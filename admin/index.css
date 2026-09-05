@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=DM+Sans:opsz,wght@9..40,300..700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*{
+    font-family: Outfit;
+}
+
+
+select,input,textarea{
+    border:1px solid #c2c2c2;
+    outline-color: #C586A5;
+    border-radius:4px;
+}
+
+.gradient-text{
+    background: linear-gradient(135deg,#7c2d12,#C586A5,#7c2d12);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.card-lift{
+    transition: transform .3s ease, box-shadow .3s ease;
+}
+.card-lift:hover{
+    transform: translateY(-4px);
+    box-shadow: 0 18px 40px -18px rgba(124,45,18,.35);
+}
+
+.side-link.active{
+    background: linear-gradient(135deg,rgba(197,134,165,.16),rgba(124,45,18,.1));
+    border-color:#C586A5;
+    color:#7c2d12;
+    font-weight: 600;
+}
