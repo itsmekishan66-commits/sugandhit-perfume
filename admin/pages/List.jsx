@@ -50,8 +50,28 @@ const List = ({ token }) => {
   };
 
   useEffect(() => {
-    fetchList();
-  }, []);
+    if (!token) return;
+    let ignore = false;
+    fetch(backendUrl + '/api/product/list', {
+      headers: { token }
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (ignore) return;
+        if (data.success) {
+          setList(data.products);
+        } else {
+          toast.error(data.message);
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        toast.error(error.message);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [token]);
 
   return (
     <div className='bg-white rounded-2xl p-8 border border-orange-100 shadow-sm'>

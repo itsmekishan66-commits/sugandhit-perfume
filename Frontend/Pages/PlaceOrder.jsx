@@ -3,7 +3,7 @@ import Title from "../Components/Title";
 import { toast } from "react-toastify";
 import CartTotal from "../Components/CartTotal";
 import { assets } from "../assets/assets";
-import { ShopContext } from "../Context/ShopContext";
+import { ShopContext } from "../Context/ShopContextObject";
 
 const PlaceOrder = () => {
   const [method, setMethod] = useState('cod');
@@ -69,7 +69,7 @@ const PlaceOrder = () => {
           });
           if (success) {
             setCartItems({});
-            toast.success('Order placed — we'll begin blending now!');
+            toast.success("Order placed — we'll begin blending now!");
             navigate('/orders');
           } else {
             toast.error("Order failed");

@@ -31,8 +31,7 @@ const Login = ({setToken}) => {
         }
     }
   return (
-    <div className='min-h-screen flex items-center justify-center w-full bg-gradient-to-br from-[#fdf6ef] via-[#f7e8ef] to-[#f3dfd8] p-4'>
-      <div className='bg-white/90 backdrop-blur shadow-2xl rounded-3xl px-10 py-12 max-w-md border border-orange-100 w-full'>
+    <div className='bg-white/90 backdrop-blur shadow-2xl rounded-3xl px-10 py-12 max-w-md border border-orange-100 w-full'>
         <div className='flex flex-col items-center mb-8'>
           <span className='w-12 h-12 rounded-full bg-gradient-to-br from-[#7c2d12] to-[#C586A5] mb-4'></span>
           <h1 className='text-3xl font-bold gradient-text'>Sugandhit</h1>
@@ -53,7 +52,6 @@ const Login = ({setToken}) => {
             <button className='mt-2 w-full py-3 rounded-xl text-white bg-gradient-to-r from-[#7c2d12] to-[#C586A5] font-medium hover:opacity-90 transition-opacity' type='submit'>Login</button>
         </form>
       </div>
-    </div>
   )
 }
 

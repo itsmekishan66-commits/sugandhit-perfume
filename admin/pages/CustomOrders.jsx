@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { backendUrl, currency } from "../config";
 import { toast } from "react-toastify";
@@ -24,7 +24,7 @@ NotePills.propTypes = {
 const CustomOrders = ({ token }) => {
   const [orders, setOrders] = useState([]);
 
-  const fetchAllOrders = useCallback(async () => {
+  const fetchAllOrders = async () => {
     if (!token) return;
 
     try {
@@ -41,7 +41,7 @@ const CustomOrders = ({ token }) => {
     } catch (error) {
       toast.error(error.message);
     }
-  }, [token]);
+  };
 
   const statusHandler = async (event, orderId) => {
     try {
@@ -62,8 +62,26 @@ const CustomOrders = ({ token }) => {
   };
 
   useEffect(() => {
-    fetchAllOrders();
-  }, [fetchAllOrders]);
+    if (!token) return;
+    let ignore = false;
+    fetch(backendUrl + "/api/custom-order/list", {
+      method: 'POST',
+      headers: { token }
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (ignore) return;
+        if (data.success) {
+          setOrders(data.orders);
+        } else {
+          toast.error(data.message);
+        }
+      })
+      .catch((error) => toast.error(error.message));
+    return () => {
+      ignore = true;
+    };
+  }, [token]);
 
   return (
     <div className="bg-white rounded-2xl p-8 border border-orange-100 shadow-sm">

@@ -12,6 +12,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
     "seed": "tsx models/seed.ts"
   },
   "dependencies": {
@@ -43,7 +44,7 @@
     "eslint": "^10.10.0",
     "globals": "^17.12.0",
     "tsx": "^4.23.13",
-    "typescript": "^7.0.2",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.69.0"
   }
 }

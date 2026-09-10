@@ -1,9 +1,8 @@
-import { createContext, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import PropTypes from 'prop-types'
-
-export const ShopContext = createContext();
+import { ShopContext } from "./ShopContextObject";
 
 const ShopContextProvider = ({ children }) => {
   const currency = "Rs.";
@@ -13,7 +12,7 @@ const ShopContextProvider = ({ children }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [cartItems, setCartItems] = useState({});
   const [products, setProducts] = useState([]);
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState(() => localStorage.getItem('token') || '');
   const [palette, setPalette] = useState({ top: [], heart: [], base: [], bases: [] });
   const [userProfile, setUserProfile] = useState(null);
   const navigate = useNavigate();
@@ -34,17 +33,6 @@ const ShopContextProvider = ({ children }) => {
     const data = await response.json();
     return { response, data, success: response.ok };
   }, []);
-
-  const fetchPalette = useCallback(async () => {
-    try {
-      const { data, success } = await fetchApi(backendUrl + '/api/note/palette');
-      if (success && data.success) {
-        setPalette(data.palette);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }, [backendUrl]);
 
   const addToCart = async (itemId, colors) => {
     if (!colors) {
@@ -127,36 +115,6 @@ const ShopContextProvider = ({ children }) => {
     return totalAmount;
   };
 
-  const getProductsData = useCallback(async () => {
-    try {
-      const { data, success } = await fetchApi(backendUrl + '/api/product/list')
-      if (success && data.success) {
-        setProducts(data.products)
-      } else {
-        toast.error(data.message)
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error(error.message)
-    }
-  }, [backendUrl]);
-
-  const getUserCart = useCallback(async (token) => {
-    try {
-      const { data, success } = await fetchApi(backendUrl + '/api/cart/get', {
-        method: 'POST',
-        body: {},
-        headers: { token }
-      })
-      if (success && data.success) {
-        setCartItems(data.cartData)
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error(error.message)
-    }
-  }, [backendUrl]);
-
   const getUserProfile = useCallback(async (token) => {
     try {
       const { data, success } = await fetchApi(backendUrl + '/api/user/profile', {
@@ -171,17 +129,17 @@ const ShopContextProvider = ({ children }) => {
       console.log(error);
       toast.error(error.message)
     }
-  }, [backendUrl]);
+  }, [backendUrl, fetchApi]);
 
-  const updateUserProfile = async (data) => {
+  const updateUserProfile = async (profileData) => {
     try {
       const { data, success } = await fetchApi(backendUrl + '/api/user/update-profile', {
         method: 'POST',
-        body: data,
+        body: profileData,
         headers: { token }
       })
       if (success && data.success) {
-        setUserProfile(response.data.user)
+        setUserProfile(data.user)
         return true
       } else {
         toast.error(data.message)
@@ -195,21 +153,68 @@ const ShopContextProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    getProductsData();
-    fetchPalette();
-  }, [getProductsData, fetchPalette]);
+    const loadProducts = async () => {
+      try {
+        const { data, success } = await fetchApi(backendUrl + '/api/product/list');
+        if (success && data.success) {
+          setProducts(data.products);
+        } else {
+          toast.error(data.message);
+        }
+      } catch (error) {
+        console.log(error);
+        toast.error(error.message);
+      }
+    };
+    const loadPalette = async () => {
+      try {
+        const { data, success } = await fetchApi(backendUrl + '/api/note/palette');
+        if (success && data.success) {
+          setPalette(data.palette);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    loadProducts();
+    loadPalette();
+  }, [backendUrl, fetchApi]);
 
   useEffect(() => {
-    const stored = localStorage.getItem('token');
-    if (!token && stored) {
-      setToken(stored);
-      getUserCart(stored);
-      getUserProfile(stored);
-    }
-    if (token) {
-      getUserProfile(token);
-    }
-  }, [token, getUserCart, getUserProfile]);
+    if (!token) return;
+    const loadCart = async () => {
+      try {
+        const { data, success } = await fetchApi(backendUrl + '/api/cart/get', {
+          method: 'POST',
+          body: {},
+          headers: { token }
+        });
+        if (success && data.success) {
+          setCartItems(data.cartData);
+        }
+      } catch (error) {
+        console.log(error);
+        toast.error(error.message);
+      }
+    };
+    const loadProfile = async () => {
+      try {
+        const { data, success } = await fetchApi(backendUrl + '/api/user/profile', {
+          method: 'POST',
+          body: {},
+          headers: { token }
+        });
+        if (success && data.success) {
+          setUserProfile(data.user);
+        }
+      } catch (error) {
+        console.log(error);
+        toast.error(error.message);
+      }
+    };
+    loadCart();
+    loadProfile();
+  }, [token, backendUrl, fetchApi]);
 
   const logout = () => {
     localStorage.removeItem('token');

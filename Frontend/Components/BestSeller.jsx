@@ -1,16 +1,14 @@
-import { useContext, useEffect, useState } from "react";
-import { ShopContext } from "../Context/ShopContext";
+import { useContext, useMemo } from "react";
+import { ShopContext } from "../Context/ShopContextObject";
 import Title from "./Title";
 import ProductItem from "./ProductItem";
 import Reveal from "./Reveal";
 
 const BestSeller = () => {
   const { products } = useContext(ShopContext);
-  const [bestseller, setBestSeller] = useState([]);
-
-  useEffect(() => {
+  const bestseller = useMemo(() => {
     const best = products.filter((item) => item.bestseller);
-    setBestSeller(best.length ? best.slice(0, 4) : products.slice(0, 4));
+    return best.length ? best.slice(0, 4) : products.slice(0, 4);
   }, [products]);
 
   return (

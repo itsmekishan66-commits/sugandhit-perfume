@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { ShopContext } from '../Context/ShopContext'
+import { ShopContext } from '../Context/ShopContextObject'
 import { toast } from 'react-toastify'
 import Reveal from '../Components/Reveal'
 

@@ -1,6 +1,6 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { ShopContext } from '../Context/ShopContext'
+import { ShopContext } from '../Context/ShopContextObject'
 import { Star } from "lucide-react"
 import RelatedProducts from '../Components/RelatedProducts';
 import Reveal from '../Components/Reveal';
@@ -8,20 +8,14 @@ import Reveal from '../Components/Reveal';
 const Product = () => {
   const { productId } = useParams();
   const { products, currency, addToCart } = useContext(ShopContext);
-  const [productData, setProductData] = useState(null);
-  const [image, setImage] = useState('');
+  const [imageState, setImageState] = useState({ id: null, src: '' });
   const [colors, setColors] = useState('100ml');
   const [qty, setQty] = useState(1);
 
   const sizes = ['100ml', '50ml', '30ml'];
 
-  useEffect(() => {
-    const p = products.find(item => item._id === productId);
-    if (p) {
-      setProductData(p);
-      setImage(p.image[0] || '');
-    }
-  }, [productId, products]);
+  const productData = useMemo(() => products.find(item => item._id === productId) || null, [products, productId]);
+  const image = imageState.id === productId ? imageState.src : (productData?.image?.[0] || '');
 
   const qtyChange = (v) => setQty((q) => Math.max(1, q + v));
 
@@ -43,7 +37,7 @@ const Product = () => {
             {(productData.image || []).slice(0, 4).map((img) => (
               <div
                 key={img}
-                onClick={() => setImage(img)}
+                onClick={() => setImageState({ id: productId, src: img })}
                 className={`cursor-pointer rounded-xl overflow-hidden border transition-all ${image === img ? 'border-gold ring-2 ring-gold/30' : 'border-gold/15 hover:border-gold/50'}`}
               >
                 <img className="w-full aspect-square object-cover" src={img} alt="" />

@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { ShopContext } from '../Context/ShopContext'
+import { ShopContext } from '../Context/ShopContextObject'
 import { Trash } from "lucide-react"
 import Title from '../Components/Title';
 import CartTotal from '../Components/CartTotal';

@@ -1,20 +1,15 @@
-import { useCallback, useContext, useEffect, useState } from 'react'
-import { ShopContext } from '../Context/ShopContext'
+import { useContext, useMemo, useState } from 'react'
+import { ShopContext } from '../Context/ShopContextObject'
 import ProductItem from '../Components/ProductItem'
 import Reveal from '../Components/Reveal'
-import { MenuDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 const Collection = () => {
   const { products, search, showSearch } = useContext(ShopContext);
   const [showFilter, setShowFilter] = useState(true);
-  const [filterProducts, setFilterProducts] = useState([]);
   const [category, setCategory] = useState([]);
   const [subCategory, setSubCategory] = useState([]);
   const [sortType, setSortType] = useState('relevant');
-
-  useEffect(() => {
-    setFilterProducts(products);
-  }, [products]);
 
   const toggleCategory = (e) => {
     if (category.includes(e.target.value)) {
@@ -32,7 +27,7 @@ const Collection = () => {
     }
   }
 
-  const applyFilter = useCallback(() => {
+  const filterProducts = useMemo(() => {
     let productsCopy = products.slice();
 
     if (showSearch && search) {
@@ -47,26 +42,14 @@ const Collection = () => {
       productsCopy = productsCopy.filter(item => subCategory.includes(item.subCategory));
     }
 
-    setFilterProducts(productsCopy);
-  }, [products, search, showSearch, category, subCategory]);
-
-  useEffect(() => {
-    applyFilter();
-  }, [applyFilter]);
-
-  const sortProduct = useCallback(() => {
-    let fpCopy = filterProducts.slice();
     if (sortType === 'low-high') {
-      setFilterProducts(fpCopy.sort((a, b) => Number(a.price) - Number(b.price)));
+      productsCopy.sort((a, b) => Number(a.price) - Number(b.price));
+    } else if (sortType === 'high-low') {
+      productsCopy.sort((a, b) => Number(b.price) - Number(a.price));
     }
-    else if (sortType === 'high-low') {
-      setFilterProducts(fpCopy.sort((a, b) => Number(b.price) - Number(a.price)));
-    }
-  }, [filterProducts, sortType]);
 
-  useEffect(() => {
-    sortProduct();
-  }, [sortProduct]);
+    return productsCopy;
+  }, [products, search, showSearch, category, subCategory, sortType]);
 
   const categories = ['Men', 'Women', 'Unisex'];
   const subCategories = [
@@ -79,12 +62,12 @@ const Collection = () => {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 pt-8">
+    <div className="flex flex-col lg:flex-row gap-8 pt-2">
       {/* Filter sidebar */}
       <div className="lg:w-64 shrink-0">
         <p onClick={() => setShowFilter(!showFilter)} className="my-2 lg:hidden cursor-pointer flex items-center justify-between font-medium">
           Filters
-          <img src={MenuDown} className={`h-3 transition ${showFilter ? 'rotate-90' : ''}`} alt="" />
+          <ChevronDown className={`h-3 w-3 transition ${showFilter ? 'rotate-90' : ''}`} />
         </p>
         <div className={`lg:block ${showFilter ? '' : 'hidden'}`}>
           <Reveal className="p-6 rounded-2xl bg-white/70 border border-gold/15 backdrop-blur">

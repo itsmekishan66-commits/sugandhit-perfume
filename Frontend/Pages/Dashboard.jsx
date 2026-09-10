@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { ShopContext } from '../Context/ShopContext'
+import { ShopContext } from '../Context/ShopContextObject'
 import { toast } from 'react-toastify'
 import Title from '../Components/Title'
 import Reveal from '../Components/Reveal'
@@ -13,29 +13,20 @@ const Dashboard = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (userProfile) {
-      setForm({
-        name: userProfile.name || '',
-        phone: userProfile.phone || '',
-        address: (userProfile.address && userProfile.address.address) || (typeof userProfile.address === 'string' ? userProfile.address : ''),
-        city: (userProfile.address && userProfile.address.city) || '',
-      });
-    }
-  }, [userProfile]);
-
-  useEffect(() => {
     if (!token) return;
-    const fetch = async () => {
+    const fetchData = async () => {
       try {
         const [oRes, cRes] = await Promise.all([
-          fetchApi(backendUrl + '/api/order/userorders', { method: 'POST', headers: { token } }),
-          fetchApi(backendUrl + '/api/custom-order/userorders', { method: 'POST', headers: { token } }),
+          fetch(backendUrl + '/api/order/userorders', { method: 'POST', headers: { token } }),
+          fetch(backendUrl + '/api/custom-order/userorders', { method: 'POST', headers: { token } }),
         ]);
-        if (oRes.success) setOrders(oRes.data?.orders);
-        if (cRes.success) setCustom(cRes.data?.orders);
+        const oData = await oRes.json();
+        const cData = await cRes.json();
+        if (oData.success) setOrders(oData.orders);
+        if (cData.success) setCustom(cData.orders);
       } catch (error) { console.log(error); }
     };
-    fetch();
+    fetchData();
   }, [token, backendUrl]);
 
   if (!token) {
@@ -60,6 +51,16 @@ const Dashboard = () => {
     });
     setSaving(false);
     if (ok) { setEdit(false); toast.success('Profile updated'); }
+  };
+
+  const startEdit = () => {
+    setForm({
+      name: userProfile?.name || '',
+      phone: userProfile?.phone || '',
+      address: (userProfile?.address && userProfile.address.address) || (typeof userProfile?.address === 'string' ? userProfile.address : ''),
+      city: (userProfile?.address && userProfile.address.city) || '',
+    });
+    setEdit(true);
   };
 
   const onChange = (e) => setForm(d => ({ ...d, [e.target.name]: e.target.value }));
@@ -105,7 +106,7 @@ const Dashboard = () => {
       <Reveal className="max-w-4xl mx-auto rounded-3xl border border-gold/15 bg-white/70 p-6 mb-10">
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-display text-2xl font-semibold">Profile</h3>
-          {!edit && <button onClick={() => setEdit(true)} className="text-sm text-gold font-medium hover:text-espresso transition-colors">Edit</button>}
+          {!edit && <button onClick={startEdit} className="text-sm text-gold font-medium hover:text-espresso transition-colors">Edit</button>}
         </div>
 
         {!edit && userProfile ? (

@@ -1,5 +1,5 @@
-import { useContext, useEffect, useState } from 'react'
-import { ShopContext } from '../Context/ShopContext'
+import { useContext, useMemo } from 'react'
+import { ShopContext } from '../Context/ShopContextObject'
 import Title from './Title';
 import ProductItem from "./ProductItem";
 import Reveal from './Reveal';
@@ -7,19 +7,16 @@ import PropTypes from 'prop-types'
 
 const RelatedProducts = ({ category, subCategory }) => {
   const { products } = useContext(ShopContext);
-  const [related, setRelated] = useState([]);
 
-  useEffect(() => {
-    if (products.length > 0) {
-      let copy = products.slice();
-      copy = copy.filter((item) => item.category === category);
-      copy = copy.filter((item) => item.subCategory === subCategory);
-      copy = copy.slice(0, 4);
-      if (copy.length === 0) {
-        copy = products.slice(0, 4);
-      }
-      setRelated(copy);
+  const related = useMemo(() => {
+    if (products.length === 0) return [];
+    let copy = products.filter((item) => item.category === category);
+    copy = copy.filter((item) => item.subCategory === subCategory);
+    copy = copy.slice(0, 4);
+    if (copy.length === 0) {
+      copy = products.slice(0, 4);
     }
+    return copy;
   }, [products, category, subCategory]);
 
   return (

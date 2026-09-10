@@ -1,5 +1,5 @@
-import { useCallback, useContext, useEffect, useState } from 'react'
-import { ShopContext } from '../Context/ShopContext'
+import { useContext, useEffect, useState } from 'react'
+import { ShopContext } from '../Context/ShopContextObject'
 import Title from '../Components/Title'
 import Reveal from '../Components/Reveal'
 
@@ -9,29 +9,30 @@ const Orders = () => {
   const [customOrders, setCustomOrders] = useState([]);
   const [tab, setTab] = useState('all');
 
-  const fetchOrders = useCallback(async () => {
+  useEffect(() => {
     if (!token) return;
-    try {
-      const [oRes, cRes] = await Promise.all([
-        fetch(backendUrl + '/api/order/userorders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', token }
-        }),
-        fetch(backendUrl + '/api/custom-order/userorders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', token }
-        }),
-      ]);
-      const oData = await oRes.json();
-      const cData = await cRes.json();
-      if (oData.success) setOrders(oData.orders);
-      if (cData.success) setCustomOrders(cData.orders);
-    } catch (error) {
-      console.log(error);
-    }
+    const fetchOrders = async () => {
+      try {
+        const [oRes, cRes] = await Promise.all([
+          fetch(backendUrl + '/api/order/userorders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', token }
+          }),
+          fetch(backendUrl + '/api/custom-order/userorders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', token }
+          }),
+        ]);
+        const oData = await oRes.json();
+        const cData = await cRes.json();
+        if (oData.success) setOrders(oData.orders);
+        if (cData.success) setCustomOrders(cData.orders);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchOrders();
   }, [token, backendUrl]);
-
-  useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
   if (!token) {
     return (
