@@ -62,9 +62,9 @@ const Collection = () => {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 pt-2">
+    <div className="flex flex-col lg:flex-row gap-2 md:gap-8 pt-2 no-scrollbar">
       {/* Filter sidebar */}
-      <div className="lg:w-64 shrink-0">
+      <div className="lg:w-64 shrink-0 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto no-scrollbar">
         <p onClick={() => setShowFilter(!showFilter)} className="my-2 lg:hidden cursor-pointer flex items-center justify-between font-medium">
           Filters
           <ChevronDown className={`h-3 w-3 transition ${showFilter ? 'rotate-90' : ''}`} />
@@ -99,7 +99,7 @@ const Collection = () => {
       </div>
 
       {/* Products */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <div className="flex justify-end mb-6">
           <div className="flex items-center gap-2">
             <span className="text-sm text-ink-soft hidden sm:block">Sort by</span>
@@ -111,10 +111,10 @@ const Collection = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 gap-y-10 mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 gap-y-10 pt-4 lg:max-h-[calc(100vh-13rem)] lg:overflow-y-auto lg:pr-2 lg:pb-2 no-scrollbar">
           {filterProducts.map((item, index) => (
             <Reveal key={item._id} delay={index * 50}>
-              <ProductItem id={item._id} image={item.image} name={item.name} price={Number(item.price)} subCategory={item.subCategory} />
+              <ProductItem id={item._id} image={item.image} name={item.name} price={Number(item.price)} subCategory={item.subCategory} category={item.category} rating={item.rating} reviews={item.reviews} badge={item.badge} bestseller={item.bestseller} popular={item.popular} />
             </Reveal>
           ))}
         </div>

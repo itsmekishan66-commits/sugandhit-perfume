@@ -17,9 +17,9 @@ const Contact = () => {
   const labelClass = "text-sm font-medium mb-2 inline-block";
 
   return (
-    <div className="pt-8">
+    <div className="pt-2">
       <Title text1={'Get in'} text2={'touch'} />
-      <Reveal className="max-w-4xl mx-auto card-lux rounded-[2rem] p-8 md:p-12">
+      <Reveal className="max-w-4xl mx-auto card-lux rounded-4xl p-8 md:p-12">
         <form onSubmit={onSubmitHandler} className="grid sm:grid-cols-2 gap-6">
           <div>
             <label className={labelClass}>Your name</label>

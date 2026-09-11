@@ -15,16 +15,25 @@ const Product = () => {
   const sizes = ['100ml', '50ml', '30ml'];
 
   const productData = useMemo(() => products.find(item => item._id === productId) || null, [products, productId]);
+  const rating = Number(productData?.rating) || 0;
+  const reviews = productData?.reviews || 0;
   const image = imageState.id === productId ? imageState.src : (productData?.image?.[0] || '');
 
   const qtyChange = (v) => setQty((q) => Math.max(1, q + v));
+
+  const isPopular = productData?.popular ?? (productId ? String(productId).charCodeAt(String(productId).length - 1) % 3 === 0 : false);
 
   return productData ? (
     <div className="mt-10">
       <div className="grid md:grid-cols-2 gap-10">
         {/* Image */}
-        <Reveal direction="left" className="flex flex-col gap-4">
-          <div className="img-zoom-wrap rounded-[1.75rem] bg-gradient-to-br from-white to-sand/50 border border-gold/15 flex items-center justify-center min-h-[28rem]">
+        <Reveal direction="left" className="relative flex flex-col gap-4">
+          {isPopular && (
+            <span className="award-badge-lg">
+              Popular
+            </span>
+          )}
+          <div className="img-zoom-wrap relative rounded-[1.75rem] bg-gradient-to-br from-white to-sand/50 border border-gold/15 flex items-center justify-center min-h-[28rem]">
             {image ? (
               <img className="w-full h-[28rem] object-cover" src={image} alt={productData.name} />
             ) : (
@@ -48,13 +57,18 @@ const Product = () => {
 
         {/* Info */}
         <Reveal direction="right" className="flex flex-col justify-start">
-          <p className="text-xs tracking-luxe uppercase text-gold">Sugandhit · {productData.category}</p>
+          <div className="flex items-center gap-3">
+            <p className="text-xs tracking-luxe uppercase text-gold">Sugandhit · {productData.category}</p>
+            {(productData.badge || productData.bestseller) && (
+              <span className="text-[0.6rem] tracking-luxe uppercase px-3 py-1 rounded-full bg-espresso text-cream">{productData.badge || 'Bestseller'}</span>
+            )}
+          </div>
           <h1 className="mt-2 font-display text-4xl md:text-5xl font-medium">{productData.name}</h1>
           <div className="flex items-center gap-1 mt-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} className="w-4 fill-yellow-500" alt="star" />
+              <Star key={i} className={`w-4 ${i < Math.round(rating) ? 'fill-gold text-gold' : 'text-gold/30'}`} />
             ))}
-            <p className="text-sm text-ink-soft ml-2">Hand-blended signature</p>
+            <p className="text-sm text-ink-soft ml-2">{rating.toFixed(1)} · {reviews} reviews</p>
           </div>
 
           <div className="flex items-center gap-3 mt-6">

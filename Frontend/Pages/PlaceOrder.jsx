@@ -90,7 +90,7 @@ const PlaceOrder = () => {
   return (
     <form onSubmit={onSubmitHandler} className="flex flex-col lg:flex-row lg:items-start justify-between gap-10 pt-5 sm:pt-14 pb-10">
       {/* LEFT SIDE */}
-      <div className="flex flex-col gap-4 w-full max-w-[520px]">
+      <div className="flex flex-col gap-4 w-full max-w-130">
         <div className="text-left lg:text-3xl my-3">
           <Title text1={'Delivery'} text2={'Information'} />
         </div>

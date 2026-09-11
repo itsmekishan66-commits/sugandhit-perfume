@@ -1,19 +1,24 @@
 import Title from '../Components/Title'
 import Reveal from '../Components/Reveal'
-import PerfumeBottle from '../Components/PerfumeBottle'
+// import PerfumeBottle from '../Components/PerfumeBottle'
 
 const About = () => {
   return (
     <div>
-      <div className="text-2xl text-left lg:text-3xl pt-8">
+      <div className="text-2xl text-left lg:text-3xl pt-2">
         <Title text1={'Crafted'} text2={'with patience'} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-10 items-center mt-6">
         <Reveal direction="left">
-          <div className="relative rounded-[2rem] bg-gradient-to-br from-blush via-sand to-gold/25 flex items-center justify-center py-20 overflow-hidden">
-            <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-gold/15 blur-3xl floating" />
-            <PerfumeBottle className="w-52 h-64 drop-shadow-2xl float-anim" />
+          <div className="relative rounded-4xl bg-linear-to-br from-blush via-sand to-gold/25 flex items-center justify-center py-0 overflow-hidden">
+            <div className="absolute -top-16 -left-16 w-84 h-84 rounded-full bg-gold/15 blur-3xl floating" />
+            <img
+              src="/sugandhit-prototype4.jpeg"
+              alt="Sugandhit perfume prototype"
+              className="relative w-138 h-110 object-cover rounded-3xl drop-shadow-2xl"
+              // className="relative w-52 h-64 object-cover rounded-3xl drop-shadow-2xl float-anim"
+            />
           </div>
         </Reveal>
 

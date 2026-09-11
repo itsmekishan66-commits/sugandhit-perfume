@@ -8,6 +8,7 @@ import Orders from "./Pages/Orders";
 import PlaceOrder from "./Pages/PlaceOrder";
 import Product from "./Pages/Product";
 import Cart from "./Pages/Cart";
+import Wishlist from "./Pages/Wishlist";
 import CustomPerfume from "./Pages/CustomPerfume";
 import Dashboard from "./Pages/Dashboard";
 import SidebarLayout from "./layouts/SidebarLayout";
@@ -28,6 +29,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/Cart" element={<Cart />} />
+          <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/collection" element={<Collection />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/Orders" element={<Orders />} />

@@ -33,7 +33,7 @@ const Cart = () => {
               return Object.entries(detail).map(([size, quantity]) => (
                 <Reveal key={itemId + size}>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl border border-gold/15 bg-white/70 p-4 card-lux">
-                    <div className="w-20 h-24 rounded-xl overflow-hidden bg-gradient-to-br from-blush to-sand flex items-center justify-center shrink-0">
+                    <div className="w-20 h-24 rounded-xl overflow-hidden bg-linear-to-br from-blush to-sand flex items-center justify-center shrink-0">
                       {productData.image && productData.image[0] ? (
                         <img className="w-full h-full object-cover" src={productData.image[0]} alt="" />
                       ) : (

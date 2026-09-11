@@ -15,6 +15,14 @@ const ShopContextProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem('token') || '');
   const [palette, setPalette] = useState({ top: [], heart: [], base: [], bases: [] });
   const [userProfile, setUserProfile] = useState(null);
+  const [wishlist, setWishlist] = useState(() => {
+    try {
+      const stored = localStorage.getItem('wishlist');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   const navigate = useNavigate();
 
   const fetchApi = useCallback(async (url, options = {}) => {
@@ -114,6 +122,28 @@ const ShopContextProvider = ({ children }) => {
     }
     return totalAmount;
   };
+
+  const isInWishlist = (itemId) => wishlist.includes(itemId);
+
+  const toggleWishlist = (itemId) => {
+    setWishlist((prev) => {
+      if (prev.includes(itemId)) {
+        toast.info("Removed from wishlist");
+        return prev.filter((id) => id !== itemId);
+      }
+      toast.success("Added to wishlist");
+      return [...prev, itemId];
+    });
+  };
+
+  const removeFromWishlist = (itemId) => {
+    setWishlist((prev) => prev.filter((id) => id !== itemId));
+    toast.info("Removed from wishlist");
+  };
+
+  useEffect(() => {
+    localStorage.setItem('wishlist', JSON.stringify(wishlist));
+  }, [wishlist]);
 
   const getUserProfile = useCallback(async (token) => {
     try {
@@ -247,6 +277,10 @@ const ShopContextProvider = ({ children }) => {
     getUserProfile,
     updateUserProfile,
     logout,
+    wishlist,
+    toggleWishlist,
+    removeFromWishlist,
+    isInWishlist,
   };
 
   return (

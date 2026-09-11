@@ -11,10 +11,6 @@ const countPalette = async () => {
   return Number(rows[0].total);
 };
 
-const countProducts = async () => {
-  const { rows } = await db.execute(sql`select count(*) as total from products`);
-  return Number(rows[0].total);
-};
 
 const seedPalette = async () => {
   const total = await countPalette();
@@ -27,17 +23,22 @@ const seedPalette = async () => {
   console.log('Palette seeded ✓');
 };
 
+const ensureColumns = async () => {
+  await db.execute(sql`alter table products add column if not exists rating numeric(3,2) default 4.5`);
+  await db.execute(sql`alter table products add column if not exists reviews integer default 0`);
+  await db.execute(sql`alter table products add column if not exists badge text`);
+};
+
 const seedProducts = async () => {
-  const total = await countProducts();
-  if (total > 0) {
-    console.log(`Products already seeded (${total} rows).`);
-    return;
-  }
+  await ensureColumns();
+  await db.delete(products);
   const day = 86400000;
   const now = Date.now();
   const rows = defaultProducts.map((p, i) => ({
     ...p,
-    image: [`https://placehold.co/600x800/1a1a1a/c9a227?text=${encodeURIComponent(p.name)}`],
+    image: p.image?.length
+      ? p.image
+      : [`https://placehold.co/600x800/1a1a1a/c9a227?text=${encodeURIComponent(p.name)}`],
     date: now - i * day,
   }));
   await db.insert(products).values(rows);

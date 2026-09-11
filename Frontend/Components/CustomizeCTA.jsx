@@ -8,7 +8,7 @@ const CustomizeCTA = () => {
   const topNotes = (palette.top || []).slice(0, 4);
 
   return (
-    <section className="my-24 relative overflow-hidden rounded-[2rem] bg-deep text-cream">
+    <section className="my-24 relative overflow-hidden rounded-4xl bg-deep text-cream">
       <div className="absolute inset-0 opacity-[0.12] pointer-events-none"
         style={{ backgroundImage: 'radial-gradient(circle at 25% 30%, #c9a227 2px, transparent 2.5px)', backgroundSize: '44px 44px' }} />
       <div className="absolute -top-24 right-0 w-96 h-96 rounded-full bg-gold/15 blur-3xl" />
@@ -39,7 +39,7 @@ const CustomizeCTA = () => {
 
         <Reveal direction="right" className="hidden md:flex items-center justify-center">
           <div className="relative">
-            <div className="w-64 h-64 rounded-full bg-gradient-to-br from-espresso/60 to-gold/40 flex items-center justify-center float-anim">
+            <div className="w-64 h-64 rounded-full bg-linear-to-br from-espresso/60 to-gold/40 flex items-center justify-center float-anim">
               <div className="text-center">
                 <p className="font-display text-lg italic text-cream/80">hand-blended</p>
                 <p className="font-display text-6xl font-medium gold-text">III</p>

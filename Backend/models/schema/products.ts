@@ -1,4 +1,4 @@
-import { pgTable, serial, text, numeric, jsonb, boolean, bigint } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, numeric, jsonb, boolean, bigint, integer } from 'drizzle-orm/pg-core';
 
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),
@@ -10,5 +10,8 @@ export const products = pgTable('products', {
   subCategory: text('sub_category').notNull(),
   colors: jsonb('colors').$type<string[]>().notNull().default([]),
   bestseller: boolean('bestseller').default(false),
+  rating: numeric('rating', { precision: 3, scale: 2 }).default('4.5'),
+  reviews: integer('reviews').default(0),
+  badge: text('badge'),
   date: bigint('date', { mode: 'number' }).notNull(),
 });

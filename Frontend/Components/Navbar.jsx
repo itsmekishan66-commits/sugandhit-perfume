@@ -1,13 +1,13 @@
 import { useContext, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { Search, User, ShoppingCart, Home, LayoutGrid, Sparkles } from "lucide-react";
+import { Search, User, ShoppingCart, Home, LayoutGrid, Sparkles, Heart } from "lucide-react";
 import { ShopContext } from "../Context/ShopContextObject";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
 
-  const { setShowSearch, getCartCount, token, logout, navigate } = useContext(ShopContext);
+  const { setShowSearch, getCartCount, token, logout, navigate, wishlist } = useContext(ShopContext);
 
   const location = useLocation();
 
@@ -211,6 +211,24 @@ const Navbar = () => {
                   </>
                 )}
               </div>
+
+              {/* WISHLIST */}
+              <Link
+                to="/wishlist"
+                aria-label="Wishlist"
+                className="relative rounded-full p-2.5 transition-colors duration-200 hover:bg-sand"
+              >
+                <Heart
+                  className="h-5 w-5"
+                  strokeWidth={2}
+                />
+
+                {wishlist.length > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-white">
+                    {wishlist.length}
+                  </span>
+                )}
+              </Link>
 
               {/* CART */}
               <Link

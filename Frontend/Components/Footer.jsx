@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { FaFacebookF, FaXTwitter, FaInstagram, FaTiktok } from 'react-icons/fa6'
 
 const Footer = () => {
   return (
@@ -6,7 +7,7 @@ const Footer = () => {
       <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr] gap-10 pb-10">
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-gold to-espresso" />
+            <span className="w-8 h-8 rounded-full bg-linear-to-br from-gold to-espresso" />
             <span className="font-display text-3xl font-semibold">Sugandhit<span className="gold-text">.</span></span>
           </div>
           <p className="text-ink-soft leading-relaxed max-w-sm">
@@ -41,10 +42,22 @@ const Footer = () => {
             <li>+977 9804068834</li>
             <li>hello@sugandhit.com</li>
             <li className="pt-2 flex gap-3">
-              {['𝕏', 'IG', 'in'].map((s) => (
-                <span key={s} className="w-9 h-9 rounded-full border border-gold/30 flex items-center justify-center text-sm hover:bg-gold hover:text-white transition-colors cursor-pointer">
-                  {s}
-                </span>
+              {[
+                { name: 'Facebook', href: 'https://facebook.com', Icon: FaFacebookF },
+                { name: 'Twitter', href: 'https://twitter.com', Icon: FaXTwitter },
+                { name: 'Instagram', href: 'https://instagram.com', Icon: FaInstagram },
+                { name: 'TikTok', href: 'https://tiktok.com', Icon: FaTiktok },
+              ].map(({ name, href, Icon }) => (
+                <a
+                  key={name}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={name}
+                  className="w-9 h-9 rounded-full border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-white transition-colors"
+                >
+                  <Icon className="w-4 h-4" />
+                </a>
               ))}
             </li>
           </ul>

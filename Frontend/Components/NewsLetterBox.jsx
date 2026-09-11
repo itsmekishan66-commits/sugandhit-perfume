@@ -7,13 +7,13 @@ const NewsLetterBox = () => {
 
   return (
     <Reveal className="my-24 text-center">
-      <div className="rounded-[2rem] bg-ink text-cream px-6 py-16 md:px-16 relative overflow-hidden">
+      <div className="rounded-4xl bg-ink text-cream px-6 py-16 md:px-16 relative overflow-hidden">
         <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-gold/20 blur-3xl" />
         <div className="absolute -bottom-24 -right-16 w-80 h-80 rounded-full bg-espresso/40 blur-3xl" />
         <div className="relative">
-          <p className="text-gold tracking-luxe uppercase text-xs mb-3">✦ Join the Circle ✦</p>
-          <h3 className="font-display text-4xl md:text-5xl font-medium">
-            Receive <span className="italic gold-text">10% off</span> your first
+          <p className="text-gold tracking-luxe uppercase text-xs mb-3">✦ Join the Community ✦</p>
+          <h3 className="font-display text-4xl md:text-5xl font-medium text-center">
+            Receive <span className="italic gold-text px-2">10% off</span> your first
             <br className="hidden md:block" /> custom blend
           </h3>
           <p className="text-cream/70 mt-4 max-w-lg mx-auto">

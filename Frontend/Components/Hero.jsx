@@ -7,7 +7,7 @@ const Hero = () => {
     <section className="relative pt-10 md:pt-16 pb-10 overflow-hidden">
       {/* background orbs */}
       <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-gold/15 blur-3xl breathe" />
-      <div className="absolute top-1/3 -right-32 w-[28rem] h-[28rem] rounded-full bg-espresso/10 blur-3xl float-anim" />
+      <div className="absolute top-1/3 -right-32 w-md h-md rounded-full bg-espresso/10 blur-3xl float-anim" />
       <div className="absolute bottom-0 left-1/3 w-72 h-72 rounded-full bg-blush/60 blur-3xl" />
 
       <div className="relative grid lg:grid-cols-2 gap-12 items-center">
@@ -62,7 +62,7 @@ const Hero = () => {
         {/* Visual */}
         <Reveal direction="zoom" delay={200} className="relative flex items-center justify-center">
           <div className="relative w-full max-w-md aspect-square">
-            <div className="absolute inset-6 rounded-full bg-gradient-to-br from-blush via-sand to-gold/30 shadow-2xl shadow-gold/20 breathe" />
+            <div className="absolute inset-6 rounded-full bg-linear-to-br from-blush via-sand to-gold/30 shadow-2xl shadow-gold/20 breathe" />
             <div className="absolute -inset-3 rounded-full border border-gold/20 spin-slow" style={{ background: 'conic-gradient(from 0deg, transparent 0 340deg, rgba(201,162,39,0.35) 360deg)' }} />
             <div className="absolute inset-0 flex items-center justify-center float-anim">
               <PerfumeBottle className="w-56 h-72 drop-shadow-2xl" />
