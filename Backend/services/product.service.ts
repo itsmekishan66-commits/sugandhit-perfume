@@ -1,7 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { desc, eq } from 'drizzle-orm';
 import db from '../config/db.js';
-import { products } from '../models/schema.js';
+import { products } from '../models/schema/index.js';
 import { serializeProduct } from '../utils/helper.js';
 
 interface ProductInput {

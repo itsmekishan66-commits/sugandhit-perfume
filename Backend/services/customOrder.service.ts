@@ -1,6 +1,6 @@
 import { desc, eq } from 'drizzle-orm';
 import db from '../config/db.js';
-import { customorders } from '../models/schema.js';
+import { customorders } from '../models/schema/index.js';
 import { serializeCustomOrder } from '../utils/helper.js';
 
 interface CustomOrderInput {

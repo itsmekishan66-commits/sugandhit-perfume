@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { users, products, orders, customorders } from '../models/schema.js';
+import { users, products, orders, customorders } from '../models/schema/index.js';
 
 export const createToken = (id: number) => {
   return jwt.sign({ id }, process.env.JWT_SECRET as string);

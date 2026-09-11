@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import db from '../config/db.js';
-import { users } from '../models/schema.js';
+import { users } from '../models/schema/index.js';
 
 type CartData = Record<string, Record<string, number>>;
 

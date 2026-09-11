@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import validator from 'validator';
 import db from '../config/db.js';
-import { users } from '../models/schema.js';
+import { users } from '../models/schema/index.js';
 import { createToken, createAdminToken, hashPassword, verifyPassword, serializeUser } from '../utils/helper.js';
 
 export const registerUser = async ({ name, email, password }: { name: string; email: string; password: string }) => {
