@@ -11,7 +11,7 @@ const Cart = () => {
   const cartData = Object.entries(cartItems);
 
   return (
-    <div className="pt-8 min-h-[60vh]">
+    <div className="pt-2min-h-[60vh]">
       <Title text1={'Your'} text2={'Cart'} />
 
       {cartData.length === 0 ? (

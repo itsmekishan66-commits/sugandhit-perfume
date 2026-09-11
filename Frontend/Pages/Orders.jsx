@@ -63,7 +63,7 @@ const Orders = () => {
   };
 
   return (
-    <div className="pt-8 min-h-[60vh]">
+    <div className="pt-2 min-h-[60vh]">
       <Title text1={'My'} text2={'Orders'} />
       <div className="flex gap-3 mb-6 justify-center">
         {[['all', 'All'], ['order', 'Perfumes'], ['custom', 'Custom Blends']].map(([v, l]) => (

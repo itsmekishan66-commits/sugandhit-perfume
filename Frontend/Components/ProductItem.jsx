@@ -36,9 +36,9 @@ const ProductItem = ({ id, image, name, price, subCategory, category, rating, re
           </span>
         )}
         {image && image[0] ? (
-          <img className="w-full aspect-[3/4] object-cover" src={image[0]} alt={name} loading="lazy" />
+          <img className="w-full aspect-3/4 object-cover" src={image[0]} alt={name} loading="lazy" />
         ) : (
-          <div className="w-full aspect-[3/4] flex items-center justify-center bg-gradient-to-br from-blush to-sand">
+          <div className="w-full aspect-3/4 flex items-center justify-center bg-linear-to-br from-blush to-sand">
             <span className="font-display text-espresso/50 italic">Sugandhit</span>
           </div>
         )}
@@ -47,7 +47,15 @@ const ProductItem = ({ id, image, name, price, subCategory, category, rating, re
           {score.toFixed(1)}
           {reviews ? <span className="text-espresso/70">({reviews})</span> : null}
         </span>
-
+      </div>
+      <div className="pt-4 flex items-start justify-between">
+        <div>
+          <p className="font-medium tracking-wide">{name}</p>
+          <p className="text-xs tracking-luxe uppercase text-ink-soft mt-1">{subCategory || 'Parfum'}</p>
+        </div>
+        <p className="font-display text-lg gold-text font-semibold whitespace-nowrap">{currency}{price}</p>
+      </div>
+      <div className="mt-3 flex items-center gap-2">
         <button
           type="button"
           aria-label={isInWishlist(id) ? 'Remove from wishlist' : 'Add to wishlist'}
@@ -56,11 +64,10 @@ const ProductItem = ({ id, image, name, price, subCategory, category, rating, re
             e.stopPropagation();
             toggleWishlist(id);
           }}
-          className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/85 backdrop-blur border border-gold/20 shadow-sm transition-transform hover:scale-110"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white border border-gold/20 shadow-sm transition-transform hover:scale-110"
         >
           <Heart className={`w-4 h-4 transition-colors ${isInWishlist(id) ? 'fill-espresso text-espresso' : 'text-ink-soft'}`} />
         </button>
-
         <button
           type="button"
           aria-label="Add to cart"
@@ -69,18 +76,11 @@ const ProductItem = ({ id, image, name, price, subCategory, category, rating, re
             e.stopPropagation();
             addToCart(id, '100ml');
           }}
-          className="absolute inset-x-2 bottom-2 z-20 flex translate-y-2 items-center justify-center gap-1.5 rounded-full bg-ink/90 py-2 text-[0.7rem] font-medium text-cream opacity-0 backdrop-blur transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-ink/90 py-2 text-[0.7rem] font-medium text-cream transition-colors hover:bg-ink"
         >
           <ShoppingCart className="w-3.5 h-3.5" />
           Add to Cart
         </button>
-      </div>
-      <div className="pt-4 flex items-start justify-between">
-        <div>
-          <p className="font-medium tracking-wide">{name}</p>
-          <p className="text-xs tracking-luxe uppercase text-ink-soft mt-1">{subCategory || 'Parfum'}</p>
-        </div>
-        <p className="font-display text-lg gold-text font-semibold whitespace-nowrap">{currency}{price}</p>
       </div>
     </Link>
   );

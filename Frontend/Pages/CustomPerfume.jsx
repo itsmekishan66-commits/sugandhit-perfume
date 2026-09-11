@@ -151,7 +151,11 @@ const CustomPerfume = () => {
         </Reveal>
       )}
 
-      <form onSubmit={placeOrder} className="grid lg:grid-cols-[1fr_360px] gap-8 items-start">
+      <div className="relative">
+        {!token && (
+          <div className="absolute inset-0 z-20 cursor-not-allowed backdrop-blur-[1px] bg-white/10 rounded-2xl" />
+        )}
+      <form onSubmit={placeOrder} className={`grid lg:grid-cols-[1fr_360px] gap-8 items-start transition ${!token ? 'blur-[1px] select-none opacity-85 pointer-events-none' : ''}`}>
         <div>
           {LAYERS.map(layer => renderLayer(layer))}
 
@@ -261,6 +265,7 @@ const CustomPerfume = () => {
           </Reveal>
         </div>
       </form>
+      </div>
     </div>
   );
 };
