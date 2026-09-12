@@ -23,7 +23,7 @@ export const addProduct = async (data: ProductInput) => {
     category: data.category,
     subCategory: data.subCategory,
     price: data.price,
-    bestseller: data.bestseller === 'true',
+    bestseller: Boolean(data.bestseller),
     colors: data.colors ? JSON.parse(data.colors) : [],
     image: data.image,
     date: data.date,

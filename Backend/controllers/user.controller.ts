@@ -7,8 +7,8 @@ const ok = (res: Response, payload: Record<string, unknown>, message?: string) =
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body;
-    const token = await registerUser({ name, email, password });
+    const { name, email, password, phone, address } = req.body;
+    const token = await registerUser({ name, email, password, phone, address });
     res.json({ success: true, token });
   } catch (error) {
     console.log(error);
