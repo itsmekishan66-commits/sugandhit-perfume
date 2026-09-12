@@ -1,3 +1,13 @@
+CREATE TABLE "cartitems" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"product_id" text NOT NULL,
+	"size" text NOT NULL,
+	"quantity" integer DEFAULT 1 NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now(),
+	CONSTRAINT "cartitems_user_product_size_unique" UNIQUE("user_id","product_id","size")
+);
+--> statement-breakpoint
 CREATE TABLE "customorders" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
@@ -59,6 +69,9 @@ CREATE TABLE "products" (
 	"sub_category" text NOT NULL,
 	"colors" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"bestseller" boolean DEFAULT false,
+	"rating" numeric(3, 2) DEFAULT '4.5',
+	"reviews" integer DEFAULT 0,
+	"badge" text,
 	"date" bigint NOT NULL
 );
 --> statement-breakpoint
@@ -69,7 +82,14 @@ CREATE TABLE "users" (
 	"password" text NOT NULL,
 	"phone" text DEFAULT '',
 	"address" jsonb DEFAULT '{}'::jsonb,
-	"cart_data" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now(),
 	CONSTRAINT "users_email_unique" UNIQUE("email")
+);
+--> statement-breakpoint
+CREATE TABLE "wishlistitems" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"product_id" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now(),
+	CONSTRAINT "wishlistitems_user_product_unique" UNIQUE("user_id","product_id")
 );

@@ -1,41 +1,50 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import db from '../config/db.js';
-import { users } from '../models/schema/index.js';
+import { cartitems } from '../models/schema/index.js';
 
 type CartData = Record<string, Record<string, number>>;
 
-const getCartData = async (userId: number) => {
-  const userData = await db.query.users.findFirst({ where: eq(users.id, userId) });
-  if (!userData) throw new Error('User not found');
-  return { userData, cartData: { ...((userData.cartData as CartData) || {}) } };
+const isExistingUser = async (userId: number) => {
+  const rows = await db.query.cartitems.findMany({ where: eq(cartitems.userId, userId) });
+  return rows;
 };
 
-export const addToCart = async (userId: number, itemId: string, colors: string) => {
-  const { cartData } = await getCartData(userId);
+export const addToCart = async (userId: number, itemId: string, size: string, quantity = 1) => {
+  await db
+    .insert(cartitems)
+    .values({ userId, productId: itemId, size, quantity: Number(quantity) })
+    .onConflictDoUpdate({
+      target: [cartitems.userId, cartitems.productId, cartitems.size],
+      set: { quantity: sql`${cartitems.quantity} + ${Number(quantity)}` },
+    });
+};
 
-  if (cartData[itemId]) {
-    if (cartData[itemId][colors]) {
-      cartData[itemId][colors] += 1;
-    } else {
-      cartData[itemId][colors] = 1;
-    }
-  } else {
-    cartData[itemId] = { [colors]: 1 };
+export const updateCart = async (userId: number, itemId: string, size: string, quantity: number) => {
+  if (Number(quantity) <= 0) {
+    await db
+      .delete(cartitems)
+      .where(and(eq(cartitems.userId, userId), eq(cartitems.productId, itemId), eq(cartitems.size, size)));
+    return;
   }
-
-  await db.update(users).set({ cartData }).where(eq(users.id, userId));
+  await db
+    .insert(cartitems)
+    .values({ userId, productId: itemId, size, quantity: Number(quantity) })
+    .onConflictDoUpdate({
+      target: [cartitems.userId, cartitems.productId, cartitems.size],
+      set: { quantity: Number(quantity) },
+    });
 };
 
-export const updateCart = async (userId: number, itemId: string, colors: string, quantity: number) => {
-  const { cartData } = await getCartData(userId);
-
-  if (!cartData[itemId]) cartData[itemId] = {};
-  cartData[itemId][colors] = Number(quantity);
-
-  await db.update(users).set({ cartData }).where(eq(users.id, userId));
+export const getCart = async (userId: number): Promise<CartData> => {
+  const rows = await isExistingUser(userId);
+  const cartData: CartData = {};
+  for (const row of rows) {
+    cartData[row.productId] = cartData[row.productId] || {};
+    cartData[row.productId][row.size] = row.quantity;
+  }
+  return cartData;
 };
 
-export const getCart = async (userId: number) => {
-  const { userData } = await getCartData(userId);
-  return userData.cartData;
+export const clearCart = async (userId: number) => {
+  await db.delete(cartitems).where(eq(cartitems.userId, Number(userId)));
 };

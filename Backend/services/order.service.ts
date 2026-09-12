@@ -1,6 +1,7 @@
 import { desc, eq } from 'drizzle-orm';
 import db from '../config/db.js';
-import { orders, users } from '../models/schema/index.js';
+import { orders } from '../models/schema/index.js';
+import { clearCart } from './cart.service.js';
 import { serializeOrder } from '../utils/helper.js';
 
 interface OrderInput {
@@ -22,7 +23,7 @@ const buildOrderData = ({ userId, items, amount, address }: OrderInput) => ({
 
 export const placeOrder = async (data: OrderInput) => {
   await db.insert(orders).values(buildOrderData(data));
-  await db.update(users).set({ cartData: {} }).where(eq(users.id, Number(data.userId)));
+  await clearCart(Number(data.userId));
 };
 
 export const listAllOrders = async () => {

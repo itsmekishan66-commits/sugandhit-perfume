@@ -3,8 +3,8 @@ import { addToCart, updateCart, getCart } from '../services/cart.service.js';
 
 export const add = async (req: Request, res: Response) => {
   try {
-    const { userId, itemId, colors } = req.body;
-    await addToCart(Number(userId), itemId, colors);
+    const { userId, itemId, colors, quantity } = req.body;
+    await addToCart(Number(userId), itemId, colors, Number(quantity) || 1);
     res.json({ success: true, message: 'Added to Cart.' });
   } catch (error) {
     console.log(error);

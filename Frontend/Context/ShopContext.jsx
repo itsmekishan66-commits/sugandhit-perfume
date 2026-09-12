@@ -10,7 +10,14 @@ const ShopContextProvider = ({ children }) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const [cartItems, setCartItems] = useState({});
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const stored = localStorage.getItem('cartItems');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
   const [products, setProducts] = useState([]);
   const [token, setToken] = useState(() => localStorage.getItem('token') || '');
   const [palette, setPalette] = useState({ top: [], heart: [], base: [], bases: [] });
@@ -42,37 +49,37 @@ const ShopContextProvider = ({ children }) => {
     return { response, data, success: response.ok };
   }, []);
 
-  const addToCart = async (itemId, colors) => {
+  const addToCart = async (itemId, colors, qty = 1) => {
     if (!colors) {
       toast.error("Select Product Details.");
       return;
     }
     let cartData = structuredClone(cartItems);
     if (cartData[itemId]) {
-      if (cartData[itemId][colors]) {
-        cartData[itemId][colors] += 1;
-      } else {
-        cartData[itemId][colors] = 1;
-      }
+      cartData[itemId][colors] = (cartData[itemId][colors] || 0) + qty;
     } else {
       cartData[itemId] = {};
-      cartData[itemId][colors] = 1;
+      cartData[itemId][colors] = qty;
     }
     setCartItems(cartData);
     if (token) {
       try {
         const { success } = await fetchApi(backendUrl + '/api/cart/add', {
           method: 'POST',
-          body: { itemId, colors },
+          body: { itemId, colors, quantity: qty },
           headers: { token }
         });
         if (!success) {
           toast.error("Failed to add to cart");
+        } else {
+          toast.success("Added to cart");
         }
       } catch (error) {
         console.log(error)
         toast.error(error.message)
       }
+    } else {
+      toast.success("Added to cart");
     }
   };
 
@@ -90,8 +97,17 @@ const ShopContextProvider = ({ children }) => {
 
   const updateQuantity = async (itemId, colors, quantity) => {
     let cartData = structuredClone(cartItems);
-    if (!cartData[itemId]) cartData[itemId] = {};
-    cartData[itemId][colors] = quantity;
+    if (cartData[itemId]) {
+      if (quantity <= 0) {
+        toast.info("Item has been removed from cart");
+        delete cartData[itemId][colors];
+        if (Object.keys(cartData[itemId]).length === 0) {
+          delete cartData[itemId];
+        }
+      } else {
+        cartData[itemId][colors] = quantity;
+      }
+    }
     setCartItems(cartData);
     if (token) {
       try {
@@ -125,25 +141,52 @@ const ShopContextProvider = ({ children }) => {
 
   const isInWishlist = (itemId) => wishlist.includes(itemId);
 
-  const toggleWishlist = (itemId) => {
-    setWishlist((prev) => {
-      if (prev.includes(itemId)) {
-        toast.info("Removed from wishlist");
-        return prev.filter((id) => id !== itemId);
-      }
+  const toggleWishlist = async (itemId) => {
+    const adding = !wishlist.includes(itemId);
+    setWishlist((prev) => (adding ? [...prev, itemId] : prev.filter((id) => id !== itemId)));
+    if (adding) {
       toast.success("Added to wishlist");
-      return [...prev, itemId];
-    });
+    } else {
+      toast.info("Removed from wishlist");
+    }
+    if (token) {
+      try {
+        const { success } = await fetchApi(backendUrl + `/api/wishlist/${adding ? 'add' : 'remove'}`, {
+          method: 'POST',
+          body: { productId: itemId },
+          headers: { token }
+        });
+        if (!success) {
+          setWishlist((prev) => (adding ? prev.filter((id) => id !== itemId) : [...prev, itemId]));
+          toast.error("Failed to update wishlist");
+        }
+      } catch (error) {
+        setWishlist((prev) => (adding ? prev.filter((id) => id !== itemId) : [...prev, itemId]));
+        console.log(error);
+        toast.error(error.message);
+      }
+    }
   };
 
-  const removeFromWishlist = (itemId) => {
+  const removeFromWishlist = async (itemId) => {
     setWishlist((prev) => prev.filter((id) => id !== itemId));
     toast.info("Removed from wishlist");
+    if (token) {
+      try {
+        const { success } = await fetchApi(backendUrl + '/api/wishlist/remove', {
+          method: 'POST',
+          body: { productId: itemId },
+          headers: { token }
+        });
+        if (!success) {
+          toast.error("Failed to update wishlist");
+        }
+      } catch (error) {
+        console.log(error);
+        toast.error(error.message);
+      }
+    }
   };
-
-  useEffect(() => {
-    localStorage.setItem('wishlist', JSON.stringify(wishlist));
-  }, [wishlist]);
 
   const getUserProfile = useCallback(async (token) => {
     try {
@@ -227,6 +270,21 @@ const ShopContextProvider = ({ children }) => {
         toast.error(error.message);
       }
     };
+    const loadWishlist = async () => {
+      try {
+        const { data, success } = await fetchApi(backendUrl + '/api/wishlist/get', {
+          method: 'POST',
+          body: {},
+          headers: { token }
+        });
+        if (success && data.success) {
+          setWishlist(data.wishlist || []);
+        }
+      } catch (error) {
+        console.log(error);
+        toast.error(error.message);
+      }
+    };
     const loadProfile = async () => {
       try {
         const { data, success } = await fetchApi(backendUrl + '/api/user/profile', {
@@ -243,13 +301,29 @@ const ShopContextProvider = ({ children }) => {
       }
     };
     loadCart();
+    loadWishlist();
     loadProfile();
   }, [token, backendUrl, fetchApi]);
 
+  useEffect(() => {
+    if (!token) {
+      localStorage.setItem('cartItems', JSON.stringify(cartItems));
+    }
+  }, [cartItems, token]);
+
+  useEffect(() => {
+    if (!token) {
+      localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    }
+  }, [wishlist, token]);
+
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('cartItems');
+    localStorage.removeItem('wishlist');
     setToken('');
     setCartItems({});
+    setWishlist([]);
     setUserProfile(null);
     navigate('/');
   };
