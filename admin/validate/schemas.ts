@@ -33,3 +33,35 @@ export const orderStatusSchema = z.object({
     { message: 'Invalid order status.' }
   ),
 });
+
+export const couponSchema = z.object({
+  code: z.string().trim().min(1, 'Coupon code is required.').toUpperCase(),
+  title: z.string().trim().min(1, 'Coupon title is required.'),
+  description: z.string().optional(),
+  discountType: z.enum(['percent', 'flat'], { message: 'Invalid discount type.' }),
+  discountValue: z.coerce.number().positive('Discount value must be positive.'),
+  minPurchase: z.coerce.number().min(0).optional().default(0),
+  maxDiscount: z.coerce.number().min(0).optional(),
+  validTill: z.coerce.number().min(1, 'Valid till date is required.'),
+});
+
+export const couponIdSchema = z.object({
+  id: z.union([z.string(), z.number()]),
+});
+
+export const couponToggleSchema = z.object({
+  id: z.union([z.string(), z.number()]),
+  active: z.boolean(),
+});
+
+export const notificationSchema = z.object({
+  type: z.enum(['order', 'promo', 'sale', 'system'], { message: 'Invalid notification type.' }),
+  title: z.string().trim().min(1, 'Notification title is required.'),
+  message: z.string().trim().min(1, 'Notification message is required.'),
+  link: z.string().trim().optional(),
+  userId: z.coerce.number().int().positive().optional(),
+});
+
+export const notificationIdSchema = z.object({
+  id: z.union([z.string(), z.number()]),
+});

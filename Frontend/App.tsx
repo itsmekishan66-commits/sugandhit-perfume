@@ -12,6 +12,8 @@ import Cart from "./Pages/Cart";
 import Wishlist from "./Pages/Wishlist";
 import CustomPerfume from "./Pages/CustomPerfume";
 import Dashboard from "./Pages/Dashboard";
+import Notifications from "./Pages/Notifications";
+import Coupons from "./Pages/Coupons";
 import SidebarLayout from "./layouts/SidebarLayout";
 import AuthLayout from "./layouts/AuthLayout";
 import { ToastContainer } from "react-toastify";
@@ -40,6 +42,8 @@ const App = () => {
           <Route path="/product/:productId" element={<Product />} />
           <Route path="/customize" element={<CustomPerfume />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/coupons" element={<Coupons />} />
         </Route>
       </Routes>
     </>

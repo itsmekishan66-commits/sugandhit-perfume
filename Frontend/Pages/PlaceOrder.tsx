@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import CartTotal from "../Components/CartTotal";
 import { assets } from "../assets/assets";
 import { ShopContext } from "../Context/ShopContextObject";
+import { useShopStore, getCartAmount } from "../Context/shopStore";
 import { orderAddressSchema } from "../validate/schemas";
 
 interface AddressForm {
@@ -36,7 +37,10 @@ interface CartProduct {
 
 const PlaceOrder = () => {
   const [method, setMethod] = useState('cod');
-  const { navigate, backendUrl, token, cartItems, setCartItems, getCartAmount, delivery_fee, products } = useContext(ShopContext);
+  const { navigate, backendUrl, token, delivery_fee, products } = useContext(ShopContext);
+  const cartItems = useShopStore((s) => s.cartItems);
+  const setCartItems = useShopStore((s) => s.setCartItems);
+  const subtotal = getCartAmount(cartItems, products);
   const [formData, setFormData] = useState<AddressForm>({
     firstName: '',
     lastName: '',
@@ -64,7 +68,7 @@ const PlaceOrder = () => {
 
   const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (getCartAmount() === 0) {
+    if (subtotal === 0) {
       toast.error('Your cart is empty');
       return;
     }
@@ -91,7 +95,7 @@ const PlaceOrder = () => {
       const orderData = {
         address: formData,
         items: orderItems,
-        amount: getCartAmount() + delivery_fee
+        amount: subtotal + delivery_fee
       }
 
       switch (method) {
@@ -163,7 +167,7 @@ const PlaceOrder = () => {
             </div>
           </div>
           <div className="w-full text-center mt-8">
-            <button type="submit" className="btn-primary w-full">Place Order — {new Intl.NumberFormat().format(getCartAmount() + delivery_fee)}</button>
+            <button type="submit" className="btn-primary w-full">Place Order — {new Intl.NumberFormat().format(subtotal + delivery_fee)}</button>
           </div>
         </div>
       </div>

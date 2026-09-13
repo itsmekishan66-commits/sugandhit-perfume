@@ -7,5 +7,6 @@ export const users = pgTable('users', {
   password: text('password').notNull(),
   phone: text('phone').default(''),
   address: jsonb('address').$type<Record<string, string>>().default({}),
+  image: text('image').default(''),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });

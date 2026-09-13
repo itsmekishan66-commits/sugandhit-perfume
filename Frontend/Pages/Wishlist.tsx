@@ -1,12 +1,16 @@
 import { useContext } from 'react'
 import { ShopContext } from '../Context/ShopContextObject'
+import { useShopStore } from '../Context/shopStore'
 import { Link } from 'react-router-dom'
 import { Heart } from "lucide-react"
 import Title from '../Components/Title'
 import Reveal from '../Components/Reveal'
 
 const Wishlist = () => {
-  const { products, currency, wishlist, toggleWishlist, addToCart, navigate } = useContext(ShopContext);
+  const { products, currency, navigate } = useContext(ShopContext);
+  const wishlist = useShopStore((s) => s.wishlist);
+  const toggleWishlist = useShopStore((s) => s.toggleWishlist);
+  const addToCart = useShopStore((s) => s.addToCart);
 
   const wishlisted = products.filter((item) => wishlist.includes(item._id));
 

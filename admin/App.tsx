@@ -4,6 +4,8 @@ import Add from "./pages/Add";
 import List from "./pages/List";
 import Orders from "./pages/Orders";
 import CustomOrders from "./pages/CustomOrders";
+import Coupons from "./pages/Coupons";
+import Notifications from "./pages/Notifications";
 import Dashboard from "./pages/Dashboard";
 import Login from "./components/Login";
 import SidebarLayout from "./layouts/SidebarLayout";
@@ -34,6 +36,8 @@ const App = () => {
             <Route path="/list" element={<List token={token} />} />
             <Route path="/orders" element={<Orders token={token} />} />
             <Route path="/custom-orders" element={<CustomOrders token={token} />} />
+            <Route path="/coupons" element={<Coupons token={token} />} />
+            <Route path="/notifications" element={<Notifications token={token} />} />
           </Routes>
         </SidebarLayout>
       }

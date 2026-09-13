@@ -1,13 +1,15 @@
 import { useContext, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { ShopContext } from '../Context/ShopContextObject'
+import { useShopStore } from '../Context/shopStore'
 import { Star } from "lucide-react"
 import RelatedProducts from '../Components/RelatedProducts';
 import Reveal from '../Components/Reveal';
 
 const Product = () => {
   const { productId } = useParams();
-  const { products, currency, addToCart } = useContext(ShopContext);
+  const { products, currency } = useContext(ShopContext);
+  const addToCart = useShopStore((s) => s.addToCart);
   const [imageState, setImageState] = useState<{ id: string | null; src: string }>({ id: null, src: '' });
   const [colors, setColors] = useState('100ml');
   const [qty, setQty] = useState(1);

@@ -1,5 +1,6 @@
 import { useContext } from 'react'
 import { ShopContext } from '../Context/ShopContextObject'
+import { useShopStore } from '../Context/shopStore'
 import { Link } from 'react-router-dom'
 import { Star, Heart, ShoppingCart } from 'lucide-react'
 
@@ -31,7 +32,11 @@ interface ProductItemProps {
 }
 
 const ProductItem = ({ id, image, name, price, subCategory, category, rating, reviews, badge, bestseller, popular }: ProductItemProps) => {
-  const { currency, addToCart, toggleWishlist, isInWishlist } = useContext(ShopContext);
+  const { currency } = useContext(ShopContext);
+  const addToCart = useShopStore((s) => s.addToCart);
+  const toggleWishlist = useShopStore((s) => s.toggleWishlist);
+  const wishlist = useShopStore((s) => s.wishlist);
+  const isInWishlist = (itemId: string) => wishlist.includes(itemId);
   const label = badge || (bestseller ? 'Bestseller' : null);
   const score = Number(rating) || 0;
   const isPopular = popular ?? (String(id).charCodeAt(String(id).length - 1) % 3 === 0);

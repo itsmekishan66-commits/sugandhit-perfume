@@ -103,6 +103,45 @@ export const wishlistSchema = z.object({
 export const productIdSchema = z.object({ id: z.union([z.string(), z.number()]) });
 export const productSingleSchema = z.object({ productId: z.union([z.string(), z.number()]) });
 
+const couponCodeSchema = requiredText('Coupon code is required.').trim().toUpperCase().regex(/^[A-Z0-9_-]+$/, 'Code can only contain letters, numbers, dashes and underscores.');
+const couponValueSchema = z.coerce.number().positive('Discount value must be positive.');
+const epochNumber = (message: string) => z.coerce.number().min(1, message);
+
+export const couponSchema = z.object({
+  code: couponCodeSchema,
+  title: requiredText('Coupon title is required.'),
+  description: z.string().trim().optional().default(''),
+  image: z.string().trim().optional().default(''),
+  discountType: z.enum(['percent', 'flat'], { message: 'Invalid discount type.' }),
+  discountValue: couponValueSchema,
+  minPurchase: z.coerce.number().min(0).optional().default(0),
+  maxDiscount: z.coerce.number().min(0).nullable().optional(),
+  validTill: epochNumber('Valid till date is required.'),
+});
+
+export const couponUpdateSchema = couponSchema.extend({
+  id: anyId,
+  code: couponCodeSchema.optional(),
+  title: requiredText('Coupon title is required.').optional(),
+  discountType: z.enum(['percent', 'flat'], { message: 'Invalid discount type.' }).optional(),
+  discountValue: couponValueSchema.optional(),
+  validTill: epochNumber('Valid till date is required.').optional(),
+});
+
+export const couponIdSchema = z.object({ id: anyId });
+export const couponToggleSchema = z.object({ id: anyId, active: z.boolean() });
+
+export const notificationSchema = z.object({
+  userId: z.number().int().positive().nullable().optional(),
+  type: z.enum(['order', 'promo', 'sale', 'system'], { message: 'Invalid notification type.' }),
+  title: requiredText('Notification title is required.'),
+  message: requiredText('Notification message is required.'),
+  link: z.string().trim().optional().default(''),
+});
+
+export const notificationIdSchema = z.object({ id: anyId });
+export const notificationListSchema = z.object({ userId: z.number().int().positive().optional() });
+
 export const productAddSchema = z.object({
   name: requiredText('Perfume name is required.'),
   description: requiredText('Description is required.'),

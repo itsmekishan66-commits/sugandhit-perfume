@@ -57,12 +57,13 @@ export const getUserById = async (userId: number) => {
 
 export const updateUserById = async (
   userId: number,
-  data: { name?: string; phone?: string; address?: Record<string, string> }
+  data: { name?: string; phone?: string; address?: Record<string, string>; image?: string }
 ) => {
   const patch: Partial<typeof users.$inferSelect> = {};
   if (data.name !== undefined) patch.name = data.name;
   if (data.phone !== undefined) patch.phone = data.phone;
   if (data.address !== undefined) patch.address = data.address;
+  if (data.image !== undefined) patch.image = data.image;
 
   if (Object.keys(patch).length === 0) throw new Error('Nothing to update');
 

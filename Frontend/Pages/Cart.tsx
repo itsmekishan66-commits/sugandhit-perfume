@@ -1,12 +1,15 @@
 import { useContext } from 'react'
 import { ShopContext } from '../Context/ShopContextObject'
+import { useShopStore } from '../Context/shopStore'
 import { Trash } from "lucide-react"
 import Title from '../Components/Title';
 import CartTotal from '../Components/CartTotal';
 import Reveal from '../Components/Reveal';
 
 const Cart = () => {
-  const { products, currency, cartItems, updateQuantity, navigate } = useContext(ShopContext);
+  const { products, currency, navigate } = useContext(ShopContext);
+  const cartItems = useShopStore((s) => s.cartItems);
+  const updateQuantity = useShopStore((s) => s.updateQuantity);
 
   const cartData = Object.entries(cartItems);
 

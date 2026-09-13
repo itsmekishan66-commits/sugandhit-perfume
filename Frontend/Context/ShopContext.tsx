@@ -3,11 +3,13 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import {
   ShopContext,
-  type CartItems,
+  type AppNotification,
+  type Coupon,
   type Palette,
   type Product,
   type UserProfile,
 } from "./ShopContextObject";
+import { useShopStore } from "./shopStore";
 
 const ShopContextProvider = ({ children }: { children: React.ReactNode }) => {
   const currency = "Rs.";
@@ -15,26 +17,13 @@ const ShopContextProvider = ({ children }: { children: React.ReactNode }) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const [cartItems, setCartItems] = useState<CartItems>(() => {
-    try {
-      const stored = localStorage.getItem('cartItems');
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  });
   const [products, setProducts] = useState<Product[]>([]);
   const [token, setToken] = useState(() => localStorage.getItem('token') || '');
   const [palette, setPalette] = useState<Palette>({ top: [], heart: [], base: [], bases: [] });
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [wishlist, setWishlist] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem('wishlist');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const navigate = useNavigate();
 
   const fetchApi = useCallback(async (url: string, options: { method?: string; headers?: Record<string, string>; body?: unknown } = {}) => {
@@ -53,145 +42,6 @@ const ShopContextProvider = ({ children }: { children: React.ReactNode }) => {
     const data = await response.json();
     return { response, data, success: response.ok };
   }, []);
-
-  const addToCart = async (itemId: string, colors: string, qty = 1) => {
-    if (!colors) {
-      toast.error("Select Product Details.");
-      return;
-    }
-    const cartData = structuredClone(cartItems);
-    if (cartData[itemId]) {
-      cartData[itemId][colors] = (cartData[itemId][colors] || 0) + qty;
-    } else {
-      cartData[itemId] = {};
-      cartData[itemId][colors] = qty;
-    }
-    setCartItems(cartData);
-    if (token) {
-      try {
-        const { success } = await fetchApi(backendUrl + '/api/cart/add', {
-          method: 'POST',
-          body: { itemId, colors, quantity: qty },
-          headers: { token }
-        });
-        if (!success) {
-          toast.error("Failed to add to cart");
-        } else {
-          toast.success("Added to cart");
-        }
-      } catch (error) {
-        console.log(error)
-        toast.error((error as Error).message)
-      }
-    } else {
-      toast.success("Added to cart");
-    }
-  };
-
-  const getCartCount = () => {
-    let totalCount = 0;
-    for (const items in cartItems) {
-      for (const item in cartItems[items]) {
-        if (cartItems[items][item] > 0) {
-          totalCount += cartItems[items][item];
-        }
-      }
-    }
-    return totalCount;
-  };
-
-  const updateQuantity = async (itemId: string, colors: string, quantity: number) => {
-    const cartData = structuredClone(cartItems);
-    if (cartData[itemId]) {
-      if (quantity <= 0) {
-        toast.info("Item has been removed from cart");
-        delete cartData[itemId][colors];
-        if (Object.keys(cartData[itemId]).length === 0) {
-          delete cartData[itemId];
-        }
-      } else {
-        cartData[itemId][colors] = quantity;
-      }
-    }
-    setCartItems(cartData);
-    if (token) {
-      try {
-        const { success } = await fetchApi(backendUrl + '/api/cart/update', {
-          method: 'POST',
-          body: { itemId, colors, quantity },
-          headers: { token }
-        });
-        if (!success) {
-          toast.error("Failed to update cart");
-        }
-      } catch (error) {
-        console.log(error)
-        toast.error((error as Error).message)
-      }
-    }
-  };
-
-  const getCartAmount = () => {
-    let totalAmount = 0;
-    for (const items in cartItems) {
-      const itemInfo = products.find((product) => product._id === items);
-      for (const item in cartItems[items]) {
-        if (cartItems[items][item] > 0 && itemInfo) {
-          totalAmount += Number(itemInfo.price) * cartItems[items][item];
-        }
-      }
-    }
-    return totalAmount;
-  };
-
-  const isInWishlist = (itemId: string) => wishlist.includes(itemId);
-
-  const toggleWishlist = async (itemId: string) => {
-    const adding = !wishlist.includes(itemId);
-    setWishlist((prev) => (adding ? [...prev, itemId] : prev.filter((id) => id !== itemId)));
-    if (adding) {
-      toast.success("Added to wishlist");
-    } else {
-      toast.info("Removed from wishlist");
-    }
-    if (token) {
-      try {
-        const { success } = await fetchApi(backendUrl + `/api/wishlist/${adding ? 'add' : 'remove'}`, {
-          method: 'POST',
-          body: { productId: itemId },
-          headers: { token }
-        });
-        if (!success) {
-          setWishlist((prev) => (adding ? prev.filter((id) => id !== itemId) : [...prev, itemId]));
-          toast.error("Failed to update wishlist");
-        }
-      } catch (error) {
-        setWishlist((prev) => (adding ? prev.filter((id) => id !== itemId) : [...prev, itemId]));
-        console.log(error);
-        toast.error((error as Error).message);
-      }
-    }
-  };
-
-  const removeFromWishlist = async (itemId: string) => {
-    setWishlist((prev) => prev.filter((id) => id !== itemId));
-    toast.info("Removed from wishlist");
-    if (token) {
-      try {
-        const { success } = await fetchApi(backendUrl + '/api/wishlist/remove', {
-          method: 'POST',
-          body: { productId: itemId },
-          headers: { token }
-        });
-        if (!success) {
-          toast.error("Failed to update wishlist");
-        }
-      } catch (error) {
-        console.log(error);
-        toast.error((error as Error).message);
-      }
-    }
-  };
 
   const getUserProfile = useCallback(async (token: string) => {
     try {
@@ -230,6 +80,30 @@ const ShopContextProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const uploadProfileImage = async (image: File): Promise<boolean> => {
+    try {
+      const formData = new FormData();
+      formData.append('image', image);
+      const response = await fetch(backendUrl + '/api/user/upload-image', {
+        method: 'POST',
+        headers: { token },
+        body: formData,
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setUserProfile((prev) => (prev ? { ...prev, image: data.user.image } : prev));
+        return true;
+      } else {
+        toast.error(data.message);
+        return false;
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error((error as Error).message);
+      return false;
+    }
+  };
+
   useEffect(() => {
     const loadProducts = async () => {
       try {
@@ -260,76 +134,92 @@ const ShopContextProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (!token) return;
-    const loadCart = async () => {
-      try {
-        const { data, success } = await fetchApi(backendUrl + '/api/cart/get', {
-          method: 'POST',
-          body: {},
-          headers: { token }
-        });
-        if (success && data.success) {
-          setCartItems(data.cartData);
-        }
-      } catch (error) {
-        console.log(error);
-        toast.error((error as Error).message);
+    useShopStore.getState().hydrateFromServer(token);
+    fetchApi(backendUrl + '/api/user/profile', {
+      method: 'POST',
+      body: {},
+      headers: { token }
+    }).then(({ data, success }) => {
+      if (success && data.success) {
+        setUserProfile(data.user);
       }
-    };
-    const loadWishlist = async () => {
-      try {
-        const { data, success } = await fetchApi(backendUrl + '/api/wishlist/get', {
-          method: 'POST',
-          body: {},
-          headers: { token }
-        });
-        if (success && data.success) {
-          setWishlist(data.wishlist || []);
-        }
-      } catch (error) {
-        console.log(error);
-        toast.error((error as Error).message);
+    }).catch((error) => {
+      console.log(error);
+      toast.error((error as Error).message);
+    });
+  }, [token, backendUrl, fetchApi]);
+
+  const loadCoupons = useCallback(async () => {
+    try {
+      const { data, success } = await fetchApi(backendUrl + '/api/coupon/list');
+      if (success && data.success) {
+        setCoupons(data.coupons || []);
       }
-    };
-    const loadProfile = async () => {
-      try {
-        const { data, success } = await fetchApi(backendUrl + '/api/user/profile', {
-          method: 'POST',
-          body: {},
-          headers: { token }
-        });
-        if (success && data.success) {
-          setUserProfile(data.user);
-        }
-      } catch (error) {
-        console.log(error);
-        toast.error((error as Error).message);
+    } catch (error) {
+      console.log(error);
+    }
+  }, [backendUrl, fetchApi]);
+
+  const loadNotifications = useCallback(async () => {
+    if (!token) return;
+    try {
+      const { data, success } = await fetchApi(backendUrl + '/api/notification/list', {
+        method: 'POST',
+        body: {},
+        headers: { token }
+      });
+      if (success && data.success) {
+        setNotifications(data.notifications || []);
+        setUnreadNotifications(data.unread || 0);
       }
-    };
-    loadCart();
-    loadWishlist();
-    loadProfile();
+    } catch (error) {
+      console.log(error);
+    }
   }, [token, backendUrl, fetchApi]);
 
   useEffect(() => {
-    if (!token) {
-      localStorage.setItem('cartItems', JSON.stringify(cartItems));
-    }
-  }, [cartItems, token]);
+    if (!token) return;
+    const run = async () => {
+      await loadNotifications();
+    };
+    run();
+  }, [token, loadNotifications]);
 
   useEffect(() => {
-    if (!token) {
-      localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    const run = async () => {
+      await loadCoupons();
+    };
+    run();
+  }, [loadCoupons]);
+
+  const refreshNotifications = useCallback(async () => {
+    await loadNotifications();
+  }, [loadNotifications]);
+
+  const markNotificationsRead = useCallback(async (id?: string) => {
+    if (!token) return;
+    try {
+      const { data, success } = await fetchApi(backendUrl + '/api/notification/mark-read', {
+        method: 'POST',
+        body: id ? { notificationId: Number(id) } : {},
+        headers: { token }
+      });
+      if (success && data.success) {
+        setUnreadNotifications(0);
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      }
+    } catch (error) {
+      console.log(error);
     }
-  }, [wishlist, token]);
+  }, [token, backendUrl, fetchApi]);
 
   const logout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('cartItems');
-    localStorage.removeItem('wishlist');
+    useShopStore.getState().clearAll();
     setToken('');
-    setCartItems({});
-    setWishlist([]);
     setUserProfile(null);
+    setNotifications([]);
+    setUnreadNotifications(0);
     navigate('/');
   };
 
@@ -341,12 +231,6 @@ const ShopContextProvider = ({ children }: { children: React.ReactNode }) => {
     setSearch,
     showSearch,
     setShowSearch,
-    cartItems,
-    addToCart,
-    setCartItems,
-    getCartCount,
-    updateQuantity,
-    getCartAmount,
     navigate,
     backendUrl,
     token,
@@ -355,11 +239,13 @@ const ShopContextProvider = ({ children }: { children: React.ReactNode }) => {
     userProfile,
     getUserProfile,
     updateUserProfile,
+    uploadProfileImage,
     logout,
-    wishlist,
-    toggleWishlist,
-    removeFromWishlist,
-    isInWishlist,
+    coupons,
+    notifications,
+    unreadNotifications,
+    refreshNotifications,
+    markNotificationsRead,
   };
 
   return (

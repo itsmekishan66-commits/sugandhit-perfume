@@ -6,3 +6,6 @@ export { orders } from './orders.js';
 export { customorders } from './customorders.js';
 export { notes } from './notes.js';
 export { perfumebases } from './perfumebases.js';
+export { coupons } from './coupons.js';
+export { notifications } from './notifications.js';
+export { notificationreads } from './notificationreads.js';

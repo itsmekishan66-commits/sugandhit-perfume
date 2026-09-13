@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { users, products, orders, customorders } from '../models/schema/index.js';
+import { users, products, orders, customorders, coupons, notifications } from '../models/schema/index.js';
 
 export const createToken = (id: number) => {
   return jwt.sign({ id }, process.env.JWT_SECRET as string);
@@ -25,6 +25,7 @@ export const serializeUser = (u: typeof users.$inferSelect) => ({
   email: u.email,
   phone: u.phone || '',
   address: u.address || {},
+  image: u.image || '',
   createdAt: u.createdAt,
 });
 
@@ -46,4 +47,19 @@ export const serializeCustomOrder = (o: typeof customorders.$inferSelect) => ({
   ...o,
   _id: String(o.id),
   amount: typeof o.amount === 'string' ? parseFloat(o.amount) : o.amount,
+});
+
+export const serializeCoupon = (c: typeof coupons.$inferSelect) => ({
+  ...c,
+  _id: String(c.id),
+  discountValue: typeof c.discountValue === 'string' ? parseFloat(c.discountValue) : c.discountValue,
+  minPurchase: typeof c.minPurchase === 'string' ? parseFloat(c.minPurchase) : c.minPurchase,
+  maxDiscount: c.maxDiscount !== null && c.maxDiscount !== undefined
+    ? (typeof c.maxDiscount === 'string' ? parseFloat(c.maxDiscount) : c.maxDiscount)
+    : null,
+});
+
+export const serializeNotification = (n: typeof notifications.$inferSelect) => ({
+  ...n,
+  _id: String(n.id),
 });

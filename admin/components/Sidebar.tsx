@@ -29,6 +29,16 @@ const Sidebar = () => {
           <p className='hidden md:block'>Custom Orders</p>
         </NavLink>
 
+        <NavLink className='flex items-center gap-3 border border-gray-200 px-4 py-3 rounded-xl text-gray-600 hover:bg-orange-50/60 hover:text-[#7c2d12] transition-colors side-link' to="/coupons" >
+          <p className='text-xl'>🎟️</p>
+          <p className='hidden md:block'>Coupons</p>
+        </NavLink>
+
+        <NavLink className='flex items-center gap-3 border border-gray-200 px-4 py-3 rounded-xl text-gray-600 hover:bg-orange-50/60 hover:text-[#7c2d12] transition-colors side-link' to="/notifications" >
+          <p className='text-xl'>🔔</p>
+          <p className='hidden md:block'>Notifications</p>
+        </NavLink>
+
       </div>
     </div>
   )

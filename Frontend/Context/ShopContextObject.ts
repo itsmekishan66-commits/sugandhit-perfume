@@ -49,10 +49,37 @@ export interface UserProfile {
   email: string;
   phone: string;
   address: Record<string, string>;
+  image?: string;
   createdAt?: string;
 }
 
 export type CartItems = Record<string, Record<string, number>>;
+
+export interface Coupon {
+  _id: string;
+  code: string;
+  title: string;
+  description: string;
+  image: string;
+  discountType: 'percent' | 'flat';
+  discountValue: number;
+  minPurchase: number;
+  maxDiscount: number | null;
+  validTill: number;
+  validFrom: number;
+  active: boolean;
+}
+
+export interface AppNotification {
+  _id: string;
+  userId?: number | null;
+  type: 'order' | 'promo' | 'sale' | 'system';
+  title: string;
+  message: string;
+  link?: string;
+  read: boolean;
+  createdAt: number;
+}
 
 export interface ShopContextType {
   products: Product[];
@@ -62,12 +89,6 @@ export interface ShopContextType {
   setSearch: (s: string) => void;
   showSearch: boolean;
   setShowSearch: (b: boolean) => void;
-  cartItems: CartItems;
-  setCartItems: React.Dispatch<React.SetStateAction<CartItems>>;
-  addToCart: (itemId: string, colors: string, qty?: number) => void;
-  getCartCount: () => number;
-  updateQuantity: (itemId: string, colors: string, quantity: number) => void;
-  getCartAmount: () => number;
   navigate: (to: string) => void;
   backendUrl: string;
   token: string;
@@ -76,11 +97,13 @@ export interface ShopContextType {
   userProfile: UserProfile | null;
   getUserProfile: (token: string) => void;
   updateUserProfile: (data: { name: string; phone: string; address: Record<string, string> }) => Promise<boolean>;
+  uploadProfileImage: (image: File) => Promise<boolean>;
   logout: () => void;
-  wishlist: string[];
-  toggleWishlist: (itemId: string) => void;
-  removeFromWishlist: (itemId: string) => void;
-  isInWishlist: (itemId: string) => boolean;
+  coupons: Coupon[];
+  notifications: AppNotification[];
+  unreadNotifications: number;
+  refreshNotifications: () => Promise<void>;
+  markNotificationsRead: (id?: string) => Promise<void>;
 }
 
 export const ShopContext = createContext<ShopContextType>(null as unknown as ShopContextType);

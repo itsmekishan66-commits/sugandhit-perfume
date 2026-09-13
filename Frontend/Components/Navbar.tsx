@@ -3,11 +3,18 @@ import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Search, User, ShoppingCart, Home, LayoutGrid, Sparkles, Heart, type LucideIcon } from "lucide-react";
 import { ShopContext } from "../Context/ShopContextObject";
+import { useShopStore, getCartCount, getWishlistCount } from "../Context/shopStore";
+import { LogOut, LayoutDashboardIcon } from "lucide-react";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
 
-  const { setShowSearch, getCartCount, token, logout, navigate, wishlist } = useContext(ShopContext);
+  const { products, setShowSearch, token, logout, navigate } = useContext(ShopContext);
+  const cartItems = useShopStore((s) => s.cartItems);
+  const wishlist = useShopStore((s) => s.wishlist);
+
+  const cartCount = getCartCount(cartItems, products);
+  const wishlistCount = getWishlistCount(wishlist, products);
 
   const location = useLocation();
 
@@ -85,7 +92,7 @@ const Navbar = () => {
               to="/"
               className="flex min-w-0 items-center gap-2"
             >
-              <span className="h-8 w-8 shrink-0 rounded-full bg-linear-to-br from-gold to-espresso shadow-lg shadow-gold/30 sm:h-9 sm:w-9" />
+              <span className="flex justify-center items-center font-extrabold h-8 w-8 shrink-0 rounded-full bg-linear-to-br from-gold to-espresso shadow-lg shadow-gold/30 sm:h-9 sm:w-9">S</span>
 
               <span className="font-display text-xl font-semibold tracking-tight sm:text-2xl">
                 Sugandhit<span className="gold-text">.</span>
@@ -173,10 +180,10 @@ const Navbar = () => {
                         }}
                         className="block w-full px-5 py-3 text-left text-sm text-ink transition-colors hover:bg-sand"
                       >
-                        My Dashboard
+                        My Dashboard <LayoutDashboardIcon className="inline-block h-4 w-4" />
                       </button>
 
-                      <button
+                      {/* <button
                         onClick={() => {
                           setOpen(false);
                           navigate("/customize");
@@ -184,9 +191,9 @@ const Navbar = () => {
                         className="block w-full px-5 py-3 text-left text-sm text-ink transition-colors hover:bg-sand"
                       >
                         Build My Perfume
-                      </button>
+                      </button> */}
 
-                      <button
+                      {/* <button
                         onClick={() => {
                           setOpen(false);
                           navigate("/orders");
@@ -194,7 +201,7 @@ const Navbar = () => {
                         className="block w-full px-5 py-3 text-left text-sm text-ink transition-colors hover:bg-sand"
                       >
                         My Orders
-                      </button>
+                      </button> */}
 
                       <div className="my-1 border-t border-gold/15" />
 
@@ -205,7 +212,7 @@ const Navbar = () => {
                         }}
                         className="block w-full px-5 py-3 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
                       >
-                        Log Out
+                        Log Out <LogOut className="inline-block h-4 w-4 stroke-red-600" />
                       </button>
                     </div>
                   </>
@@ -223,9 +230,9 @@ const Navbar = () => {
                   strokeWidth={2}
                 />
 
-                {wishlist.length > 0 && (
+                {wishlistCount > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-white">
-                    {wishlist.length}
+                    {wishlistCount}
                   </span>
                 )}
               </Link>
@@ -242,7 +249,7 @@ const Navbar = () => {
                 />
 
                 <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-white">
-                  {getCartCount()}
+                  {cartCount}
                 </span>
               </Link>
             </div>
