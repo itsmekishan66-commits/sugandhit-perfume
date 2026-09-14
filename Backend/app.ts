@@ -12,6 +12,8 @@ import noteRouter from './routes/note.routes.js';
 import customOrderRouter from './routes/customOrder.routes.js';
 import couponRouter from './routes/coupon.routes.js';
 import notificationRouter from './routes/notification.routes.js';
+import paymentRouter from './routes/payment.routes.js';
+import accountsRouter from './routes/accounts.routes.js';
 import { notFound, errorHandler } from './middleware/error.middleware.js';
 
 const app = express();
@@ -32,6 +34,8 @@ app.use('/api/note', noteRouter);
 app.use('/api/custom-order', customOrderRouter);
 app.use('/api/coupon', couponRouter);
 app.use('/api/notification', notificationRouter);
+app.use('/api/payment', paymentRouter);
+app.use('/api/accounts', accountsRouter);
 
 app.get('/', (_req, res) => {
   res.send('API working');

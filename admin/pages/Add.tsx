@@ -4,16 +4,34 @@ import { assets } from '../assets/assets';
 import { backendUrl } from '../config'
 import { toast } from 'react-toastify';
 import { productAddSchema } from '../validate/schemas';
+import PageHeader from '../components/PageHeader';
 
 interface AddProps {
   token: string;
 }
 
+interface VariantDraft {
+  name: string;
+  price: string;
+  description: string;
+  image: File | false;
+}
+
 const Add = ({ token }: AddProps) => {
-  const [image1, setImage1] = useState<File | false>(false)
-  const [image2, setImage2] = useState<File | false>(false)
-  const [image3, setImage3] = useState<File | false>(false)
-  const [image4, setImage4] = useState<File | false>(false)
+  const [mainImage, setMainImage] = useState<File | false>(false);
+  const [variants, setVariants] = useState<VariantDraft[]>([]);
+
+  const addVariant = () => {
+    setVariants((prev) =>
+      prev.length >= 8 ? prev : [...prev, { name: '', price: '', description: '', image: false }]
+    );
+  };
+  const updateVariant = (index: number, patch: Partial<VariantDraft>) => {
+    setVariants((prev) => prev.map((v, i) => (i === index ? { ...v, ...patch } : v)));
+  };
+  const removeVariant = (index: number) => {
+    setVariants((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -31,6 +49,11 @@ const Add = ({ token }: AddProps) => {
       return;
     }
 
+    if (!mainImage) {
+      toast.error('Please upload a main image.');
+      return;
+    }
+
     try {
       const formData = new FormData()
 
@@ -40,12 +63,17 @@ const Add = ({ token }: AddProps) => {
       formData.append("category", parsed.data.category)
       formData.append("subCategory", parsed.data.subCategory)
       formData.append("bestseller", String(parsed.data.bestseller))
-      formData.append("colors", JSON.stringify([]))
 
-      if (image1) formData.append("image1", image1)
-      if (image2) formData.append("image2", image2)
-      if (image3) formData.append("image3", image3)
-      if (image4) formData.append("image4", image4)
+      formData.append("mainImage", mainImage)
+      const variantsMeta = variants.map((v) => ({
+        name: v.name,
+        price: v.price,
+        description: v.description,
+      }));
+      formData.append("variants", JSON.stringify(variantsMeta))
+      variants.forEach((v) => {
+        if (v.image) formData.append("variantImages", v.image)
+      })
 
       const response = await fetch(backendUrl + "/api/product/add", {
         method: 'POST',
@@ -58,10 +86,8 @@ const Add = ({ token }: AddProps) => {
         toast.success(data.message)
         setName('')
         setDescription('')
-        setImage1(false)
-        setImage2(false)
-        setImage3(false)
-        setImage4(false)
+        setMainImage(false)
+        setVariants([])
         setPrice('')
       } else {
         toast.error(data.message)
@@ -75,106 +101,197 @@ const Add = ({ token }: AddProps) => {
   }
 
   return (
-    <form onSubmit={onSubmitHandler} className='flex flex-col w-full items-start gap-3 bg-white rounded-2xl p-8 border border-orange-100 shadow-sm'>
-      <h2 className='text-xl font-semibold text-[#7c2d12] mb-2'>Add New Perfume</h2>
+    <>
+      <PageHeader title="Add New Perfume" subtitle="Create a new fragrance for your boutique" />
+      <form onSubmit={onSubmitHandler} className='grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start w-full bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur'>
 
-      {/* Image Upload */}
-      <div>
-        <p className='mb-2 text-sm text-gray-500'>Upload Image</p>
-        <div className='flex gap-2'>
-          <label htmlFor="image1" className='block'>
-            <img className='w-20 rounded-xl' src={!image1 ? assets.upload_area : URL.createObjectURL(image1)} alt="Upload" style={{ cursor: 'pointer' }} />
+      {/* LEFT — Images */}
+      <div className='flex flex-col gap-6 lg:sticky lg:top-24'>
+        <div className='rounded-2xl border border-gold/15 p-5'>
+          <p className='mb-1 text-sm text-ink-soft'>Main Image <span className='text-espresso'>*</span></p>
+          <p className='mb-3 text-xs text-ink-soft/70'>The main photo — shown as the product thumbnail across the store.</p>
+          <label htmlFor="mainImage" className='relative inline-block'>
+            <img
+              className={`w-28 h-28 rounded-xl border ${mainImage ? 'border-gold/40' : 'border-dashed border-gold/30'} object-cover bg-cream`}
+              src={!mainImage ? assets.upload_area : URL.createObjectURL(mainImage)}
+              alt="Main image"
+              style={{ cursor: 'pointer' }}
+            />
+            {mainImage && (
+              <span className='absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-gold text-[10px] font-bold text-cream shadow-md'>✓</span>
+            )}
           </label>
-          <input onChange={(e) => setImage1(e.target.files?.[0] || false)} type="file" id="image1" hidden />
-
-          <label htmlFor="image2" className='block'>
-            <img className='w-20 rounded-xl' src={!image2 ? assets.upload_area : URL.createObjectURL(image2)} alt="Upload" style={{ cursor: 'pointer' }} />
-          </label>
-          <input onChange={(e) => setImage2(e.target.files?.[0] || false)} type="file" id="image2" hidden />
-
-          <label htmlFor="image3" className='block'>
-            <img className='w-20 rounded-xl' src={!image3 ? assets.upload_area : URL.createObjectURL(image3)} alt="Upload" style={{ cursor: 'pointer' }} />
-          </label>
-          <input onChange={(e) => setImage3(e.target.files?.[0] || false)} type="file" id="image3" hidden />
-
-          <label htmlFor="image4" className='block'>
-            <img className='w-20 rounded-xl' src={!image4 ? assets.upload_area : URL.createObjectURL(image4)} alt="Upload" style={{ cursor: 'pointer' }} />
-          </label>
-          <input onChange={(e) => setImage4(e.target.files?.[0] || false)} type="file" id="image4" hidden />
-        </div>
-      </div>
-
-      {/* Product Name */}
-      <div className='w-full'>
-        <p className='mb-2 text-sm text-gray-500'>Perfume name</p>
-        <input
-          onChange={(e) => setName(e.target.value)}
-          value={name}
-          className='w-full max-w-[500px] px-3 py-2'
-          type="text"
-          placeholder='e.g. Golden Oud'
-          required
-        />
-      </div>
-
-      {/* Product Description */}
-      <div className='w-full'>
-        <p className='mb-2 text-sm text-gray-500'>Perfume description</p>
-        <textarea
-          onChange={(e) => setDescription(e.target.value)}
-          value={description}
-          className='w-full max-w-[500px] px-3 py-2'
-          placeholder='Write content here'
-          required
-        />
-      </div>
-
-      {/* Product Category and Subcategory */}
-      <div className='flex flex-col sm:flex-row gap-2 w-full sm:gap-8'>
-        <div>
-          <p className='mb-2 text-sm text-gray-500'>Audience</p>
-          <select onChange={(e) => SetCategory(e.target.value)} className='w-full px-3 py-2'>
-            <option value="Men">Men</option>
-            <option value="Women">Women</option>
-            <option value="Unisex">Unisex</option>
-          </select>
+          <input onChange={(e) => setMainImage(e.target.files?.[0] || false)} type="file" id="mainImage" hidden accept="image/*" />
         </div>
 
-        <div>
-          <p className='mb-2 text-sm text-gray-500'>Fragrance family</p>
-          <select onChange={(e) => setSubCategory(e.target.value)} className='w-full px-3 py-2'>
-            <option value="Eau de Parfum">Eau de Parfum</option>
-            <option value="Eau de Toilette">Eau de Toilette</option>
-            <option value="Attar / Oil">Attar / Oil</option>
-            <option value="Bodyspray">Body Spray</option>
-            <option value="Rollerball">Rollerball</option>
-            <option value="Unisex">Unisex</option>
-          </select>
-        </div>
+      {/* Variants (hidden until toggled) */}
+      {!variants.length && (
+        <button
+          type='button'
+          onClick={addVariant}
+          className='cursor-pointer rounded-full border border-dashed border-gold/50 px-4 py-2 text-sm font-medium text-espresso transition-colors hover:bg-sand/60 hover:border-gold self-start'
+        >
+          + Add Variants <span className='text-xs text-ink-soft/60 font-sans'>(optional)</span>
+        </button>
+      )}
 
-        <div>
-          <p className='mb-2 text-sm text-gray-500'>Price (Rs.)</p>
-          <input
-            onChange={(e) => setPrice(e.target.value)}
-            value={price}
-            className='w-full px-3 py-2 sm:w-[120px]'
-            type="number"
-            placeholder='2999'
-          />
+      {variants.length > 0 && (
+        <div className='w-full'>
+          <div className='mb-1 flex flex-wrap items-center gap-3'>
+            <p className='text-sm text-ink-soft'>Product Variants <span className='text-xs text-ink-soft/60 font-sans'>(optional)</span></p>
+            <button
+              type='button'
+              onClick={addVariant}
+              disabled={variants.length >= 8}
+              className='cursor-pointer rounded-full border border-dashed border-gold/50 px-3 py-1 text-xs font-medium text-espresso transition-colors hover:bg-sand/60 hover:border-gold disabled:opacity-40 disabled:cursor-not-allowed'
+            >
+              + Add Another Variant
+            </button>
+          </div>
+          <p className='mb-3 text-xs text-ink-soft/70'>
+            Each variant can have its own name, price and description — e.g. bottle size, intensity or bundle.
+          </p>
+
+          <div className='flex flex-col gap-4'>
+            {variants.map((variant, index) => (
+              <div key={index} className='rounded-2xl border border-gold/20 bg-cream/60 p-4'>
+                <div className='mb-3 flex items-center justify-between'>
+                  <p className='font-display text-lg font-semibold text-ink'>Variant {index + 1}</p>
+                  <span
+                    onClick={() => removeVariant(index)}
+                    title="Remove variant"
+                    className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-espresso text-xs font-bold text-cream shadow-md transition-transform hover:scale-110'
+                  >
+                    ✕
+                  </span>
+                </div>
+
+                <div className='flex flex-wrap items-start gap-4'>
+                  <label htmlFor={`variant-image-${index}`} className='block shrink-0'>
+                    <img
+                      className={`w-20 h-20 rounded-xl border object-cover bg-cream ${variant.image ? 'border-gold/40' : 'border-dashed border-gold/30'}`}
+                      src={!variant.image ? assets.upload_area : URL.createObjectURL(variant.image)}
+                      alt={`Variant ${index + 1} image`}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </label>
+                  <input onChange={(e) => updateVariant(index, { image: e.target.files?.[0] || false })} type="file" id={`variant-image-${index}`} hidden accept="image/*" />
+
+                  <div className='grid w-full flex-1 grid-cols-1 gap-3 sm:grid-cols-2'>
+                    <div>
+                      <p className='mb-1 text-xs text-ink-soft'>Variant name</p>
+                      <input
+                        onChange={(e) => updateVariant(index, { name: e.target.value })}
+                        value={variant.name}
+                        className='w-full px-3 py-2'
+                        type="text"
+                        placeholder='e.g. 100ml, Gift Set, Eau de Parfum'
+                      />
+                    </div>
+                    <div>
+                      <p className='mb-1 text-xs text-ink-soft'>Variant price (Rs.)</p>
+                      <input
+                        onChange={(e) => updateVariant(index, { price: e.target.value })}
+                        value={variant.price}
+                        className='w-full px-3 py-2'
+                        type="number"
+                        placeholder='e.g. 3999'
+                      />
+                    </div>
+                    <div className='sm:col-span-2'>
+                      <p className='mb-1 text-xs text-ink-soft'>Variant description</p>
+                      <textarea
+                        onChange={(e) => updateVariant(index, { description: e.target.value })}
+                        value={variant.description}
+                        className='w-full px-3 py-2'
+                        placeholder='Optional — differences: size, intensity, notes…'
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
+      )}
       </div>
 
-      <div className='flex gap-2 mt-2'>
-        <input onChange={() => setBestseller(prev => !prev)} checked={bestseller} type="checkbox" id='bestseller' />
-        <label className='cursor-pointer text-sm text-gray-600' htmlFor="bestseller">Add to Bestseller</label>
-      </div>
+      {/* RIGHT — Details */}
+      <div className='flex flex-col gap-4'>
+        <div className='rounded-2xl border border-gold/15 p-5 flex flex-col gap-4'>
+          <div className='w-full'>
+            <p className='mb-2 text-sm text-ink-soft'>Perfume name</p>
+            <input
+              onChange={(e) => setName(e.target.value)}
+              value={name}
+              className='w-full px-3 py-2'
+              type="text"
+              placeholder='e.g. Golden Oud'
+              required
+            />
+          </div>
 
-      <button
-        type='submit'
-        className='w-32 py-3 mt-4 bg-gradient-to-r from-[#7c2d12] to-[#C586A5] text-white rounded-xl font-medium hover:opacity-90 transition-opacity'>
-        ADD
-      </button>
+          <div className='w-full'>
+            <p className='mb-2 text-sm text-ink-soft'>Perfume description</p>
+            <textarea
+              onChange={(e) => setDescription(e.target.value)}
+              value={description}
+              className='w-full px-3 py-2'
+              placeholder='Write content here'
+              required
+            />
+          </div>
+
+          {/* Product Category and Subcategory */}
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 w-full'>
+            <div>
+              <p className='mb-2 text-sm text-ink-soft'>Audience</p>
+              <select onChange={(e) => SetCategory(e.target.value)} value={category} className='w-full px-3 py-2'>
+                <option value="Men">Men</option>
+                <option value="Women">Women</option>
+                <option value="Unisex">Unisex</option>
+              </select>
+            </div>
+
+            <div>
+              <p className='mb-2 text-sm text-ink-soft'>Fragrance family</p>
+              <select onChange={(e) => setSubCategory(e.target.value)} value={subCategory} className='w-full px-3 py-2'>
+                <option value="Eau de Parfum">Eau de Parfum</option>
+                <option value="Eau de Toilette">Eau de Toilette</option>
+                <option value="Attar / Oil">Attar / Oil</option>
+                <option value="Bodyspray">Body Spray</option>
+                <option value="Rollerball">Rollerball</option>
+                <option value="Unisex">Unisex</option>
+              </select>
+            </div>
+
+            <div>
+              <p className='mb-2 text-sm text-ink-soft'>Price (Rs.)</p>
+              <input
+                onChange={(e) => setPrice(e.target.value)}
+                value={price}
+                className='w-full px-3 py-2'
+                type="number"
+                placeholder='2999'
+              />
+            </div>
+          </div>
+
+          <div className='flex gap-2 mt-1'>
+            <input onChange={() => setBestseller(prev => !prev)} checked={bestseller} type="checkbox" id='bestseller' />
+            <label className='cursor-pointer text-sm text-ink-soft' htmlFor="bestseller">Add to Bestseller</label>
+          </div>
+
+          <button
+            type='submit'
+            className='btn-primary w-32 py-3 mt-2'>
+            ADD
+          </button>
+        </div>
+      </div>
     </form>
+    </>
   );
 };
 

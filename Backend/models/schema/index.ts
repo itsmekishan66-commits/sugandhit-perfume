@@ -1,4 +1,5 @@
 export { users } from './users.js';
+export { admins } from './admins.js';
 export { products } from './products.js';
 export { cartitems } from './cartitems.js';
 export { wishlistitems } from './wishlistitems.js';

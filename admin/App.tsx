@@ -6,6 +6,9 @@ import Orders from "./pages/Orders";
 import CustomOrders from "./pages/CustomOrders";
 import Coupons from "./pages/Coupons";
 import Notifications from "./pages/Notifications";
+import Payment from "./pages/Payment";
+import Accounts from "./pages/Accounts";
+import Settings from "./pages/Settings";
 import Dashboard from "./pages/Dashboard";
 import Login from "./components/Login";
 import SidebarLayout from "./layouts/SidebarLayout";
@@ -21,8 +24,7 @@ const App = () => {
   }, [token])
 
   return (
-    <div className="min-h-screen bg-[#faf8f6]">
-      <ToastContainer />
+    <div className="min-h-screen bg-cream text-ink">       <ToastContainer />
       {token === ""
         ?
         <AuthLayout>
@@ -38,6 +40,9 @@ const App = () => {
             <Route path="/custom-orders" element={<CustomOrders token={token} />} />
             <Route path="/coupons" element={<Coupons token={token} />} />
             <Route path="/notifications" element={<Notifications token={token} />} />
+            <Route path="/payment" element={<Payment token={token} />} />
+            <Route path="/accounts" element={<Accounts />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </SidebarLayout>
       }

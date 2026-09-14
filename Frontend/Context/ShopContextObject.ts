@@ -1,5 +1,12 @@
 import { createContext } from 'react';
 
+export interface ProductVariant {
+  name: string;
+  price: string;
+  description: string;
+  image: string;
+}
+
 export interface Product {
   _id: string;
   id: number;
@@ -11,6 +18,7 @@ export interface Product {
   subCategory: string;
   bestseller: boolean;
   colors: string[];
+  variants?: ProductVariant[];
   image: string[];
   date: number;
   reviews: number;

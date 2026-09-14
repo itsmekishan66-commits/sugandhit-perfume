@@ -33,7 +33,10 @@ const Cart = () => {
             {cartData.map(([itemId, detail]) => {
               const productData = products.find((product) => product._id === itemId);
               if (!productData) return null;
-              return Object.entries(detail).map(([size, quantity]) => (
+              return Object.entries(detail).map(([size, quantity]) => {
+                const variant = (productData.variants || []).find((v) => v.name === size);
+                const linePrice = variant ? Number(variant.price) || Number(productData.price) : Number(productData.price);
+                return (
                 <Reveal key={itemId + size}>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl border border-gold/15 bg-white/70 p-4 card-lux">
                     <div className="w-20 h-24 rounded-xl overflow-hidden bg-linear-to-br from-blush to-sand flex items-center justify-center shrink-0">
@@ -51,7 +54,7 @@ const Cart = () => {
                         <span className="w-1 h-1 rounded-full bg-gold" />
                         <span>{size}</span>
                       </div>
-                      <p className="font-display text-lg gold-text font-semibold mt-1">{currency} {Number(productData.price)}</p>
+                      <p className="font-display text-lg gold-text font-semibold mt-1">{currency} {linePrice}</p>
                     </div>
 
                     <div className="flex items-center gap-3 sm:ml-auto">
@@ -67,7 +70,8 @@ const Cart = () => {
                     </div>
                   </div>
                 </Reveal>
-              ));
+                );
+              });
             })}
           </div>
 

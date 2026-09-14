@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { backendUrl } from '../config';
 import { toast } from 'react-toastify';
 import { notificationSchema, notificationIdSchema } from '../validate/schemas';
+import PageHeader from '../components/PageHeader';
 
 interface Notification {
   _id: string;
@@ -159,12 +160,13 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
 
   return (
     <div className="flex flex-col gap-6">
+      <PageHeader title="Notifications" subtitle="Send and manage customer notifications" />
       {/* Send notification */}
-      <form onSubmit={onSubmitHandler} className="bg-white rounded-2xl p-8 border border-orange-100 shadow-sm">
-        <h2 className="text-xl font-semibold text-[#7c2d12] mb-4">Send Notification</h2>
+      <form onSubmit={onSubmitHandler} className="bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur">
+        <h2 className="font-display text-2xl font-semibold text-ink mb-4">Send Notification</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <p className="mb-2 text-sm text-gray-500">Type</p>
+            <p className="mb-2 text-sm text-ink-soft">Type</p>
             <select onChange={(e) => setType(e.target.value as typeof type)} value={type} className={inputClass}>
               <option value="order">Order</option>
               <option value="promo">Promotion</option>
@@ -174,7 +176,7 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-gray-500">Audience</p>
+            <p className="mb-2 text-sm text-ink-soft">Audience</p>
             <select onChange={(e) => setAudience(e.target.value as 'all' | 'user')} value={audience} className={inputClass}>
               <option value="all">All customers</option>
               <option value="user">Specific user</option>
@@ -183,48 +185,48 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
 
           {audience === 'user' && (
             <div>
-              <p className="mb-2 text-sm text-gray-500">User ID</p>
+              <p className="mb-2 text-sm text-ink-soft">User ID</p>
               <input onChange={(e: ChangeEvent<HTMLInputElement>) => setUserId(e.target.value)} value={userId} className={inputClass} type="number" placeholder="User id" required />
             </div>
           )}
 
           <div>
-            <p className="mb-2 text-sm text-gray-500">Title</p>
+            <p className="mb-2 text-sm text-ink-soft">Title</p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} value={title} className={inputClass} type="text" placeholder="Your order is confirmed" required />
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-gray-500">Message</p>
+            <p className="mb-2 text-sm text-ink-soft">Message</p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setMessage(e.target.value)} value={message} className={inputClass} type="text" placeholder="We've received your order and started blending." required />
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-gray-500">Link (optional)</p>
+            <p className="mb-2 text-sm text-ink-soft">Link (optional)</p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setLink(e.target.value)} value={link} className={inputClass} type="text" placeholder="/orders or /collection" />
           </div>
         </div>
-        <button type="submit" disabled={sending} className="w-32 py-3 mt-6 bg-linear-to-r from-[#7c2d12] to-[#C586A5] text-white rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
+        <button type="submit" disabled={sending} className="btn-primary w-32 py-3 mt-6 disabled:opacity-50">
           {sending ? 'Sending…' : 'SEND'}
         </button>
       </form>
 
       {/* Notifications list */}
-      <div className="bg-white rounded-2xl p-8 border border-orange-100 shadow-sm">
-        <p className="mb-4 text-xl font-semibold text-[#7c2d12]">Sent Notifications ({list.length})</p>
+      <div className="bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur">
+        <p className="mb-4 font-display text-2xl font-semibold text-ink">Sent Notifications <span className="text-ink-soft text-base font-sans">({list.length})</span></p>
         <div className="flex flex-col gap-2">
-          {list.length === 0 && <p className="text-center text-gray-400 py-8">No notifications sent yet.</p>}
+          {list.length === 0 && <p className="text-center text-ink-soft/60 py-8">No notifications sent yet.</p>}
           {list.map((n) => (
-            <div key={n._id} className="flex items-start gap-3 py-2.5 px-3 border text-sm hover:bg-orange-50/40 transition-colors rounded-lg">
+            <div key={n._id} className="flex items-start gap-3 py-2.5 px-3 border text-sm hover:bg-sand/40 hover:border-gold/30 transition-colors rounded-lg">
               <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${typeColors[n.type] || typeColors.system}`}>
                 {typeLabels[n.type] || n.type}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-gray-700 font-medium">{n.title}</p>
-                <p className="text-xs text-gray-500 truncate">{n.message}</p>
+                <p className="text-ink font-medium">{n.title}</p>
+                <p className="text-xs text-ink-soft truncate">{n.message}</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-xs text-gray-400">{n.userId ? `User #${n.userId}` : 'All customers'}</p>
-                <p className="text-xs text-gray-400">{new Date(n.createdAt).toLocaleDateString()}</p>
+                <p className="text-xs text-ink-soft/60">{n.userId ? `User #${n.userId}` : 'All customers'}</p>
+                <p className="text-xs text-ink-soft/60">{new Date(n.createdAt).toLocaleDateString()}</p>
               </div>
               <p onClick={() => deleteNotification(n._id)} className="cursor-pointer text-lg text-red-500 hover:scale-110 transition-transform">✕</p>
             </div>

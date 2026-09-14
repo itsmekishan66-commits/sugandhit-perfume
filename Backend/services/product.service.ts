@@ -10,7 +10,7 @@ interface ProductInput {
   price: string;
   category: string;
   subCategory: string;
-  colors?: string;
+  variants?: { name: string; price: string; description: string; image: string }[];
   bestseller?: string;
   image: string[];
   date: number;
@@ -24,7 +24,7 @@ export const addProduct = async (data: ProductInput) => {
     subCategory: data.subCategory,
     price: data.price,
     bestseller: Boolean(data.bestseller),
-    colors: data.colors ? JSON.parse(data.colors) : [],
+    colors: data.variants || [],
     image: data.image,
     date: data.date,
   });

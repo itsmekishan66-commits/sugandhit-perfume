@@ -44,9 +44,13 @@ const getCartAmount = (cartItems: CartItems, products: Product[]) => {
   let totalAmount = 0;
   for (const items in cartItems) {
     const itemInfo = products.find((product) => product._id === items);
+    if (!itemInfo) continue;
+    const variants = itemInfo.variants || [];
     for (const item in cartItems[items]) {
-      if (cartItems[items][item] > 0 && itemInfo) {
-        totalAmount += Number(itemInfo.price) * cartItems[items][item];
+      if (cartItems[items][item] > 0) {
+        const variant = variants.find((v) => v.name === item);
+        const unitPrice = variant ? Number(variant.price) || Number(itemInfo.price) : Number(itemInfo.price);
+        totalAmount += unitPrice * cartItems[items][item];
       }
     }
   }

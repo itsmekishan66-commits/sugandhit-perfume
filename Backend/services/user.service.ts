@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import validator from 'validator';
 import db from '../config/db.js';
-import { users } from '../models/schema/index.js';
+import { users, admins } from '../models/schema/index.js';
 import { createToken, createAdminToken, hashPassword, verifyPassword, serializeUser } from '../utils/helper.js';
 
 export const registerUser = async ({ name, email, password, phone = '', address = {} }: { name: string; email: string; password: string; phone?: string; address?: Record<string, string> }) => {
@@ -44,10 +44,15 @@ export const loginUser = async ({ email, password }: { email: string; password: 
 };
 
 export const adminLogin = async ({ email, password }: { email: string; password: string }) => {
-  if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-    return createAdminToken(email, password);
-  }
-  throw new Error('Invalid Credentials');
+  if (!email || !password) throw new Error('Please enter email and password.');
+  const admin = await db.query.admins.findFirst({ where: eq(admins.email, email) });
+  if (!admin) throw new Error('Invalid Credentials');
+  if (!admin.active) throw new Error('This admin account has been disabled.');
+
+  const isMatch = await verifyPassword(password, admin.password);
+  if (!isMatch) throw new Error('Invalid Credentials');
+
+  return createAdminToken(admin.id);
 };
 
 export const getUserById = async (userId: number) => {

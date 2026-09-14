@@ -4,13 +4,13 @@ interface NavbarProps {
 
 const Navbar = ({ setToken }: NavbarProps) => {
   return (
-    <div className='flex items-center py-3 px-[4%] justify-between bg-white border-b border-orange-100/60 sticky top-0 z-30'>
+    <div className='flex items-center py-3 px-[4%] justify-between bg-white/75 border-b border-gold/15 backdrop-blur-md sticky top-0 z-30'>
       <div className='flex items-center gap-2'>
-        <span className='w-4 h-4 rounded-full bg-gradient-to-br from-[#7c2d12] to-[#C586A5]'></span>
-        <h1 className='text-2xl font-bold gradient-text'>Sugandhit</h1>
-        <span className='text-xs uppercase tracking-widest text-gray-400 mt-1'>Perfume Admin</span>
+        <span className='flex items-center justify-center h-8 w-8 rounded-full bg-linear-to-br from-gold-soft to-gold font-display text-lg italic text-ink/70 shadow-gold/30 shadow-md'>S</span>
+        <h1 className='font-display text-2xl font-semibold'>Sugandhit<span className='gold-text'>.</span></h1>
+        <span className='hidden lg:block mt-1 text-[10px] uppercase tracking-luxe text-ink-soft'>Perfume Admin</span>
       </div>
-      <button onClick={() => setToken('')} className='bg-[#7c2d12] text-white px-5 py-2 sm:px-7 rounded-full text-sm font-medium hover:bg-[#5b1f0d] transition-colors'>Logout</button>
+      <button onClick={() => setToken('')} className='bg-ink text-cream px-5 py-2 sm:px-7 rounded-full text-sm font-medium hover:bg-espresso transition-colors'>Logout</button>
     </div>
   )
 }

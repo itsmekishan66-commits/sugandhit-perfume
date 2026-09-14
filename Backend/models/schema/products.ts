@@ -1,5 +1,12 @@
 import { pgTable, serial, text, numeric, jsonb, boolean, bigint, integer } from 'drizzle-orm/pg-core';
 
+export interface ProductVariant {
+  name: string;
+  price: string;
+  description: string;
+  image: string;
+}
+
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
@@ -8,7 +15,7 @@ export const products = pgTable('products', {
   image: jsonb('image').$type<string[]>().notNull().default([]),
   category: text('category').notNull(),
   subCategory: text('sub_category').notNull(),
-  colors: jsonb('colors').$type<string[]>().notNull().default([]),
+  colors: jsonb('colors').$type<ProductVariant[]>().notNull().default([]),
   bestseller: boolean('bestseller').default(false),
   rating: numeric('rating', { precision: 3, scale: 2 }).default('4.5'),
   reviews: integer('reviews').default(0),

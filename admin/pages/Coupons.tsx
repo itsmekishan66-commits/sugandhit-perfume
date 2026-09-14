@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { backendUrl, currency } from '../config';
 import { toast } from 'react-toastify';
 import { couponSchema, couponToggleSchema, couponIdSchema } from '../validate/schemas';
+import PageHeader from '../components/PageHeader';
 
 interface Coupon {
   _id: string;
@@ -193,39 +194,40 @@ const Coupons = ({ token }: CouponsProps) => {
 
   return (
     <div className="flex flex-col gap-6">
+      <PageHeader title="Coupons" subtitle="Create and manage discount codes" />
       {/* Create coupon */}
-      <form onSubmit={onSubmitHandler} className="bg-white rounded-2xl p-8 border border-orange-100 shadow-sm">
-        <h2 className="text-xl font-semibold text-[#7c2d12] mb-4">Create Coupon</h2>
+      <form onSubmit={onSubmitHandler} className="bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur">
+        <h2 className="font-display text-2xl font-semibold text-ink mb-4">Create Coupon</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <p className="mb-2 text-sm text-gray-500">Coupon image (optional)</p>
+            <p className="mb-2 text-sm text-ink-soft">Coupon image (optional)</p>
             <label htmlFor="couponImage" className="block">
               {!image ? (
-                <div className="flex h-24 w-24 items-center justify-center rounded-xl border border-dashed border-orange-200 bg-orange-50/60 text-2xl text-[#7c2d12]">🖼️</div>
+                <div className="flex h-24 w-24 items-center justify-center rounded-xl border border-dashed border-gold/30 bg-cream text-2xl text-espresso">🖼️</div>
               ) : (
-                <img className="w-24 h-24 rounded-xl object-cover border border-orange-100" src={URL.createObjectURL(image)} alt="Upload" style={{ cursor: 'pointer' }} />
+                <img className="w-24 h-24 rounded-xl object-cover border border-gold/20" src={URL.createObjectURL(image)} alt="Upload" style={{ cursor: 'pointer' }} />
               )}
             </label>
             <input onChange={(e) => setImage(e.target.files?.[0] || false)} type="file" id="couponImage" hidden accept="image/*" />
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-gray-500">Coupon code</p>
+            <p className="mb-2 text-sm text-ink-soft">Coupon code</p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setCode(e.target.value)} value={code} className={inputClass} type="text" placeholder="e.g. FESTIVE20" required />
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-gray-500">Title</p>
+            <p className="mb-2 text-sm text-ink-soft">Title</p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} value={title} className={inputClass} type="text" placeholder="Festival Offer" required />
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-gray-500">Description</p>
+            <p className="mb-2 text-sm text-ink-soft">Description</p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)} value={description} className={inputClass} type="text" placeholder="Save big on festival blends" />
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-gray-500">Discount type</p>
+            <p className="mb-2 text-sm text-ink-soft">Discount type</p>
             <select onChange={(e) => setDiscountType(e.target.value as 'percent' | 'flat')} value={discountType} className={inputClass}>
               <option value="percent">Percentage (%)</option>
               <option value="flat">Flat Amount</option>
@@ -233,57 +235,57 @@ const Coupons = ({ token }: CouponsProps) => {
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-gray-500">Discount value</p>
+            <p className="mb-2 text-sm text-ink-soft">Discount value</p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setDiscountValue(e.target.value)} value={discountValue} className={inputClass} type="number" placeholder={discountType === 'percent' ? '20' : '500'} required />
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-gray-500">Min. purchase (Rs.)</p>
+            <p className="mb-2 text-sm text-ink-soft">Min. purchase (Rs.)</p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setMinPurchase(e.target.value)} value={minPurchase} className={inputClass} type="number" placeholder="2000" />
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-gray-500">Max discount (Rs., optional)</p>
+            <p className="mb-2 text-sm text-ink-soft">Max discount (Rs., optional)</p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setMaxDiscount(e.target.value)} value={maxDiscount} className={inputClass} type="number" placeholder="1500" />
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-gray-500">Valid until</p>
+            <p className="mb-2 text-sm text-ink-soft">Valid until</p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setValidUntil(e.target.value)} value={validUntil} className={inputClass} type="date" required />
           </div>
         </div>
-        <button type="submit" disabled={saving} className="w-32 py-3 mt-6 bg-gradient-to-r from-[#7c2d12] to-[#C586A5] text-white rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
+        <button type="submit" disabled={saving} className="btn-primary w-32 py-3 mt-6 disabled:opacity-50">
           {saving ? 'Saving…' : 'CREATE'}
         </button>
       </form>
 
       {/* Coupons list */}
-      <div className="bg-white rounded-2xl p-8 border border-orange-100 shadow-sm">
-        <p className="mb-4 text-xl font-semibold text-[#7c2d12]">Coupons ({list.length})</p>
+      <div className="bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur">
+        <p className="mb-4 font-display text-2xl font-semibold text-ink">Coupons ({list.length})</p>
         <div className="flex flex-col gap-2">
-          {list.length === 0 && <p className="text-center text-gray-400 py-8">No coupons yet. Create your first one!</p>}
+          {list.length === 0 && <p className="text-center text-ink-soft/60 py-8">No coupons yet. Create your first one!</p>}
           {list.map((coupon) => (
             <div
               key={coupon._id}
-              className="grid grid-cols-[1fr_2fr_1fr_1fr_1fr] items-center gap-2 py-2 px-3 border text-sm hover:bg-orange-50/40 transition-colors rounded-lg"
+              className="grid grid-cols-[1fr_2fr_1fr_1fr_1fr] items-center gap-2 py-2 px-3 border text-sm hover:bg-sand/40 hover:border-gold/30 transition-colors rounded-lg"
             >
               {coupon.image ? (
                 <img className="w-12 h-12 object-cover rounded-lg" src={coupon.image} alt="" />
               ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-[#C586A5] to-[#7c2d12] text-white text-lg">🎟️</div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-gold to-espresso text-white text-lg">🎟️</div>
               )}
               <div className="min-w-0">
-                <p className="text-gray-700 font-medium truncate">{coupon.title}</p>
-                <p className="text-xs text-gray-400 font-semibold tracking-wide">{coupon.code}</p>
+                <p className="text-ink font-medium truncate">{coupon.title}</p>
+                <p className="text-xs text-ink-soft/70 font-semibold tracking-wide">{coupon.code}</p>
               </div>
               <p>{coupon.discountType === 'percent' ? `${coupon.discountValue}% off` : `${currency} ${coupon.discountValue} off`}</p>
-              <p className="text-xs text-gray-500">Till {new Date(coupon.validTill).toLocaleDateString()}</p>
+              <p className="text-xs text-ink-soft">Till {new Date(coupon.validTill).toLocaleDateString()}</p>
               <div className="flex items-center justify-end gap-3">
                 <input
                   type="checkbox"
                   checked={coupon.active}
                   onChange={() => toggleCoupon(coupon)}
-                  className="accent-[#7c2d12] cursor-pointer"
+                  className="accent-gold cursor-pointer"
                   title="Active"
                 />
                 <p onClick={() => deleteCoupon(coupon._id)} className="cursor-pointer text-lg text-red-500 hover:scale-110 transition-transform">✕</p>

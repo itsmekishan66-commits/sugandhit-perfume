@@ -152,6 +152,7 @@ export const productAddSchema = z.object({
     { message: 'Invalid fragrance family.' }
   ),
   colors: z.string().optional(),
+  variants: z.string().optional().default(''),
   bestseller: z
     .union([z.literal('true'), z.literal('false')])
     .transform((value) => value === 'true'),

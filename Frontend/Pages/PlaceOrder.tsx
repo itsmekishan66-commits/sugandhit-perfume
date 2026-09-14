@@ -33,6 +33,7 @@ interface CartProduct {
   image?: string[];
   colors?: string;
   quantity?: number;
+  variants?: { name: string; price: string; description: string; image: string }[];
 }
 
 const PlaceOrder = () => {
@@ -84,9 +85,11 @@ const PlaceOrder = () => {
           if (cartItems[items][item] > 0) {
             const itemInfo = structuredClone(products.find(product => product._id === items)) as CartProduct | undefined;
             if (itemInfo) {
+              const variant = (itemInfo.variants || []).find((v) => v.name === item);
+              const unitPrice = variant ? Number(variant.price) || Number(itemInfo.price) : Number(itemInfo.price);
               itemInfo.colors = item;
               itemInfo.quantity = cartItems[items][item];
-              orderItems.push({ id: itemInfo._id, name: itemInfo.name, price: itemInfo.price, size: item, quantity: cartItems[items][item], image: (itemInfo.image || [])[0] || '' })
+              orderItems.push({ id: itemInfo._id, name: itemInfo.name, price: unitPrice, size: item, quantity: cartItems[items][item], image: (itemInfo.image || [])[0] || '' })
             }
           }
         }

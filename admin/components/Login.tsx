@@ -46,39 +46,39 @@ const Login = ({ setToken }: LoginProps) => {
   }
 
   return (
-    <div className='bg-white/90 backdrop-blur shadow-2xl rounded-3xl px-10 py-12 max-w-md border border-orange-100 w-full'>
-      <div className='flex flex-col items-center mb-8'>
-        <span className='w-12 h-12 rounded-full bg-linear-to-br from-[#7c2d12] to-[#C586A5] mb-4'></span>
-        <h1 className='text-3xl font-bold gradient-text'>Sugandhit</h1>
-        <p className='text-gray-400 text-sm mt-1'>Admin Panel · Perfume Studio</p>
+    <div className='w-full max-w-md card-lux rounded-4xl p-8 md:p-10 text-sm'>
+      <div className='text-center mb-8'>
+        <span className='inline-flex items-center justify-center h-12 w-12 rounded-full bg-linear-to-br from-gold-soft to-gold font-display text-2xl italic text-ink/60 shadow-lg shadow-gold/30 mb-4'>S</span>
+        <h1 className='font-display text-3xl font-semibold'>Sugandhit<span className='gold-text'>.</span></h1>
+        <p className='text-xs tracking-luxe uppercase text-ink-soft mt-2'>Admin Panel · Perfume Studio</p>
       </div>
 
       <form onSubmit={onSubmitHandler}>
 
         <div className='mb-4'>
-          <p className='text-sm font-medium text-gray-700 mb-2'>Email Address</p>
+          <p className='text-sm font-medium text-ink-soft mb-2'>Email Address</p>
           <input
             onChange={(e) => setEmail(e.target.value)}
             value={email}
-            className='rounded-xl w-full px-4 py-3 border border-orange-100 outline-none focus:ring-2 focus:ring-[#C586A5]/40 bg-[#fdf6ef]/50'
+            className='w-full px-4 py-3 rounded-xl bg-white/70 border border-gold/25 focus:border-gold outline-none transition-colors'
             type='email'
             placeholder='your@email.com'
             required
           />
         </div>
         <div className='mb-6'>
-          <p className='text-sm font-medium text-gray-700 mb-2'>Password</p>
+          <p className='text-sm font-medium text-ink-soft mb-2'>Password</p>
           <input
             onChange={(e) => setPassword(e.target.value)}
             value={password}
-            className='rounded-xl w-full px-4 py-3 border border-orange-100 outline-none focus:ring-2 focus:ring-[#C586A5]/40 bg-[#fdf6ef]/50'
+            className='w-full px-4 py-3 rounded-xl bg-white/70 border border-gold/25 focus:border-gold outline-none transition-colors'
             type='password'
             placeholder='Enter your password'
             required
           />
         </div>
 
-        <button className='mt-2 w-full py-3 rounded-xl text-white bg-linear-to-r from-[#7c2d12] to-[#C586A5] font-medium hover:opacity-90 transition-opacity' type='submit'>Login</button>
+        <button className='btn-primary mt-2 w-full' type='submit'>Login</button>
       </form>
     </div>
   )

@@ -3,14 +3,30 @@ import { addProduct, uploadImages, listProducts, removeProduct, getProductById }
 
 export const add = async (req: Request, res: Response) => {
   try {
-    const { name, description, price, category, subCategory, colors, bestseller } = req.body;
+    const { name, description, price, category, subCategory, bestseller, variants } = req.body;
 
-    const files = (req.files as Record<string, Express.Multer.File[]>) ?? {};
-    const imgs = [files.image1?.[0], files.image2?.[0], files.image3?.[0], files.image4?.[0]].filter(
-      (i): i is Express.Multer.File => !!i
-    );
+    const files = (req.files as { mainImage?: Express.Multer.File[]; variantImages?: Express.Multer.File[] }) ?? {};
+    const main = files.mainImage?.[0];
+    const variantFiles = files.variantImages ?? [];
 
-    const image = await uploadImages(imgs);
+    if (!main) {
+      return res.json({ success: false, message: 'A main image is required.' });
+    }
+
+    const image = await uploadImages([main, ...variantFiles]);
+
+    let parsedVariants: { name: string; price: string; description: string; image: string }[] = [];
+    try {
+      parsedVariants = variants ? JSON.parse(variants) : [];
+    } catch {
+      parsedVariants = [];
+    }
+
+    let fileIndex = 0;
+    parsedVariants = parsedVariants.map((v) => ({
+      ...v,
+      image: fileIndex < variantFiles.length ? image[1 + fileIndex++] : '',
+    }));
 
     await addProduct({
       name,
@@ -18,8 +34,8 @@ export const add = async (req: Request, res: Response) => {
       price,
       category,
       subCategory,
-      colors,
       bestseller,
+      variants: parsedVariants,
       image,
       date: Date.now(),
     });

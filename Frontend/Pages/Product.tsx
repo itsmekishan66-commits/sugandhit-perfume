@@ -12,6 +12,7 @@ const Product = () => {
   const addToCart = useShopStore((s) => s.addToCart);
   const [imageState, setImageState] = useState<{ id: string | null; src: string }>({ id: null, src: '' });
   const [colors, setColors] = useState('100ml');
+  const [variantName, setVariantName] = useState('');
   const [qty, setQty] = useState(1);
 
   const sizes = ['100ml', '50ml', '30ml'];
@@ -19,9 +20,19 @@ const Product = () => {
   const productData = useMemo(() => products.find(item => item._id === productId) || null, [products, productId]);
   const rating = Number(productData?.rating) || 0;
   const reviews = productData?.reviews || 0;
-  const image = imageState.id === productId ? imageState.src : (productData?.image?.[0] || '');
+
+  const variants = productData?.variants || [];
+  const activeVariant = variants.find((v) => v.name === (variantName || '')) || variants[0];
+
+  const unitPrice = activeVariant ? Number(activeVariant.price) || Number(productData?.price || 0) : Number(productData?.price || 0);
+  const image = imageState.id === productId ? imageState.src : (activeVariant?.image || productData?.image?.[0] || '');
+  const selectedOption = activeVariant ? activeVariant.name : colors;
 
   const qtyChange = (v: number) => setQty((q) => Math.max(1, q + v));
+  const selectVariant = (v: { name: string; image: string }) => {
+    setVariantName(v.name);
+    if (v.image) setImageState({ id: productId ?? null, src: v.image });
+  };
 
   const isPopular = productData?.popular ?? (productId ? String(productId).charCodeAt(String(productId).length - 1) % 3 === 0 : false);
 
@@ -45,7 +56,7 @@ const Product = () => {
             )}
           </div>
           <div className="grid grid-cols-4 gap-3">
-            {(productData.image || []).slice(0, 4).map((img) => (
+            {(productData.image || []).slice(0, 8).map((img) => (
               <div
                 key={img}
                 onClick={() => setImageState({ id: productId ?? null, src: img })}
@@ -74,7 +85,7 @@ const Product = () => {
           </div>
 
           <div className="flex items-center gap-3 mt-6">
-            <p className="font-display text-3xl gold-text font-bold">{currency} {Number(productData.price)}</p>
+            <p className="font-display text-3xl gold-text font-bold">{currency} {unitPrice}</p>
             <p className="text-ink-soft line-through text-lg">{Number(productData.price) + 500}</p>
             <span className="text-xs bg-blush text-espresso px-2.5 py-1 rounded-full font-medium">Introductory</span>
           </div>
@@ -82,18 +93,32 @@ const Product = () => {
           <p className="mt-6 text-ink-soft leading-relaxed">{productData.description || 'A hand-blended parfum crafted by our in-house perfumer. Notes are weighed, macerated and matured to deliver a scent that lingers elegantly on the skin.'}</p>
 
           <div className="mt-8">
-            <p className="mb-3 font-medium">Size</p>
-            <div className="flex gap-3">
-              {sizes.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setColors(s)}
-                  className={`px-6 py-3 rounded-full border text-sm transition-all ${colors === s ? 'border-ink bg-ink text-cream' : 'border-gold/40 text-ink-soft hover:border-ink'}`}
-                >
-                  {s}
-                </button>
-              ))}
+            <p className="mb-3 font-medium">{variants.length ? 'Variant' : 'Size'}</p>
+            <div className="flex flex-wrap gap-3">
+              {variants.length
+                ? variants.map((v) => (
+                    <button
+                      key={v.name}
+                      onClick={() => selectVariant(v)}
+                      className={`px-5 py-3 rounded-full border text-sm transition-all ${activeVariant?.name === v.name ? 'border-ink bg-ink text-cream' : 'border-gold/40 text-ink-soft hover:border-ink'}`}
+                    >
+                      {v.name}
+                      {v.price !== '' && <span className="ml-1 opacity-80">· {currency} {Number(v.price)}</span>}
+                    </button>
+                  ))
+                : sizes.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setColors(s)}
+                      className={`px-6 py-3 rounded-full border text-sm transition-all ${colors === s ? 'border-ink bg-ink text-cream' : 'border-gold/40 text-ink-soft hover:border-ink'}`}
+                    >
+                      {s}
+                    </button>
+                  ))}
             </div>
+            {activeVariant?.description && (
+              <p className="mt-3 text-xs text-ink-soft">{activeVariant.description}</p>
+            )}
           </div>
 
           <div className="flex items-center gap-4 mt-8">
@@ -103,14 +128,14 @@ const Product = () => {
               <button onClick={() => qtyChange(1)} className="px-3 text-xl text-ink-soft">+</button>
             </div>
             <button
-              onClick={() => addToCart(productData._id, colors, qty)}
+              onClick={() => addToCart(productData._id, selectedOption, qty)}
               className="btn-primary flex-1"
             >
-              Add to Cart — {currency} {Number(productData.price) * qty}
+              Add to Cart — {currency} {unitPrice * qty}
             </button>
           </div>
           <p className="mt-3 text-xs text-ink-soft">
-            ✦ Add {qty} × {colors} of {productData.name} to your cart
+            ✦ Add {qty} × {selectedOption} of {productData.name} to your cart
           </p>
 
           <hr className="mt-8 border-gold/15" />

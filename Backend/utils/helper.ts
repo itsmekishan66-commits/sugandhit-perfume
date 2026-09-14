@@ -6,8 +6,8 @@ export const createToken = (id: number) => {
   return jwt.sign({ id }, process.env.JWT_SECRET as string);
 };
 
-export const createAdminToken = (email: string, password: string) => {
-  return jwt.sign(email + password, process.env.JWT_SECRET as string);
+export const createAdminToken = (id: number) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET as string);
 };
 
 export const hashPassword = async (password: string) => {
@@ -35,6 +35,7 @@ export const serializeProduct = (p: typeof products.$inferSelect) => ({
   price: typeof p.price === 'string' ? parseFloat(p.price) : p.price,
   rating: p.rating != null ? Number(p.rating) : 0,
   reviews: p.reviews ?? 0,
+  variants: p.colors || [],
 });
 
 export const serializeOrder = (o: typeof orders.$inferSelect) => ({
