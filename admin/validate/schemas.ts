@@ -65,3 +65,12 @@ export const notificationSchema = z.object({
 export const notificationIdSchema = z.object({
   id: z.union([z.string(), z.number()]),
 });
+
+export const userIdSchema = z.object({
+  userId: z.union([z.string(), z.number()]).transform(Number),
+});
+
+export const addCreditSchema = z.object({
+  userId: z.union([z.string(), z.number()]).transform(Number),
+  amount: z.coerce.number().positive('Credit amount must be positive.'),
+});

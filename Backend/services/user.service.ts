@@ -1,7 +1,7 @@
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import validator from 'validator';
 import db from '../config/db.js';
-import { users, admins } from '../models/schema/index.js';
+import { users, admins, orders, customorders } from '../models/schema/index.js';
 import { createToken, createAdminToken, hashPassword, verifyPassword, serializeUser } from '../utils/helper.js';
 
 export const registerUser = async ({ name, email, password, phone = '', address = {} }: { name: string; email: string; password: string; phone?: string; address?: Record<string, string> }) => {
@@ -73,5 +73,55 @@ export const updateUserById = async (
   if (Object.keys(patch).length === 0) throw new Error('Nothing to update');
 
   const updated = await db.update(users).set(patch).where(eq(users.id, userId)).returning();
+  return serializeUser(updated[0]);
+};
+
+export const listAllUsers = async () => {
+  const all = await db.select().from(users).orderBy(desc(users.createdAt));
+  return all.map(serializeUser);
+};
+
+export const listAllAdmins = async () => {
+  const all = await db.select().from(admins).orderBy(desc(admins.createdAt));
+  return all.map((a) => ({
+    id: a.id,
+    name: a.name,
+    email: a.email,
+    role: a.role,
+    active: a.active,
+    createdAt: a.createdAt,
+  }));
+};
+
+export const getUserWithHistory = async (userId: number) => {
+  const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
+  if (!user) return null;
+  const userOrders = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.userId, userId))
+    .orderBy(desc(orders.date));
+  const userCustomOrders = await db
+    .select()
+    .from(customorders)
+    .where(eq(customorders.userId, userId))
+    .orderBy(desc(customorders.date));
+  return {
+    user: serializeUser(user),
+    orders: userOrders.map((o) => ({ ...o, _id: String(o.id), amount: parseFloat(String(o.amount)) })),
+    customOrders: userCustomOrders.map((c) => ({ ...c, _id: String(c.id), amount: parseFloat(String(c.amount)) })),
+  };
+};
+
+export const addUserCredit = async (userId: number, amount: number) => {
+  const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
+  if (!user) throw new Error('User not found.');
+  const current = parseFloat(String(user.credit || 0));
+  const total = Math.round((current + amount) * 100) / 100;
+  const updated = await db
+    .update(users)
+    .set({ credit: String(total) })
+    .where(eq(users.id, userId))
+    .returning();
   return serializeUser(updated[0]);
 };

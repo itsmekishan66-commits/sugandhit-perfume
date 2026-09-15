@@ -26,6 +26,7 @@ export const serializeUser = (u: typeof users.$inferSelect) => ({
   phone: u.phone || '',
   address: u.address || {},
   image: u.image || '',
+  credit: u.credit != null ? parseFloat(String(u.credit)) : 0,
   createdAt: u.createdAt,
 });
 

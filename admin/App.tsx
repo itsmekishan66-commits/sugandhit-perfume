@@ -6,8 +6,9 @@ import Orders from "./pages/Orders";
 import CustomOrders from "./pages/CustomOrders";
 import Coupons from "./pages/Coupons";
 import Notifications from "./pages/Notifications";
-import Payment from "./pages/Payment";
-import Accounts from "./pages/Accounts";
+import PaymentsPage from "./pages/PaymentsPage";
+import AccountsPage from "./pages/AccountsPage";
+import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import Dashboard from "./pages/Dashboard";
 import Login from "./components/Login";
@@ -40,8 +41,9 @@ const App = () => {
             <Route path="/custom-orders" element={<CustomOrders token={token} />} />
             <Route path="/coupons" element={<Coupons token={token} />} />
             <Route path="/notifications" element={<Notifications token={token} />} />
-            <Route path="/payment" element={<Payment token={token} />} />
-            <Route path="/accounts" element={<Accounts />} />
+            <Route path="/payment" element={<PaymentsPage token={token} />} />
+            <Route path="/users" element={<Users token={token} />} />
+            <Route path="/accounts" element={<AccountsPage token={token} />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </SidebarLayout>

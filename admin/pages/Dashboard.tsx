@@ -24,7 +24,6 @@ interface Stats {
   custom: number;
   revenue: number;
   pending: number;
-  totalExpenses: number;
   totalCustomers: number;
 }
 
@@ -37,18 +36,14 @@ interface RecentItem {
   date?: string | number;
 }
 
-const EXPENSES_KEY = 'sugandhit_expenses';
-
 const Dashboard = ({ token }: DashboardProps) => {
-  const [stats, setStats] = useState<Stats>({ products: 0, orders: 0, custom: 0, revenue: 0, pending: 0, totalExpenses: 0, totalCustomers: 0 });
+  const [stats, setStats] = useState<Stats>({ products: 0, orders: 0, custom: 0, revenue: 0, pending: 0, totalCustomers: 0 });
   const [recent, setRecent] = useState<RecentItem[]>([]);
   const [products, setProducts] = useState<{ name?: string; category?: string; subCategory?: string; price?: string | number }[]>([]);
   const [orders, setOrders] = useState<ApiOrder[]>([]);
   const [customs, setCustoms] = useState<ApiOrder[]>([]);
   const [coupons, setCoupons] = useState<{ code?: string; discountType?: string; discountValue?: string | number; active?: boolean }[]>([]);
   const [notifications, setNotifications] = useState<{ type?: string }[]>([]);
-  const [expenseDesc, setExpenseDesc] = useState('');
-  const [expenseAmount, setExpenseAmount] = useState('');
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -91,16 +86,12 @@ const Dashboard = ({ token }: DashboardProps) => {
         });
         const totalCustomers = customerIds.size;
 
-        const savedExpenses = JSON.parse(localStorage.getItem(EXPENSES_KEY) || '[]');
-        const totalExpenses = savedExpenses.reduce((sum: number, exp: { amount: number }) => sum + (exp.amount || 0), 0);
-
         setStats({
           products: products.length,
           orders: orders.length,
           custom: customs.length,
           revenue: deliveredRevenue,
           pending,
-          totalExpenses,
           totalCustomers,
         });
 
@@ -129,27 +120,8 @@ const Dashboard = ({ token }: DashboardProps) => {
     { label: 'Custom Blends', value: stats.custom, tint: 'from-sand to-blush', to: '/custom-orders' },
     { label: 'In Progress', value: stats.pending, tint: 'from-espresso to-ink', to: '/orders' },
     { label: 'Total Sales', value: stats.revenue, tint: 'from-gold-soft to-blush', to: '/orders', isCurrency: true },
-    { label: 'Total Expenses', value: stats.totalExpenses, tint: 'from-sand to-gold', to: '/settings', isCurrency: true },
     { label: 'Total Customers', value: stats.totalCustomers, tint: 'from-blush to-espresso', to: '/accounts' },
   ];
-
-  const addExpense = () => {
-    if (!expenseDesc.trim() || !expenseAmount.trim()) return;
-    const amount = parseFloat(expenseAmount);
-    if (isNaN(amount)) return;
-    const savedExpenses = JSON.parse(localStorage.getItem(EXPENSES_KEY) || '[]');
-    savedExpenses.push({ desc: expenseDesc.trim(), amount, date: Date.now() });
-    localStorage.setItem(EXPENSES_KEY, JSON.stringify(savedExpenses));
-    setExpenseDesc('');
-    setExpenseAmount('');
-    const totalExpenses = savedExpenses.reduce((sum: number, exp: { amount: number }) => sum + (exp.amount || 0), 0);
-    setStats((prev) => ({ ...prev, totalExpenses }));
-  };
-
-  const clearExpenses = () => {
-    localStorage.removeItem(EXPENSES_KEY);
-    setStats((prev) => ({ ...prev, totalExpenses: 0 }));
-  };
 
 return (
     <div>
@@ -164,30 +136,6 @@ return (
             <p className="mt-2 truncate text-sm font-medium opacity-80">{c.label}</p>
           </Link>
         ))}
-      </div>
-
-      <div className="rounded-2xl border border-gold/15 bg-white/70 p-6 shadow-sm mb-6">
-        <p className="font-display text-2xl font-semibold text-ink mb-4">Quick Expense Tracker</p>
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <input
-            value={expenseDesc}
-            onChange={(e) => setExpenseDesc(e.target.value)}
-            className="flex-1 rounded-xl border border-gold/20 bg-cream/50 px-3 py-2.5 text-sm text-ink outline-none focus:border-gold"
-            placeholder="Expense description"
-          />
-          <input
-            value={expenseAmount}
-            onChange={(e) => setExpenseAmount(e.target.value)}
-            type="number"
-            className="w-full sm:w-40 rounded-xl border border-gold/20 bg-cream/50 px-3 py-2.5 text-sm text-ink outline-none focus:border-gold"
-            placeholder="Amount"
-          />
-          <button onClick={addExpense} className="btn-primary px-6 py-2.5 text-sm">Add</button>
-          <button onClick={clearExpenses} className="px-4 py-2.5 text-sm text-ink-soft hover:text-espresso">Clear All</button>
-        </div>
-        <p className="text-xs text-ink-soft/70">
-          Expenses are stored locally in this browser. For a production setup, wire this to a backend endpoint with a dedicated expenses model.
-        </p>
       </div>
 
       <Suspense

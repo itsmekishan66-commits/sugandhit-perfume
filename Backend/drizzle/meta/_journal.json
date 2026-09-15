@@ -15,6 +15,20 @@
       "when": 1789281687711,
       "tag": "0001_small_human_robot",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789389327562,
+      "tag": "0002_powerful_joystick",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789500000000,
+      "tag": "0003_finance_modules",
+      "breakpoints": true
     }
   ]
 }

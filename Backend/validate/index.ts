@@ -10,6 +10,11 @@ export const userIdSchema = z.object({
   userId: z.number().int().positive('Invalid user.'),
 });
 
+export const addCreditSchema = z.object({
+  userId: z.number().int().positive('Invalid user.'),
+  amount: z.coerce.number().positive('Credit amount must be positive.'),
+});
+
 export const registerSchema = z.object({
   name: requiredText('Please enter your full name.'),
   email: emailSchema,

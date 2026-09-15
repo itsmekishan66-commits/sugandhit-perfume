@@ -15,6 +15,9 @@ const navItems: NavItem[] = [
   { label: 'Custom', to: '/custom-orders', icon: '✨' },
   { label: 'Coupons', to: '/coupons', icon: '🎟️' },
   { label: 'Notify', to: '/notifications', icon: '🔔' },
+  { label: 'Payments', to: '/payment', icon: '💳', end: true },
+  { label: 'Accounts', to: '/accounts', icon: '🧾' },
+  { label: 'Users', to: '/users', icon: '👥' },
   { label: 'Settings', to: '/settings', icon: '⚙️' },
 ]
 
@@ -25,14 +28,14 @@ const BottomNav = () => {
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
       <div className="max-w-full overflow-x-auto no-scrollbar">
-        <div className="flex min-w-max items-center gap-1 rounded-[1.5rem] border border-gold/20 bg-white/90 p-1.5 shadow-[0_14px_44px_-14px_rgba(43,29,22,0.45)] backdrop-blur-2xl">
+        <div className="flex min-w-max items-center gap-1 rounded-3xl border border-gold/20 bg-white/90 p-1.5 shadow-[0_14px_44px_-14px_rgba(43,29,22,0.45)] backdrop-blur-2xl">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `flex min-w-[4.5rem] flex-col items-center gap-1 rounded-2xl px-3 py-2 text-ink-soft transition-colors ${isActive
+                `flex min-w-18 flex-col items-center gap-1 rounded-2xl px-3 py-2 text-ink-soft transition-colors ${isActive
                   ? 'bg-sand font-semibold text-espresso'
                   : 'hover:bg-cream'
                 }`

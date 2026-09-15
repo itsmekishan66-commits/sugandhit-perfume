@@ -1,11 +1,12 @@
 import 'dotenv/config';
 import { sql } from 'drizzle-orm';
 import db from '../../config/db.js';
-import { notes, perfumebases, products, admins } from '../schema/index.js';
+import { notes, perfumebases, products, admins, chartOfAccounts, paymentAccounts } from '../schema/index.js';
 import { hashPassword } from '../../utils/helper.js';
 import { defaultNotes } from './notes.js';
 import { defaultBases } from './bases.js';
 import { defaultProducts } from './products.js';
+import { DEFAULT_CHART_OF_ACCOUNTS } from '../../utils/finance.constants.js';
 
 const countPalette = async () => {
   const { rows } = await db.execute(sql`select (select count(*) from notes) + (select count(*) from perfumebases) as total`);
@@ -86,10 +87,38 @@ const seedProducts = async () => {
   console.log(`Products seeded ✓ (${rows.length})`);
 };
 
+const seedChartOfAccounts = async () => {
+  const existing = await db.query.chartOfAccounts.findFirst();
+  if (existing) {
+    console.log('Chart of accounts already seeded.');
+    return;
+  }
+  const now = Date.now();
+  await db.insert(chartOfAccounts).values(
+    DEFAULT_CHART_OF_ACCOUNTS.map((a) => ({
+      code: a.code,
+      name: a.name,
+      accountType: a.type,
+      normalBalance: a.normalBalance,
+      createdAt: now,
+      updatedAt: now,
+    }))
+  );
+  await db.insert(paymentAccounts).values({
+    name: 'Cash in Hand',
+    accountType: 'cash',
+    openingBalance: '0',
+    createdAt: now,
+    updatedAt: now,
+  });
+  console.log(`Chart of accounts seeded ✓ (${DEFAULT_CHART_OF_ACCOUNTS.length} accounts)`);
+};
+
 try {
   await seedPalette();
   await seedProducts();
   await seedAdmins();
+  await seedChartOfAccounts();
   process.exit(0);
 } catch (e) {
   console.error(e);
