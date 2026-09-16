@@ -25,6 +25,7 @@ interface Stats {
   revenue: number;
   pending: number;
   totalCustomers: number;
+  expense: number;
 }
 
 interface RecentItem {
@@ -37,7 +38,7 @@ interface RecentItem {
 }
 
 const Dashboard = ({ token }: DashboardProps) => {
-  const [stats, setStats] = useState<Stats>({ products: 0, orders: 0, custom: 0, revenue: 0, pending: 0, totalCustomers: 0 });
+  const [stats, setStats] = useState<Stats>({ products: 0, orders: 0, custom: 0, revenue: 0, pending: 0, totalCustomers: 0, expense: 0 });
   const [recent, setRecent] = useState<RecentItem[]>([]);
   const [products, setProducts] = useState<{ name?: string; category?: string; subCategory?: string; price?: string | number }[]>([]);
   const [orders, setOrders] = useState<ApiOrder[]>([]);
@@ -72,6 +73,15 @@ const Dashboard = ({ token }: DashboardProps) => {
         setCoupons(couponData.coupons || []);
         setNotifications(notifData.notifications || []);
 
+        let expenseTotal = 0;
+        try {
+          const expRes = await fetch(backendUrl + '/api/accounts/expenses/totals', { headers: { token } });
+          const expData = await expRes.json();
+          if (expData.success) expenseTotal = Number(expData.total || 0);
+        } catch (error) {
+          console.log(error);
+        }
+
         const allOrders = [...orders, ...customs];
 
         const deliveredRevenue = allOrders
@@ -93,6 +103,7 @@ const Dashboard = ({ token }: DashboardProps) => {
           revenue: deliveredRevenue,
           pending,
           totalCustomers,
+          expense: expenseTotal,
         });
 
         setRecent(
@@ -120,6 +131,7 @@ const Dashboard = ({ token }: DashboardProps) => {
     { label: 'Custom Blends', value: stats.custom, tint: 'from-sand to-blush', to: '/custom-orders' },
     { label: 'In Progress', value: stats.pending, tint: 'from-espresso to-ink', to: '/orders' },
     { label: 'Total Sales', value: stats.revenue, tint: 'from-gold-soft to-blush', to: '/orders', isCurrency: true },
+    { label: 'Total Expenses', value: stats.expense, tint: 'from-sand to-ink', to: '/accounts', isCurrency: true },
     { label: 'Total Customers', value: stats.totalCustomers, tint: 'from-blush to-espresso', to: '/accounts' },
   ];
 

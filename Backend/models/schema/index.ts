@@ -1,6 +1,9 @@
 export { users } from './users.js';
 export { admins } from './admins.js';
 export { products } from './products.js';
+export { purchaseOrders } from './purchase_orders.js';
+export { purchaseOrderLines } from './purchase_order_lines.js';
+export { inventoryMovements } from './inventory_movements.js';
 export { cartitems } from './cartitems.js';
 export { wishlistitems } from './wishlistitems.js';
 export { orders } from './orders.js';

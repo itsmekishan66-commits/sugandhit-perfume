@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, StatCard, TableShell, Th, Td, Row, GhostBtn, Pill, inputCls } from '../components/finance/FinanceUI';
 import { api, money, formatDateTime, REFUND_STATUS_LABELS, REFUND_TYPE_LABELS } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface Refund {
   _id: string;
@@ -81,7 +82,7 @@ const PaymentRefunds = ({ token }: { token: string }) => {
         </select>
       }>
         {loading ? (
-          <p className="text-center text-ink-soft/60 py-10">Loading refunds…</p>
+          <div className="flex items-center justify-center py-12"><Loading /></div>
         ) : items.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No refunds found.</p>
         ) : (

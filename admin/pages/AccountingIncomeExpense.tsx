@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, StatCard, TableShell, Th, Td, Row, Modal, Field, PrimaryBtn, GhostBtn, Pill, Tabs, inputCls } from '../components/finance/FinanceUI';
 import { api, money, formatDate } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface ChartAcc { id: number; code: string; name: string; accountType: string; active: boolean }
 interface PaymentAcc { id: number; name: string; active: boolean }
@@ -146,7 +147,7 @@ const AccountingIncomeExpense = ({ token }: { token: string }) => {
       <SectionCard>
         <Tabs tabs={[{ key: 'income', label: `Income (${income.length})` }, { key: 'expenses', label: `Expenses (${expenses.length})` }]} active={tab} onChange={setTab} />
         {loading ? (
-          <p className="text-center text-ink-soft/60 py-10">Loading…</p>
+          <div className="flex items-center justify-center py-12"><Loading /></div>
         ) : tab === 'income' ? (
           income.length === 0 ? (
             <p className="text-center text-ink-soft/60 py-10">No income records yet.</p>

@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, TableShell, Th, Td, Row, Modal, Field, PrimaryBtn, GhostBtn, Pill, inputCls } from '../components/finance/FinanceUI';
 import { api, money, num, label, formatDateTime, CHANNEL_LABELS, TXN_TYPE_LABELS, TXN_STATUS_LABELS } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface Transaction {
   id: number;
@@ -191,7 +192,7 @@ const PaymentTransactions = ({ token }: { token: string }) => {
 
       <SectionCard title="Payment Transactions">
         {loading ? (
-          <p className="text-center text-ink-soft/60 py-10">Loading transactions…</p>
+          <div className="flex items-center justify-center py-12"><Loading /></div>
         ) : items.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No transactions found.</p>
         ) : (

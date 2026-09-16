@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, StatCard, TableShell, Th, Td, Row, Modal, Field, PrimaryBtn, GhostBtn, Pill, inputCls } from '../components/finance/FinanceUI';
 import { api, money, num, label, formatDate, PAYMENT_ACCOUNT_TYPE_LABELS, TXN_TYPE_LABELS } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface PaymentAccount {
   _id: string;
@@ -116,7 +117,7 @@ const PaymentAccounts = ({ token }: { token: string }) => {
 
       <SectionCard title="Accounts">
         {loading ? (
-          <p className="text-center text-ink-soft/60 py-10">Loading accounts…</p>
+          <div className="flex items-center justify-center py-12"><Loading /></div>
         ) : accounts.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No payment accounts yet. Add your first account to start recording payments.</p>
         ) : (

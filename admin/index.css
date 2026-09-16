@@ -1,6 +1,46 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
 
+@theme {
+  --animate-bounce-dot: bounce-dot 0.5s ease infinite alternate;
+  --animate-bounce-shadow: bounce-shadow 0.5s ease infinite alternate;
+
+  @keyframes bounce-dot {
+    0% {
+      top: 60px;
+      height: 5px;
+      border-radius: 50px 50px 25px 25px;
+      transform: scaleX(1.7);
+    }
+
+    40% {
+      height: 20px;
+      border-radius: 50%;
+      transform: scaleX(1);
+    }
+
+    100% {
+      top: 0;
+    }
+  }
+
+  @keyframes bounce-shadow {
+    0% {
+      transform: scaleX(1.5);
+    }
+
+    40% {
+      transform: scaleX(1);
+      opacity: 0.7;
+    }
+
+    100% {
+      transform: scaleX(0.2);
+      opacity: 0.4;
+    }
+  }
+}
+
 :root {
   --color-ink: #2b1d16;
   --color-ink-soft: #5c4a3f;

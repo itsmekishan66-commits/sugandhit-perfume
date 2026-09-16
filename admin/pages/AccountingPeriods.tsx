@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, TableShell, Th, Td, Row, Modal, Field, PrimaryBtn, GhostBtn, Pill, inputCls } from '../components/finance/FinanceUI';
 import { api, formatDate, PERIOD_STATUS_LABELS, formatDateTime } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface Period { id: number; _id: string; name: string; startDate: number; endDate: number; status: string; closedAt?: number | null; closedBy?: number | null }
 
@@ -91,7 +92,7 @@ const AccountingPeriods = ({ token }: { token: string }) => {
 
       <SectionCard title="Periods">
         {loading ? (
-          <p className="text-center text-ink-soft/60 py-10">Loading periods…</p>
+          <div className="flex items-center justify-center py-12"><Loading /></div>
         ) : periods.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No accounting periods defined.</p>
         ) : (

@@ -18,7 +18,7 @@ import {
 } from '../services/journal.service.js';
 import { getTrialBalance, getProfitAndLoss, getBalanceSheet, getCashFlow } from '../services/report.service.js';
 import { listPeriods, createPeriod, closePeriod, reopenPeriod, getCurrentPeriod } from '../services/accountingPeriod.service.js';
-import { createVendor, listVendors, getVendor, updateVendor, toggleVendor } from '../services/vendor.service.js';
+import { createVendor, listVendors, getVendor, updateVendor, toggleVendor, deleteVendor } from '../services/vendor.service.js';
 import {
   createPayable,
   listPayables,
@@ -308,7 +308,7 @@ export const vendorList = async (req: Request, res: Response) => {
     const q = req.query as Record<string, string | undefined>;
     res.json({
       success: true,
-      ...(await listVendors({ active: q.active, page: q.page ? Number(q.page) : 1, limit: q.limit ? Number(q.limit) : 50 })),
+      ...(await listVendors({ active: q.active, page: q.page ? Number(q.page) : 1, limit: q.limit ? Number(q.limit) : 50, search: q.search })),
     });
   } catch (error) {
     res.json({ success: false, message: (error as Error).message });
@@ -347,6 +347,17 @@ export const vendorToggle = async (req: Request, res: Response) => {
 export const vendorDetail = async (req: Request, res: Response) => {
   try {
     res.json({ success: true, vendor: await getVendor(Number(req.params.id)) });
+  } catch (error) {
+    res.json({ success: false, message: (error as Error).message });
+  }
+};
+
+export const vendorDelete = async (req: Request, res: Response) => {
+  try {
+    const a = actor(req);
+    const result = await deleteVendor(Number(req.params.id));
+    await createAuditLog({ ...a, action: 'vendor.delete', entityType: 'vendor', entityId: Number(req.params.id), previousValue: { name: result.name }, ip: a.ip });
+    res.json({ success: true, data: result, message: 'Vendor deleted.' });
   } catch (error) {
     res.json({ success: false, message: (error as Error).message });
   }

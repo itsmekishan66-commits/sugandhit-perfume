@@ -33,6 +33,12 @@ const groups: { section?: string; links: Link[] }[] = [
       { label: 'Accounts', to: '/accounts', icon: '🧾', end: true },
     ],
   },
+  {
+    section: 'Inventory',
+    links: [
+      { label: 'Inventory', to: '/inventory', icon: '📦', end: true },
+    ],
+  },
 ]
 
 const Sidebar = () => {

@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, StatCard, TableShell, Th, Td, Row, Modal, Field, PrimaryBtn, GhostBtn, Pill, Tabs, inputCls } from '../components/finance/FinanceUI';
 import { api, money, num, formatDate, DEBT_STATUS_LABELS } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface Vendor {
   _id: string;
@@ -204,7 +205,7 @@ const PaymentPayables = ({ token }: { token: string }) => {
         </div>
         {tab === 'bills' ? (
           loading ? (
-            <p className="text-center text-ink-soft/60 py-10">Loading payables…</p>
+            <div className="flex items-center justify-center py-12"><Loading /></div>
           ) : payables.length === 0 ? (
             <p className="text-center text-ink-soft/60 py-10">No bills yet. Record your first vendor bill.</p>
           ) : (

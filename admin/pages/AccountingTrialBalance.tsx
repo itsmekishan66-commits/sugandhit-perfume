@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, StatCard, TableShell, Th, Td, Row, Pill, inputCls } from '../components/finance/FinanceUI';
 import { api, money, ACCOUNT_TYPE_LABELS } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface Row { accountId: number; code: string; name: string; type: string; normalBalance: string; debit: number; credit: number; balance: number }
 interface Data { rows: Row[]; totalDebit: number; totalCredit: number; balanced: boolean; difference: number }
@@ -52,7 +53,7 @@ const AccountingTrialBalance = ({ token }: { token: string }) => {
 
           <SectionCard title="Accounts">
             {loading ? (
-              <p className="text-center text-ink-soft/60 py-10">Loading…</p>
+              <div className="flex items-center justify-center py-12"><Loading /></div>
             ) : (
               <TableShell head={<><Th>Code</Th><Th>Account</Th><Th>Type</Th><Th right>Debit</Th><Th right>Credit</Th><Th right>Balance</Th></>}>
                 {data.rows.map((r) => (

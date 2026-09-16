@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, StatCard, TableShell, Th, Td, Row, inputCls } from '../components/finance/FinanceUI';
 import { api, money } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface PnlRow { code: string; name: string; amount: number }
 interface Data {
@@ -90,7 +91,7 @@ const AccountingPnL = ({ token }: { token: string }) => {
             </SectionCard>
           )}
 
-          {loading ? <p className="text-center text-ink-soft/60 py-6">Loading…</p> : (
+          {loading ? <div className="flex items-center justify-center py-10"><Loading /></div> : (
             <>
               {section('Revenue', data.revenueRows, data.revenue)}
               {section('Cost of Goods Sold', data.cogsRows, data.cogs)}

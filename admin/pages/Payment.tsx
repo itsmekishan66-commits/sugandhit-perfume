@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, StatCard, TableShell, Th, Td, Row, Pill } from '../components/finance/FinanceUI';
 import { Download } from 'lucide-react';
+import Loading from '../components/loading';
 import { api, money, label, CHANNEL_LABELS } from '../utils/finance';
 
 interface Overview {
@@ -89,7 +90,7 @@ const Payment = ({ token }: { token: string }) => {
       />
 
       {loading && !data ? (
-        <div className="p-12 text-center text-ink-soft/60">Loading payment overview…</div>
+        <div className="flex items-center justify-center py-12"><Loading /></div>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

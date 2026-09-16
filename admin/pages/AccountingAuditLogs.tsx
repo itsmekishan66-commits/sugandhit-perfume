@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, TableShell, Th, Td, Row, Pill, inputCls } from '../components/finance/FinanceUI';
 import { api, formatDateTime } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface AuditLog {
   _id: string;
@@ -81,7 +82,7 @@ const AccountingAuditLogs = ({ token }: { token: string }) => {
           <span className="text-xs text-ink-soft">{logs.length} of latest 200 entries</span>
         </div>
         {loading ? (
-          <p className="text-center text-ink-soft/60 py-10">Loading audit logs…</p>
+          <div className="flex items-center justify-center py-12"><Loading /></div>
         ) : logs.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No audit entries recorded yet.</p>
         ) : (

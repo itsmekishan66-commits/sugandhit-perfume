@@ -8,6 +8,7 @@ import Coupons from "./pages/Coupons";
 import Notifications from "./pages/Notifications";
 import PaymentsPage from "./pages/PaymentsPage";
 import AccountsPage from "./pages/AccountsPage";
+import InventoryPage from "./pages/InventoryPage";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import Dashboard from "./pages/Dashboard";
@@ -44,6 +45,7 @@ const App = () => {
             <Route path="/payment" element={<PaymentsPage token={token} />} />
             <Route path="/users" element={<Users token={token} />} />
             <Route path="/accounts" element={<AccountsPage token={token} />} />
+            <Route path="/inventory" element={<InventoryPage token={token} />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </SidebarLayout>

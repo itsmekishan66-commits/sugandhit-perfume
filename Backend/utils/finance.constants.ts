@@ -143,6 +143,9 @@ export const PERMISSIONS = {
   accounts_view_reports: 'accounts.view_reports',
   accounts_export: 'accounts.export',
   accounts_manage_periods: 'accounts.manage_periods',
+  inventory_view: 'inventory.view',
+  inventory_manage: 'inventory.manage',
+  inventory_adjust: 'inventory.adjust',
 } as const;
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -165,8 +168,11 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.accounts_view_reports,
     PERMISSIONS.accounts_export,
     PERMISSIONS.accounts_manage_periods,
+    PERMISSIONS.inventory_view,
+    PERMISSIONS.inventory_manage,
+    PERMISSIONS.inventory_adjust,
   ],
-  editor: [PERMISSIONS.payments_view, PERMISSIONS.accounts_view, PERMISSIONS.accounts_view_reports, PERMISSIONS.receivables_view, PERMISSIONS.payables_view],
+  editor: [PERMISSIONS.payments_view, PERMISSIONS.accounts_view, PERMISSIONS.accounts_view_reports, PERMISSIONS.receivables_view, PERMISSIONS.payables_view, PERMISSIONS.inventory_view],
 };
 
 export const DEFAULT_CHART_OF_ACCOUNTS: { code: string; name: string; type: string; normalBalance: 'debit' | 'credit' }[] = [

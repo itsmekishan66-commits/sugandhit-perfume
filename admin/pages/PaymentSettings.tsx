@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, StatCard, Pill } from '../components/finance/FinanceUI';
 import { api } from '../utils/finance';
+import Loading from '../components/loading';
 import { currency } from '../config';
 
 interface LinkStatus { configured: boolean; accountCount: number; note: string }
@@ -30,7 +31,7 @@ const PaymentSettings = ({ token }: { token: string }) => {
       <PageHeader title="Payment Settings" subtitle="Gateway configuration and webhooks" />
 
       {loading && !status ? (
-        <p className="text-center text-ink-soft/60 py-10">Loading settings…</p>
+        <div className="flex items-center justify-center py-12"><Loading /></div>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

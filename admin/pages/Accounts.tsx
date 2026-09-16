@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, StatCard } from '../components/finance/FinanceUI';
 import { api, money } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface Overview {
   totalIncome: number;
@@ -53,7 +54,7 @@ const Accounts = ({ token }: { token: string }) => {
       <PageHeader title="Accounts" subtitle="Accounting overview and double-entry journal engine" />
 
       {loading && !data ? (
-        <p className="text-center text-ink-soft/60 py-10">Loading accounting overview…</p>
+        <div className="flex items-center justify-center py-12"><Loading /></div>
       ) : data ? (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

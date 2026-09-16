@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, StatCard, TableShell, Th, Td, Row, Modal, Field, PrimaryBtn, GhostBtn, Pill, inputCls } from '../components/finance/FinanceUI';
 import { api, money, num, formatDate, DEBT_STATUS_LABELS } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface Receivable {
   _id: string;
@@ -150,7 +151,7 @@ const PaymentReceivables = ({ token }: { token: string }) => {
         </select>
       }>
         {loading ? (
-          <p className="text-center text-ink-soft/60 py-10">Loading receivables…</p>
+          <div className="flex items-center justify-center py-12"><Loading /></div>
         ) : items.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No receivables found.</p>
         ) : (
@@ -232,7 +233,7 @@ const PaymentReceivables = ({ token }: { token: string }) => {
 
       <Modal open={!!statement || statementLoading} title="Customer Statement" onClose={() => setStatement(null)} wide>
         {statementLoading ? (
-          <p className="text-center text-ink-soft/60 py-10">Loading statement…</p>
+          <div className="flex items-center justify-center py-16"><Loading /></div>
         ) : statement ? (
           <div className="flex flex-col gap-4">
             <div className="rounded-xl border border-gold/15 bg-cream/60 p-4 text-sm flex flex-wrap items-center justify-between gap-2">

@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, StatCard, TableShell, Th, Td, Row, Modal, Field, PrimaryBtn, GhostBtn, Pill, inputCls } from '../components/finance/FinanceUI';
 import { api, money, formatDate, RECON_ITEM_STATUS_LABELS } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface PaymentAccountBrief { id: number; name: string; accountType: string; active: boolean }
 
@@ -214,7 +215,7 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
 
       <SectionCard title="Reconciliation Periods">
         {loading ? (
-          <p className="text-center text-ink-soft/60 py-10">Loading reconciliations…</p>
+          <div className="flex items-center justify-center py-12"><Loading /></div>
         ) : list.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No reconciliations yet.</p>
         ) : (

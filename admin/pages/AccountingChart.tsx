@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, TableShell, Th, Td, Row, Modal, Field, PrimaryBtn, GhostBtn, Pill, inputCls } from '../components/finance/FinanceUI';
 import { api, money, ACCOUNT_TYPE_LABELS } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface Account {
   _id: string;
@@ -102,7 +103,7 @@ const AccountingChart = ({ token }: { token: string }) => {
 
       <SectionCard title="Chart of Accounts">
         {loading ? (
-          <p className="text-center text-ink-soft/60 py-10">Loading chart…</p>
+          <div className="flex items-center justify-center py-12"><Loading /></div>
         ) : accounts.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No chart accounts yet. Add the first account to begin.</p>
         ) : (

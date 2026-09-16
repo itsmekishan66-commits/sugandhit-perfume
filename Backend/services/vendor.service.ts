@@ -1,4 +1,5 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, ilike, or, sql } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
 import db from '../config/db.js';
 import { vendors } from '../models/schema/index.js';
 
@@ -29,17 +30,26 @@ export const createVendor = async (input: VendorInput) => {
   return { ...vendor, _id: String(vendor.id) };
 };
 
-export const listVendors = async (opts: { active?: string; page?: number; limit?: number } = {}) => {
+export const listVendors = async (opts: { active?: string; page?: number; limit?: number; search?: string } = {}) => {
   const page = opts.page ?? 1;
   const limit = opts.limit ?? 50;
   const active = opts.active && opts.active !== 'all' ? opts.active === 'true' : undefined;
+  const q = opts.search?.trim();
+  const conditions: SQL[] = [];
+  if (active !== undefined) conditions.push(eq(vendors.active, active));
+  if (q) {
+    conditions.push(
+      or(ilike(vendors.name, `%${q}%`), ilike(vendors.category, `%${q}%`), ilike(vendors.phone, `%${q}%`), ilike(vendors.email, `%${q}%`), ilike(vendors.address, `%${q}%`))!
+    );
+  }
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
   const items = await db.query.vendors.findMany({
-    where: active === undefined ? undefined : (t, { eq }) => eq(t.active, active),
+    where,
     orderBy: (t, { desc }) => [desc(t.createdAt)],
     limit,
     offset: (page - 1) * limit,
   });
-  const counts = await db.select({ count: sql<number>`count(*)` }).from(vendors).where(active === undefined ? sql`1=1` : eq(vendors.active, active));
+  const counts = await db.select({ count: sql<number>`count(*)` }).from(vendors).where(where ?? sql`1=1`);
   return { items: items.map((v) => ({ ...v, _id: String(v.id) })), total: Number(counts[0]?.count ?? 0), page, limit };
 };
 
@@ -62,4 +72,11 @@ export const updateVendor = async (id: number, patch: Partial<VendorInput>) => {
 export const toggleVendor = async (id: number, active: boolean) => {
   await db.update(vendors).set({ active }).where(eq(vendors.id, id));
   return getVendor(id);
+};
+
+export const deleteVendor = async (id: number) => {
+  const vendor = await db.query.vendors.findFirst({ where: eq(vendors.id, id) });
+  if (!vendor) throw new Error('Vendor not found.');
+  await db.delete(vendors).where(eq(vendors.id, id));
+  return { id, deleted: true, name: vendor.name };
 };

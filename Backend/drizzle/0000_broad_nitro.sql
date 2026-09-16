@@ -69,6 +69,17 @@ CREATE TABLE "accounts_receivable_payments" (
 	"created_at" bigint NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "admins" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"email" text NOT NULL,
+	"password" text NOT NULL,
+	"role" text DEFAULT 'admin' NOT NULL,
+	"active" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now(),
+	CONSTRAINT "admins_email_unique" UNIQUE("email")
+);
+--> statement-breakpoint
 CREATE TABLE "audit_logs" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"actor_id" integer,
@@ -81,6 +92,16 @@ CREATE TABLE "audit_logs" (
 	"reason" text DEFAULT '' NOT NULL,
 	"ip" text DEFAULT '' NOT NULL,
 	"created_at" bigint NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "cartitems" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"product_id" text NOT NULL,
+	"size" text NOT NULL,
+	"quantity" integer DEFAULT 1 NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now(),
+	CONSTRAINT "cartitems_user_product_size_unique" UNIQUE("user_id","product_id","size")
 );
 --> statement-breakpoint
 CREATE TABLE "chart_of_accounts" (
@@ -96,6 +117,43 @@ CREATE TABLE "chart_of_accounts" (
 	"created_at" bigint NOT NULL,
 	"updated_at" bigint NOT NULL,
 	CONSTRAINT "chart_of_accounts_code_unique" UNIQUE("code")
+);
+--> statement-breakpoint
+CREATE TABLE "coupons" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"code" text NOT NULL,
+	"title" text NOT NULL,
+	"description" text DEFAULT '' NOT NULL,
+	"image" text DEFAULT '' NOT NULL,
+	"discount_type" text DEFAULT 'percent' NOT NULL,
+	"discount_value" numeric(12, 2) NOT NULL,
+	"min_purchase" numeric(12, 2) DEFAULT '0' NOT NULL,
+	"max_discount" numeric(12, 2),
+	"valid_from" bigint NOT NULL,
+	"valid_till" bigint NOT NULL,
+	"active" boolean DEFAULT true NOT NULL,
+	"created_at" bigint NOT NULL,
+	CONSTRAINT "coupons_code_unique" UNIQUE("code")
+);
+--> statement-breakpoint
+CREATE TABLE "customorders" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"name" text DEFAULT 'Custom Perfume' NOT NULL,
+	"bottle_size" text DEFAULT '50ml' NOT NULL,
+	"top_notes" jsonb NOT NULL,
+	"heart_notes" jsonb NOT NULL,
+	"base_notes" jsonb NOT NULL,
+	"perfume_base" text NOT NULL,
+	"strength" text DEFAULT 'EDP' NOT NULL,
+	"strength_name" text DEFAULT 'Eau de Parfum' NOT NULL,
+	"custom_label" text DEFAULT '' NOT NULL,
+	"amount" numeric(12, 2) NOT NULL,
+	"status" text DEFAULT 'Order Placed' NOT NULL,
+	"payment_method" text DEFAULT 'COD' NOT NULL,
+	"payment" boolean DEFAULT false NOT NULL,
+	"address" jsonb NOT NULL,
+	"date" bigint NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "expense_records" (
@@ -134,6 +192,19 @@ CREATE TABLE "income_records" (
 	"created_at" bigint NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "inventory_movements" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"product_id" integer NOT NULL,
+	"change" integer NOT NULL,
+	"type" text NOT NULL,
+	"reference_id" text DEFAULT '' NOT NULL,
+	"qty_before" integer NOT NULL,
+	"qty_after" integer NOT NULL,
+	"note" text DEFAULT '' NOT NULL,
+	"created_by" integer,
+	"created_at" bigint NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "journal_entries" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"entry_number" text NOT NULL,
@@ -160,6 +231,47 @@ CREATE TABLE "journal_entry_lines" (
 	"description" text DEFAULT '' NOT NULL,
 	"cost_center" text DEFAULT '' NOT NULL,
 	"tax_info" jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "notes" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"layer" text NOT NULL,
+	"icon" text DEFAULT '🌿' NOT NULL,
+	"color" text DEFAULT '#C586A5' NOT NULL,
+	"description" text DEFAULT '' NOT NULL,
+	"active" boolean DEFAULT true NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "notificationreads" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"notification_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"read" boolean DEFAULT false NOT NULL,
+	CONSTRAINT "notificationreads_notification_user_unique" UNIQUE("notification_id","user_id")
+);
+--> statement-breakpoint
+CREATE TABLE "notifications" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer,
+	"type" text NOT NULL,
+	"title" text NOT NULL,
+	"message" text NOT NULL,
+	"link" text DEFAULT '' NOT NULL,
+	"read" boolean DEFAULT false NOT NULL,
+	"created_at" bigint NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "orders" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"items" jsonb NOT NULL,
+	"amount" numeric(12, 2) NOT NULL,
+	"address" jsonb NOT NULL,
+	"status" text DEFAULT 'Order Placed' NOT NULL,
+	"payment_method" text NOT NULL,
+	"payment" boolean DEFAULT false NOT NULL,
+	"date" bigint NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "payment_accounts" (
@@ -268,6 +380,75 @@ CREATE TABLE "payment_transactions" (
 	"updated_at" bigint NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "perfumebases" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"code" text NOT NULL,
+	"description" text DEFAULT '' NOT NULL,
+	"extra_price" numeric(12, 2) DEFAULT '0' NOT NULL,
+	"active" boolean DEFAULT true NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "products" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"description" text NOT NULL,
+	"price" numeric(12, 2) NOT NULL,
+	"image" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"category" text NOT NULL,
+	"sub_category" text NOT NULL,
+	"colors" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"sku" text,
+	"stock" integer DEFAULT 0 NOT NULL,
+	"reorder_level" integer DEFAULT 0 NOT NULL,
+	"bestseller" boolean DEFAULT false,
+	"rating" numeric(3, 2) DEFAULT '4.5',
+	"reviews" integer DEFAULT 0,
+	"badge" text,
+	"date" bigint NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "purchase_order_lines" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"purchase_order_id" integer NOT NULL,
+	"product_id" integer NOT NULL,
+	"quantity" integer NOT NULL,
+	"unit_cost" numeric(12, 2) DEFAULT '0' NOT NULL,
+	"line_total" numeric(12, 2) DEFAULT '0' NOT NULL,
+	"reorder_level" integer,
+	"created_at" bigint NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "purchase_orders" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"po_number" text NOT NULL,
+	"supplier_id" integer NOT NULL,
+	"order_date" bigint NOT NULL,
+	"expected_date" bigint,
+	"received_date" bigint,
+	"status" text DEFAULT 'ordered' NOT NULL,
+	"sub_total" numeric(12, 2) DEFAULT '0' NOT NULL,
+	"tax_amount" numeric(12, 2) DEFAULT '0' NOT NULL,
+	"total_amount" numeric(12, 2) DEFAULT '0' NOT NULL,
+	"notes" text DEFAULT '' NOT NULL,
+	"created_by" integer,
+	"created_at" bigint NOT NULL,
+	"updated_at" bigint NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "users" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"email" text NOT NULL,
+	"password" text NOT NULL,
+	"phone" text DEFAULT '',
+	"address" jsonb DEFAULT '{}'::jsonb,
+	"image" text DEFAULT '',
+	"credit" numeric(12, 2) DEFAULT '0' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now(),
+	CONSTRAINT "users_email_unique" UNIQUE("email")
+);
+--> statement-breakpoint
 CREATE TABLE "vendors" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
@@ -281,4 +462,10 @@ CREATE TABLE "vendors" (
 	"created_at" bigint NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "credit" numeric(12, 2) DEFAULT '0' NOT NULL;
+CREATE TABLE "wishlistitems" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"product_id" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now(),
+	CONSTRAINT "wishlistitems_user_product_unique" UNIQUE("user_id","product_id")
+);

@@ -17,6 +17,7 @@ const navItems: NavItem[] = [
   { label: 'Notify', to: '/notifications', icon: '🔔' },
   { label: 'Payments', to: '/payment', icon: '💳', end: true },
   { label: 'Accounts', to: '/accounts', icon: '🧾' },
+  { label: 'Stock', to: '/inventory', icon: '🗃️' },
   { label: 'Users', to: '/users', icon: '👥' },
   { label: 'Settings', to: '/settings', icon: '⚙️' },
 ]

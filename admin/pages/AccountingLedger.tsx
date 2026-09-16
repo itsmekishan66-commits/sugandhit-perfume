@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, StatCard, TableShell, Th, Td, Row, inputCls } from '../components/finance/FinanceUI';
 import { api, money, formatDate } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface ChartAcc { id: number; code: string; name: string; accountType: string; active: boolean }
 
@@ -86,7 +87,7 @@ const AccountingLedger = ({ token }: { token: string }) => {
 
       <SectionCard title="Ledger Entries">
         {loading ? (
-          <p className="text-center text-ink-soft/60 py-10">Loading ledger…</p>
+          <div className="flex items-center justify-center py-12"><Loading /></div>
         ) : rows.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">Select an account and run to view its ledger.</p>
         ) : (

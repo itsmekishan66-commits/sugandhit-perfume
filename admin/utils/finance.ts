@@ -170,6 +170,21 @@ export const DEBT_STATUS_LABELS: Record<string, string> = {
   written_off: 'Written Off',
 };
 
+export const PO_STATUS_LABELS: Record<string, string> = {
+  draft: 'Draft',
+  ordered: 'Ordered',
+  received: 'Received',
+  cancelled: 'Cancelled',
+};
+
+export const MOVEMENT_TYPE_LABELS: Record<string, string> = {
+  opening: 'Opening Stock',
+  adjustment: 'Adjustment',
+  purchase_receipt: 'Purchase Receipt',
+  sale: 'Sale',
+  sale_cancel: 'Sale Cancel / Return',
+};
+
 export const toneFor = (value: string | null | undefined): string => {
   const v = value ?? '';
   if (['successful', 'reconciled', 'matched', 'paid', 'open', 'posted', 'processed', 'active'].includes(v)) return 'green';

@@ -25,6 +25,7 @@ import {
   vendorUpdate,
   vendorToggle,
   vendorDetail,
+  vendorDelete,
   payableList,
   payableCreate,
   payableApprove,
@@ -111,6 +112,7 @@ accountsRouter.get('/vendors/:id', requireAdmin(PERMISSIONS.payables_view), vend
 accountsRouter.post('/vendors', requireAdmin(PERMISSIONS.payables_manage), validate(vendorCreateSchema), vendorCreate);
 accountsRouter.put('/vendors/:id', requireAdmin(PERMISSIONS.payables_manage), validate(vendorUpdateSchema), vendorUpdate);
 accountsRouter.post('/vendors/:id/toggle', requireAdmin(PERMISSIONS.payables_manage), vendorToggle);
+accountsRouter.delete('/vendors/:id', requireAdmin(PERMISSIONS.payables_manage), vendorDelete);
 
 accountsRouter.get('/payables', requireAdmin(PERMISSIONS.payables_view), payableList);
 accountsRouter.post('/payables', requireAdmin(PERMISSIONS.payables_manage), validate(payableCreateSchema), payableCreate);

@@ -4,6 +4,7 @@ import { backendUrl, currency } from '../config';
 import { toast } from 'react-toastify';
 import { userIdSchema, addCreditSchema } from '../validate/schemas';
 import PageHeader from '../components/PageHeader';
+import Loading from '../components/loading';
 
 interface Customer {
   id: number;
@@ -229,7 +230,7 @@ const Users = ({ token }: UsersProps) => {
         </div>
 
         {loading ? (
-          <div className="p-10 text-center text-ink-soft/60">Loading users…</div>
+          <div className="flex items-center justify-center py-12"><Loading /></div>
         ) : tab === 'customers' ? (
           <>
             {customers.length === 0 ? (
@@ -343,7 +344,7 @@ const Users = ({ token }: UsersProps) => {
             </button>
 
             {detailLoading ? (
-              <div className="p-16 text-center text-ink-soft/60">Loading customer details…</div>
+              <div className="flex items-center justify-center py-16"><Loading /></div>
             ) : (
               <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
                 <div className="p-6 border-b border-gold/15">

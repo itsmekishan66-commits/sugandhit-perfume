@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import PageHeader from '../components/PageHeader';
 import { SectionCard, TableShell, Th, Td, Row, Modal, Field, PrimaryBtn, GhostBtn, Pill, inputCls } from '../components/finance/FinanceUI';
 import { api, money, formatDate, JOURNAL_STATUS_LABELS } from '../utils/finance';
+import Loading from '../components/loading';
 
 interface ChartAcc { id: number; code: string; name: string; active: boolean }
 
@@ -132,7 +133,7 @@ const AccountingJournals = ({ token }: { token: string }) => {
         </select>
       }>
         {loading ? (
-          <p className="text-center text-ink-soft/60 py-10">Loading journals…</p>
+          <div className="flex items-center justify-center py-12"><Loading /></div>
         ) : items.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No journal entries found.</p>
         ) : (
