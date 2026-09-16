@@ -3,9 +3,17 @@ export default {
   content: [
     "./index.html",
     "./*.{js,ts,jsx,tsx}",
-    "./Components/**/*.{js,ts,jsx,tsx}",
-    "./Context/**/*.{js,ts,jsx,tsx}",
-    "./Pages/**/*.{js,ts,jsx,tsx}",
+    "./app/**/*.{js,ts,jsx,tsx}",
+    "./assets/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
+    "./context/**/*.{js,ts,jsx,tsx}",
+    "./features/**/*.{js,ts,jsx,tsx}",
+    "./hooks/**/*.{js,ts,jsx,tsx}",
+    "./layouts/**/*.{js,ts,jsx,tsx}",
+    "./services/**/*.{js,ts,jsx,tsx}",
+    "./types/**/*.{js,ts,jsx,tsx}",
+    "./utils/**/*.{js,ts,jsx,tsx}",
+    "./validate/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
