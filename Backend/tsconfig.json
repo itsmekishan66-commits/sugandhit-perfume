@@ -16,6 +16,6 @@
     "isolatedModules": true,
     "resolveJsonModule": true
   },
-  "include": ["server.ts", "app.ts", "db/**/*", "models/**/*", "controllers/**/*", "middleware/**/*", "routes/**/*", "services/**/*", "utils/**/*", "config/**/*"],
+  "include": ["server.ts", "app.ts", "config/**/*", "database/**/*", "modules/**/*", "middleware/**/*", "routes/**/*", "shared/**/*"],
   "exclude": ["node_modules", "dist"]
 }
