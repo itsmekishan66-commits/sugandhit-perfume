@@ -1,0 +1,1 @@
+export const inputCls = 'w-full px-3 py-2 rounded-xl';
