@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { GhostBtn } from '../ui/buttons';
 
@@ -16,9 +17,10 @@ export const Modal = ({
   wide?: boolean;
 }) => {
   if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-70 flex items-start justify-center bg-deep/60 p-4 overflow-y-auto backdrop-blur-sm">
-      <div className={`relative w-full ${wide ? 'max-w-4xl' : 'max-w-xl'} my-8 rounded-2xl bg-cream border border-gold/20 shadow-xl`}>
+  return createPortal(
+    <div className="fixed inset-0 z-70 overflow-y-auto bg-deep/60 backdrop-blur-sm">
+      <div className="flex min-h-full items-center justify-center p-4">
+      <div className={`relative w-full ${wide ? 'max-w-4xl' : 'max-w-xl'} rounded-2xl bg-cream border border-gold/20 shadow-xl`}>
         <div className="flex items-center justify-between p-5 border-b border-gold/15">
           <h3 className="font-display text-xl font-semibold text-ink">{title}</h3>
           <button
@@ -31,7 +33,9 @@ export const Modal = ({
         </div>
         <div className="max-h-[calc(100vh-10rem)] overflow-y-auto p-5">{children}</div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body,
   );
 };
 

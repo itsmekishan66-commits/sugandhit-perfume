@@ -103,7 +103,7 @@ const InventorySuppliers = ({ token }: { token: string }) => {
       <SectionCard title={`Suppliers (${total})`} action={
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft/50" />
-          <input className={`${inputCls} w-56 pl-9`} placeholder="Search name, category, phoneâ€¦" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input className={`${inputCls} w-56 pl-9`} placeholder="Search name, category, phone…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
       }>
         {loading ? (
@@ -115,10 +115,10 @@ const InventorySuppliers = ({ token }: { token: string }) => {
             {items.map((v) => (
               <Row key={v._id}>
                 <Td className="font-medium text-ink">{v.name}</Td>
-                <Td className="text-ink-soft">{v.category || 'â€”'}</Td>
-                <Td className="text-ink-soft">{v.phone || 'â€”'}</Td>
-                <Td className="text-ink-soft">{v.email || 'â€”'}</Td>
-                <Td className="text-ink-soft grow">{v.address || 'â€”'}</Td>
+                <Td className="text-ink-soft">{v.category || '—'}</Td>
+                <Td className="text-ink-soft">{v.phone || '—'}</Td>
+                <Td className="text-ink-soft">{v.email || '—'}</Td>
+                <Td className="text-ink-soft grow">{v.address || '—'}</Td>
 <Td right>
                     <RowActions onEdit={() => openEdit(v)} onDelete={() => setDeleteTarget(v)} />
                   </Td>
@@ -154,7 +154,7 @@ const InventorySuppliers = ({ token }: { token: string }) => {
           </div>
           <div className="flex justify-end gap-3">
             <GhostBtn onClick={() => setShowAdd(false)}>Cancel</GhostBtn>
-            <PrimaryBtn onClick={add} disabled={working}>{working ? 'Savingâ€¦' : 'Add Supplier'}</PrimaryBtn>
+            <PrimaryBtn onClick={add} disabled={working}>{working ? 'Saving…' : 'Add Supplier'}</PrimaryBtn>
           </div>
         </div>
       </Modal>
@@ -186,7 +186,7 @@ const InventorySuppliers = ({ token }: { token: string }) => {
             </div>
             <div className="flex justify-end gap-3">
               <GhostBtn onClick={() => setEditTarget(null)}>Cancel</GhostBtn>
-              <PrimaryBtn onClick={saveEdit} disabled={working}>{working ? 'Savingâ€¦' : 'Save Supplier'}</PrimaryBtn>
+              <PrimaryBtn onClick={saveEdit} disabled={working}>{working ? 'Saving…' : 'Save Supplier'}</PrimaryBtn>
             </div>
           </div>
         )}
@@ -197,7 +197,7 @@ const InventorySuppliers = ({ token }: { token: string }) => {
         title="Delete Supplier"
         message={
           <>
-            Are you sure you want to delete supplier <span className="font-medium text-ink">â€œ{deleteTarget?.name}â€</span>?
+            Are you sure you want to delete supplier <span className="font-medium text-ink">“{deleteTarget?.name}”</span>?
           </>
         }
         confirmLabel="Delete"

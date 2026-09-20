@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Title from "@/components/ui/Title";
-import { toast } from "react-toastify";
+import { showToast } from "@/components/feedback/toast";
 import CartTotal from "@/components/cart/CartTotal";
 import { assets } from "@/assets/assets";
 import { useApp } from "@/context/AppContext";
@@ -48,12 +48,12 @@ const PlaceOrder = () => {
   const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (subtotal === 0) {
-      toast.error('Your cart is empty');
+      showToast('Your cart is empty', 'error');
       return;
     }
     const parsed = orderAddressSchema.safeParse(formData);
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
+      showToast(parsed.error.issues[0].message, 'error');
       return;
     }
     try {
@@ -70,19 +70,19 @@ const PlaceOrder = () => {
           const res = await placeOrder(token, orderData);
           if (res.success) {
             setCartItems({});
-            toast.success("Order placed — we'll begin blending now!");
+            showToast("Order placed — we'll begin blending now!", 'success');
             navigate('/orders');
           } else {
-            toast.error(res.message || "Order failed");
+            showToast(res.message || "Order failed", 'error');
           }
           break;
         }
         default:
-          toast.info('This payment method is coming soon — try Cash on Delivery.');
+          showToast('This payment method is coming soon — try Cash on Delivery.', 'info');
           break;
       }
     } catch (error) {
-      toast.error((error as Error).message);
+      showToast((error as Error).message, 'error');
     }
   }
 

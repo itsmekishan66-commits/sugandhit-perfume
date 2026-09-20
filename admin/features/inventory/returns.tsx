@@ -85,7 +85,7 @@ const InventoryReturns = ({ token }: { token: string }) => {
       <SectionCard title={`Recent Returns & Adjustments (${total})`} action={
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft/50" />
-          <input className={`${inputCls} w-56 pl-9`} placeholder="Search product, ref, noteâ€¦" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input className={`${inputCls} w-56 pl-9`} placeholder="Search product, ref, note…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
       }>
         <p className="px-6 pt-3 pb-2 text-xs text-ink-soft">Shows sale returns (from cancelled/returned orders) and manual adjustments. All other movements live on the Movements tab.</p>
@@ -103,7 +103,7 @@ const InventoryReturns = ({ token }: { token: string }) => {
                 <Td right className={`tabular-nums font-semibold ${m.change >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                   {m.change >= 0 ? `+${m.change}` : m.change}
                 </Td>
-                <Td className="text-ink-soft grow">{m.note || 'â€”'}</Td>
+                <Td className="text-ink-soft grow">{m.note || '—'}</Td>
               </Row>
             ))}
           </TableShell>
@@ -115,7 +115,7 @@ const InventoryReturns = ({ token }: { token: string }) => {
           <p className="text-sm text-ink-soft">Positive adds units back to stock (e.g. returns, damaged-units-found). Negative removes units (e.g. damaged/lost units or corrections).</p>
           <Field label="Product">
             <select className={inputCls} value={form.productId} onChange={(e) => setForm({ ...form, productId: e.target.value })}>
-              <option value="">Select productâ€¦</option>
+              <option value="">Select product…</option>
               {products.map((p) => <option key={p.id} value={p.id}>{p.name} (stock {p.stock})</option>)}
             </select>
           </Field>
@@ -129,7 +129,7 @@ const InventoryReturns = ({ token }: { token: string }) => {
           </div>
           <div className="flex justify-end gap-3">
             <GhostBtn onClick={() => setShowAdjust(false)}>Cancel</GhostBtn>
-            <PrimaryBtn onClick={saveAdjust} disabled={working}>{working ? 'Savingâ€¦' : 'Save'}</PrimaryBtn>
+            <PrimaryBtn onClick={saveAdjust} disabled={working}>{working ? 'Saving…' : 'Save'}</PrimaryBtn>
           </div>
         </div>
       </Modal>

@@ -186,9 +186,9 @@ const PaymentPayables = ({ token }: { token: string }) => {
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         <StatCard label="Current" value={money(aging?.current)} tint="from-gold-soft to-gold" />
-        <StatCard label="1â€“30 days" value={money(aging?.d30)} tint="from-blush to-sand" />
-        <StatCard label="31â€“60 days" value={money(aging?.d60)} tint="from-sand to-espresso" />
-        <StatCard label="61â€“90 days" value={money(aging?.d90)} tint="from-blush to-sand" />
+        <StatCard label="1–30 days" value={money(aging?.d30)} tint="from-blush to-sand" />
+        <StatCard label="31–60 days" value={money(aging?.d60)} tint="from-sand to-espresso" />
+        <StatCard label="61–90 days" value={money(aging?.d90)} tint="from-blush to-sand" />
         <StatCard label="90+ days" value={money(aging?.d90plus)} tint="from-gold-soft to-gold" />
       </div>
 
@@ -202,7 +202,7 @@ const PaymentPayables = ({ token }: { token: string }) => {
             <option value="paid">Paid</option>
             <option value="overdue">Overdue</option>
           </select>
-          <span className="text-xs text-ink-soft">{payableTotal} bills Â· {money(totalOutstanding)} outstanding</span>
+          <span className="text-xs text-ink-soft">{payableTotal} bills · {money(totalOutstanding)} outstanding</span>
         </div>
         {tab === 'bills' ? (
           loading ? (
@@ -282,10 +282,10 @@ const PaymentPayables = ({ token }: { token: string }) => {
                     {v.address && <p className="text-xs text-ink-soft">{v.address}</p>}
                   </Td>
                   <Td>
-                    <p className="text-ink-soft">{v.email || 'â€”'}</p>
+                    <p className="text-ink-soft">{v.email || '—'}</p>
                     <p className="text-xs text-ink-soft">{v.phone || ''}</p>
                   </Td>
-                  <Td>{v.category || 'â€”'}</Td>
+                  <Td>{v.category || '—'}</Td>
                   <Td><Pill tone={v.active ? 'green' : 'red'}>{v.active ? 'Active' : 'Inactive'}</Pill></Td>
                 </Row>
               ))}
@@ -317,7 +317,7 @@ const PaymentPayables = ({ token }: { token: string }) => {
         </div>
         <div className="mt-5 flex justify-end gap-3">
           <GhostBtn onClick={() => setShowVendor(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={createVendor} disabled={saving}>{saving ? 'Savingâ€¦' : 'Create Vendor'}</PrimaryBtn>
+          <PrimaryBtn onClick={createVendor} disabled={saving}>{saving ? 'Saving…' : 'Create Vendor'}</PrimaryBtn>
         </div>
       </Modal>
 
@@ -325,7 +325,7 @@ const PaymentPayables = ({ token }: { token: string }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Vendor">
             <select className={inputCls} value={billForm.vendorId} onChange={(e) => setBillForm({ ...billForm, vendorId: e.target.value })}>
-              <option value="">Select vendorâ€¦</option>
+              <option value="">Select vendor…</option>
               {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
             </select>
           </Field>
@@ -350,7 +350,7 @@ const PaymentPayables = ({ token }: { token: string }) => {
         </div>
         <div className="mt-5 flex justify-end gap-3">
           <GhostBtn onClick={() => setShowBill(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={createBill} disabled={saving}>{saving ? 'Savingâ€¦' : 'Create Bill'}</PrimaryBtn>
+          <PrimaryBtn onClick={createBill} disabled={saving}>{saving ? 'Saving…' : 'Create Bill'}</PrimaryBtn>
         </div>
       </Modal>
 
@@ -358,11 +358,11 @@ const PaymentPayables = ({ token }: { token: string }) => {
         {payBill && (
           <div className="flex flex-col gap-4">
             <div className="rounded-xl border border-gold/15 bg-white/70 p-3 text-sm">
-              <p className="font-medium text-ink">{payBill.vendor?.name} â€” outstanding <span className="font-semibold text-espresso">{money(payBill.outstandingAmount)}</span></p>
+              <p className="font-medium text-ink">{payBill.vendor?.name} — outstanding <span className="font-semibold text-espresso">{money(payBill.outstandingAmount)}</span></p>
             </div>
             <Field label="Payment account">
               <select className={inputCls} value={payAccountId} onChange={(e) => setPayAccountId(e.target.value)}>
-                <option value="">Selectâ€¦</option>
+                <option value="">Select…</option>
                 {payAccounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </Field>
@@ -372,7 +372,7 @@ const PaymentPayables = ({ token }: { token: string }) => {
             <p className="text-xs text-ink-soft">Select the bank/cash account this payment flows out from.</p>
             <div className="flex justify-end gap-3">
               <GhostBtn onClick={() => setPayBill(null)}>Cancel</GhostBtn>
-              <PrimaryBtn onClick={submitPay} disabled={saving}>{saving ? 'Recordingâ€¦' : 'Record Payment'}</PrimaryBtn>
+              <PrimaryBtn onClick={submitPay} disabled={saving}>{saving ? 'Recording…' : 'Record Payment'}</PrimaryBtn>
             </div>
           </div>
         )}

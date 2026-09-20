@@ -51,8 +51,8 @@ const Dashboard = ({ token }: DashboardProps) => {
       try {
         const [pRes, oRes, cRes, cuponRes, notifRes] = await Promise.all([
           fetch(backendUrl + '/api/product/list'),
-          fetch(backendUrl + '/api/order/list', { headers: { token } }),
-          fetch(backendUrl + '/api/custom-order/list', { headers: { token } }),
+          fetch(backendUrl + '/api/order/list', { method: 'POST', headers: { token } }),
+          fetch(backendUrl + '/api/custom-order/list', { method: 'POST', headers: { token } }),
           fetch(backendUrl + '/api/coupon/admin/list', { method: 'POST', headers: { token } }),
           fetch(backendUrl + '/api/notification/admin/list', { method: 'POST', headers: { token } }),
         ]);
@@ -179,7 +179,7 @@ return (
               {recent.map((o) => (
                 <li key={o.type + (o._id || '')} className="py-2.5 flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-ink">{o.type === 'custom' ? (o.name || '') + ' âœ¦' : o.items?.[0]?.name || 'Order'}</p>
+                    <p className="truncate font-medium text-ink">{o.type === 'custom' ? (o.name || '') + ' ✦' : o.items?.[0]?.name || 'Order'}</p>
                     <p className="text-xs text-ink-soft">{new Date(o.date as string | number).toLocaleDateString()}</p>
                   </div>
                   <span className="shrink-0 font-semibold text-ink">{currency}{Number(o.amount).toLocaleString()}</span>

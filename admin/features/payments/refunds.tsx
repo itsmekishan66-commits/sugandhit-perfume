@@ -92,8 +92,8 @@ const PaymentRefunds = ({ token }: { token: string }) => {
               <Row key={r._id}>
                 <Td className="whitespace-nowrap text-ink-soft">{formatDateTime(r.createdAt)}</Td>
                 <Td className="font-medium text-ink">{r.refundRef || `#${r.id}`}<p className="text-xs text-ink-soft">On transaction #{r.transactionId}</p></Td>
-                <Td>{r.chargeback ? <Pill tone="red">Chargeback</Pill> : REFUND_TYPE_LABELS[r.type ?? ''] ?? r.type ?? 'â€”'}</Td>
-                <Td className="max-w-[16rem] text-ink-soft">{r.reason || 'â€”'}</Td>
+                <Td>{r.chargeback ? <Pill tone="red">Chargeback</Pill> : REFUND_TYPE_LABELS[r.type ?? ''] ?? r.type ?? '—'}</Td>
+                <Td className="max-w-[16rem] text-ink-soft">{r.reason || '—'}</Td>
                 <Td right className="font-semibold text-espresso tabular-nums">{money(r.amount)}</Td>
                 <Td><Pill tone={r.status === 'processed' ? 'green' : r.status === 'requested' ? 'amber' : r.status === 'failed' || r.status === 'reversed' ? 'red' : 'blue'}>{REFUND_STATUS_LABELS[r.status] ?? r.status}</Pill></Td>
                 <Td right>

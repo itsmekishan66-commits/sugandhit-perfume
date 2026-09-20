@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
-import { findAll, findById, create, remove } from './products.repository.js';
-import type { ProductInput } from './products.types.js';
+import { findAll, findById, create, remove, update } from './products.repository.js';
+import type { ProductInput, ProductUpdateInput } from './products.types.js';
 
 export const addProduct = async (data: ProductInput) => create(data);
 
@@ -19,3 +19,5 @@ export const listProducts = async () => findAll();
 export const removeProduct = async (id: string | number) => remove(id);
 
 export const getProductById = async (productId: string | number) => findById(productId);
+
+export const updateProduct = async (id: string | number, data: ProductUpdateInput) => update(id, data);

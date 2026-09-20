@@ -120,7 +120,7 @@ const InventoryPurchases = ({ token }: { token: string }) => {
     setWorking(true);
     try {
       await api('/api/inventory/purchases/receive', token, { method: 'POST', body: { id: po.id } });
-      toast.success('Received â€” stock added, bill and journal entry created.');
+      toast.success('Received — stock added, bill and journal entry created.');
       setDetail(null);
       setReceiveTarget(null);
       load();
@@ -150,7 +150,7 @@ const InventoryPurchases = ({ token }: { token: string }) => {
     setWorking(true);
     try {
       await api('/api/inventory/purchases/cancel', token, { method: 'POST', body: { id: po.id } });
-      toast.success('Purchase order cancelled â€” stock was not added.');
+      toast.success('Purchase order cancelled — stock was not added.');
       setReceiveTarget(null);
       load();
     } catch (error) {
@@ -290,7 +290,7 @@ const InventoryPurchases = ({ token }: { token: string }) => {
         <div className="px-6 py-3 border-b border-gold/10 flex flex-wrap items-center justify-between gap-1">
             <div className="relative min-w-0">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft/50" />
-              <input className={`${inputCls} w-5 pl-9`} placeholder="Search PO, supplier, notesâ€¦" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+              <input className={`${inputCls} w-5 pl-9`} placeholder="Search PO, supplier, notes…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
             </div>
           <div className="flex items-center gap-8">
             <select className={`${inputCls} w-44 select-soft`} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
@@ -347,7 +347,7 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Supplier">
               <select className={inputCls} value={form.supplierId} onChange={(e) => setForm({ ...form, supplierId: e.target.value })}>
-                <option value="">Select supplierâ€¦</option>
+                <option value="">Select supplier…</option>
                 {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
               </select>
             </Field>
@@ -372,7 +372,7 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
                 <ProductPicker
                   products={products}
                   onAdd={addProductLine}
-                  placeholder="Search product to add to the orderâ€¦"
+                  placeholder="Search product to add to the order…"
                   disabled={working}
                 />
               </div>
@@ -383,7 +383,7 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
                   <div className="flex flex-col gap-1">
                     <span className="text-xs text-ink-soft">Product</span>
                     <select className={inputCls} value={l.productId} onChange={(e) => setLineProduct(idx, e.target.value)}>
-                      <option value="">Selectâ€¦</option>
+                      <option value="">Select…</option>
                       {products.map((p) => <option key={p.id} value={p.id}>{p.name} (stock {p.stock ?? 0})</option>)}
                     </select>
                   </div>
@@ -418,7 +418,7 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
 
           <div className="flex justify-end gap-3">
             <GhostBtn onClick={() => setShowCreate(false)}>Cancel</GhostBtn>
-            <PrimaryBtn onClick={create} disabled={working}>{working ? 'Creatingâ€¦' : 'Create Purchase Order'}</PrimaryBtn>
+            <PrimaryBtn onClick={create} disabled={working}>{working ? 'Creating…' : 'Create Purchase Order'}</PrimaryBtn>
           </div>
         </div>
       </Modal>
@@ -440,7 +440,7 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
                   <Td right className="tabular-nums">{l.quantity}</Td>
                   <Td right className="tabular-nums">{money(l.unitCost)}</Td>
                   <Td right className="tabular-nums">{money(l.lineTotal)}</Td>
-                  <Td right className="tabular-nums">{l.reorderLevel !== null ? l.reorderLevel : 'â€”'}</Td>
+                  <Td right className="tabular-nums">{l.reorderLevel !== null ? l.reorderLevel : '—'}</Td>
                 </Row>
               ))}
             </TableShell>
@@ -449,7 +449,7 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
               {detail.status === 'received'
                 ? 'Received. Stock was added, a vendor bill was created under Payables, and a journal entry was posted (Inventory Dr / Accounts Payable Cr).'
                 : detail.status === 'cancelled'
-                  ? 'This purchase order was cancelled â€” no stock changes were made.'
+                  ? 'This purchase order was cancelled — no stock changes were made.'
                   : 'Ordered. Receiving adds stock for every line, applies any min stock levels, creates a vendor bill, and posts the inventory journal entry.'}
             </div>
 
@@ -466,18 +466,18 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
         )}
       </Modal>
 
-      <Modal open={!!editTarget} title={`Edit Purchase Order â€” ${editTarget?.poNumber ?? ''}`} onClose={() => setEditTarget(null)} wide>
+      <Modal open={!!editTarget} title={`Edit Purchase Order — ${editTarget?.poNumber ?? ''}`} onClose={() => setEditTarget(null)} wide>
         {editTarget && (
           <div className="flex flex-col gap-4">
             {editTarget.status === 'received' && (
               <div className="rounded-xl border border-gold/20 bg-gold/10 p-3 text-xs text-ink-soft">
-                This order was already received. Changes here update the order and its lines only â€” stock, the vendor bill and the posted journal entry are <span className="font-medium text-ink">not</span> affected.
+                This order was already received. Changes here update the order and its lines only — stock, the vendor bill and the posted journal entry are <span className="font-medium text-ink">not</span> affected.
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Supplier">
                 <select className={inputCls} value={editForm.supplierId} onChange={(e) => setEditForm({ ...editForm, supplierId: e.target.value })}>
-                  <option value="">Select supplierâ€¦</option>
+                  <option value="">Select supplier…</option>
                   {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
                 </select>
               </Field>
@@ -502,7 +502,7 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
                   <ProductPicker
                     products={products}
                     onAdd={addEditLine}
-                    placeholder="Search product to add to the orderâ€¦"
+                    placeholder="Search product to add to the order…"
                     disabled={working}
                   />
                 </div>
@@ -513,7 +513,7 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
                     <div className="flex flex-col gap-1">
                       <span className="text-xs text-ink-soft">Product</span>
                       <select className={inputCls} value={l.productId} onChange={(e) => editUpdateLine(idx, 'productId', e.target.value)}>
-                        <option value="">Selectâ€¦</option>
+                        <option value="">Select…</option>
                         {products.map((p) => <option key={p.id} value={p.id}>{p.name} (stock {p.stock ?? 0})</option>)}
                       </select>
                     </div>
@@ -547,7 +547,7 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
 
             <div className="flex justify-end gap-3">
               <GhostBtn onClick={() => setEditTarget(null)}>Cancel</GhostBtn>
-              <PrimaryBtn onClick={saveEdit} disabled={working}>{working ? 'Savingâ€¦' : 'Save Changes'}</PrimaryBtn>
+              <PrimaryBtn onClick={saveEdit} disabled={working}>{working ? 'Saving…' : 'Save Changes'}</PrimaryBtn>
             </div>
           </div>
         )}
@@ -558,10 +558,10 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
         title="Receive or Cancel Purchase Order?"
         message={
           <>
-            <span className="font-medium text-ink">â€œ{receiveTarget?.poNumber}â€</span> from{' '}
+            <span className="font-medium text-ink">“{receiveTarget?.poNumber}”</span> from{' '}
             <span className="font-medium text-ink">{receiveTarget?.supplier?.name || `supplier #${receiveTarget?.supplierId}`}</span> is currently ordered.
             <span className="mt-3 block text-ink-soft">By clicking <span className="font-medium text-espresso">Receive Stock</span> the stock level will increase for every line, a vendor bill is created under Payables, and the inventory journal entry is posted (Inventory Dr / Accounts Payable Cr). This cannot be undone.</span>
-            <span className="mt-3 block text-ink-soft">By clicking <span className="font-medium text-espresso">Cancel Purchase Order</span> the purchase order will be cancelled instead â€” stock will <span className="font-medium text-ink">not</span> be added and the order status becomes Cancelled.</span>
+            <span className="mt-3 block text-ink-soft">By clicking <span className="font-medium text-espresso">Cancel Purchase Order</span> the purchase order will be cancelled instead — stock will <span className="font-medium text-ink">not</span> be added and the order status becomes Cancelled.</span>
           </>
         }
         confirmLabel="Receive Stock"
@@ -578,10 +578,10 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
         title="Delete Purchase Order"
         message={
           <>
-            Are you sure you want to delete purchase order <span className="font-medium text-ink">â€œ{deleteTarget?.poNumber}â€</span> for{' '}
+            Are you sure you want to delete purchase order <span className="font-medium text-ink">“{deleteTarget?.poNumber}”</span> for{' '}
             <span className="font-medium text-ink">{deleteTarget?.supplier?.name || `supplier #${deleteTarget?.supplierId}`}</span>? Its lines will be removed too.
             {deleteTarget?.status === 'received' && (
-              <span className="mt-2 block">This order was already received â€” the vendor bill and posted journal entry are not deleted.</span>
+              <span className="mt-2 block">This order was already received — the vendor bill and posted journal entry are not deleted.</span>
             )}
           </>
         }

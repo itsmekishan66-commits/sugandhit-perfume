@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
+import { showToast } from '@/components/feedback/toast'
 import Reveal from '@/components/ui/Reveal'
 import { loginSchema } from '@/validate/schemas'
 import { useAuth } from '@/context/AuthContext'
@@ -18,7 +18,7 @@ const Login = () => {
 
     const parsed = loginSchema.safeParse({ email, password });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
+      showToast(parsed.error.issues[0].message, 'error');
       return;
     }
     const payload = parsed.data;
@@ -27,13 +27,13 @@ const Login = () => {
       const { success, token: nextToken, message } = await loginUser(payload);
       if (success) {
         setToken(nextToken);
-        toast.success('Welcome back to Sugandhit.');
+        showToast('Welcome back to Sugandhit.', 'success');
         navigate('/');
       } else {
-        toast.error(message || 'Login failed');
+        showToast(message || 'Login failed', 'error');
       }
     } catch (error) {
-      toast.error((error as Error).message);
+      showToast((error as Error).message, 'error');
     }
   };
 

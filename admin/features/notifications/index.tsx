@@ -3,7 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { backendUrl } from '../../config';
 import { toast } from 'react-toastify';
 import { notificationSchema, notificationIdSchema } from '../../validate/schemas';
-import { PageHeader } from '../../components';
+import { PageHeader, ConfirmDialog } from '../../components';
 
 interface Notification {
   _id: string;
@@ -42,6 +42,7 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
   const [message, setMessage] = useState('');
   const [link, setLink] = useState('');
   const [sending, setSending] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Notification | null>(null);
 
   const fetchList = async () => {
     try {
@@ -206,7 +207,7 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
           </div>
         </div>
         <button type="submit" disabled={sending} className="btn-primary w-32 py-3 mt-6 disabled:opacity-50">
-          {sending ? 'Sendingâ€¦' : 'SEND'}
+          {sending ? 'Sending…' : 'SEND'}
         </button>
       </form>
 
@@ -228,11 +229,23 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
                 <p className="text-xs text-ink-soft/60">{n.userId ? `User #${n.userId}` : 'All customers'}</p>
                 <p className="text-xs text-ink-soft/60">{new Date(n.createdAt).toLocaleDateString()}</p>
               </div>
-              <p onClick={() => deleteNotification(n._id)} className="cursor-pointer text-lg text-red-500 hover:scale-110 transition-transform">âœ•</p>
+              <p onClick={() => setDeleteTarget(n)} className="cursor-pointer text-lg text-red-500 hover:scale-110 transition-transform">✕</p>
             </div>
           ))}
         </div>
       </div>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete Notification"
+        message={
+          <>
+            Are you sure you want to delete notification <span className="font-medium text-ink">“{deleteTarget?.title}”</span>? It will be removed from all customers' inboxes.
+          </>
+        }
+        confirmLabel="Delete"
+        onConfirm={() => { if (deleteTarget) void deleteNotification(deleteTarget._id); setDeleteTarget(null); }}
+        onClose={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };

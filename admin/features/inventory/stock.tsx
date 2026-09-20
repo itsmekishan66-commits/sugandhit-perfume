@@ -123,7 +123,7 @@ const InventoryStock = ({ token }: { token: string }) => {
         <div className="px-6 py-3 border-b border-gold/10 flex flex-wrap items-center gap-3">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft/50" />
-            <input className={`${inputCls} w-56 pl-9`} placeholder="Search name, skuâ€¦" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+            <input className={`${inputCls} w-56 pl-9`} placeholder="Search name, sku…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
           </div>
           <button onClick={() => { setLowStock((v) => !v); setPage(1); }} className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm cursor-pointer ${lowStock ? 'border-espresso bg-espresso text-cream' : 'border-gold/25 bg-white/70 text-ink-soft hover:text-espresso'}`}>
             <SlidersHorizontal size={14} /> Low stock
@@ -141,7 +141,7 @@ const InventoryStock = ({ token }: { token: string }) => {
               return (
                 <Row key={it._id}>
                   <Td className="font-medium text-ink">{it.name}</Td>
-                  <Td className="text-ink-soft">{it.sku || 'â€”'}</Td>
+                  <Td className="text-ink-soft">{it.sku || '—'}</Td>
                   <Td right className="tabular-nums">{money(it.price)}</Td>
                   <Td right className="tabular-nums text-ink-soft">{money(it.cost)}</Td>
                   <Td right className="tabular-nums font-semibold text-espresso">{it.stock}</Td>
@@ -164,7 +164,7 @@ const InventoryStock = ({ token }: { token: string }) => {
         )}
       </SectionCard>
 
-      <Modal open={!!editTarget} title={`Edit Product â€” ${editTarget?.name ?? ''}`} onClose={() => setEditTarget(null)}>
+      <Modal open={!!editTarget} title={`Edit Product — ${editTarget?.name ?? ''}`} onClose={() => setEditTarget(null)}>
         <div className="flex flex-col gap-4">
           <Field label="Product name">
             <input className={inputCls} value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
@@ -173,10 +173,10 @@ const InventoryStock = ({ token }: { token: string }) => {
             <input className={inputCls} value={editForm.sku} onChange={(e) => setEditForm({ ...editForm, sku: e.target.value })} />
           </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="SP â€” Selling price">
+            <Field label="SP — Selling price">
               <input type="number" className={inputCls} value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: e.target.value })} />
             </Field>
-            <Field label="CP â€” Cost price">
+            <Field label="CP — Cost price">
               <input type="number" className={inputCls} value={editForm.cost} onChange={(e) => setEditForm({ ...editForm, cost: e.target.value })} />
             </Field>
           </div>
@@ -185,7 +185,7 @@ const InventoryStock = ({ token }: { token: string }) => {
           </Field>
           <div className="flex justify-end gap-3">
             <GhostBtn onClick={() => setEditTarget(null)}>Cancel</GhostBtn>
-            <PrimaryBtn onClick={saveEdit} disabled={working}>{working ? 'Savingâ€¦' : 'Save Product'}</PrimaryBtn>
+            <PrimaryBtn onClick={saveEdit} disabled={working}>{working ? 'Saving…' : 'Save Product'}</PrimaryBtn>
           </div>
         </div>
       </Modal>
@@ -196,7 +196,7 @@ const InventoryStock = ({ token }: { token: string }) => {
         message={
           <>
             Are you sure you want to delete this product{' '}
-            <span className="font-medium text-ink">â€œ{deleteTarget?.name}â€</span>? Past purchase lines and stock movements still reference it, so only the product record is removed.
+            <span className="font-medium text-ink">“{deleteTarget?.name}”</span>? Past purchase lines and stock movements still reference it, so only the product record is removed.
           </>
         }
         confirmLabel="Delete"

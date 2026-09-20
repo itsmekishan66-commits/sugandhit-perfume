@@ -105,7 +105,7 @@ const Payment = ({ token }: { token: string }) => {
             <StatCard label="Successful Payments" value={money(data?.successfulAmount)} sub={`${data?.successfulCount} transactions`} icon={<CheckCircle2 size={20} />} tint="from-sand to-gold" />
             <StatCard label="Pending" value={money(data?.pendingAmount)} sub={`${data?.pendingCount} transactions`} icon={<Clock size={20} />} tint="from-blush to-sand" />
             <StatCard label="Failed" value={money(data?.failedAmount)} sub={`${data?.failedCount} transactions`} icon={<XCircle size={20} />} tint="from-espresso/60 to-espresso" />
-            <StatCard label="Refunds / Chargebacks" value={money((data?.refundedAmount ?? 0) + (data?.chargebackAmount ?? 0))} sub={`Refunds ${money(data?.refundedAmount)} Â· Chargebacks ${money(data?.chargebackAmount)}`} icon={<RefreshCw size={20} />} tint="from-gold to-espresso" />
+            <StatCard label="Refunds / Chargebacks" value={money((data?.refundedAmount ?? 0) + (data?.chargebackAmount ?? 0))} sub={`Refunds ${money(data?.refundedAmount)} · Chargebacks ${money(data?.chargebackAmount)}`} icon={<RefreshCw size={20} />} tint="from-gold to-espresso" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

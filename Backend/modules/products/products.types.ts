@@ -38,3 +38,14 @@ export interface ProductInput {
   image: string[];
   date: number;
 }
+
+export interface ProductUpdateInput {
+  name: string;
+  description: string;
+  price: string;
+  category: string;
+  subCategory: string;
+  variants?: { name: string; price: string; description: string; image: string }[];
+  bestseller?: string | boolean;
+  image: string[];
+}

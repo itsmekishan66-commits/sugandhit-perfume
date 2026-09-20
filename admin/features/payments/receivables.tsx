@@ -116,9 +116,9 @@ const PaymentReceivables = ({ token }: { token: string }) => {
   const agingRows: { label: string; value: number; tone: string }[] = aging
     ? [
         { label: 'Current', value: aging.current, tone: 'green' },
-        { label: '1â€“30 days', value: aging.d30, tone: 'gold' },
-        { label: '31â€“60 days', value: aging.d60, tone: 'amber' },
-        { label: '61â€“90 days', value: aging.d90, tone: 'amber' },
+        { label: '1–30 days', value: aging.d30, tone: 'gold' },
+        { label: '31–60 days', value: aging.d60, tone: 'amber' },
+        { label: '61–90 days', value: aging.d90, tone: 'amber' },
         { label: '90+ days', value: aging.d90plus, tone: 'red' },
       ]
     : [];
@@ -174,7 +174,7 @@ const PaymentReceivables = ({ token }: { token: string }) => {
             {items.map((r) => (
               <Row key={r._id}>
                 <Td>
-                  <p className="font-medium text-ink">{r.customer?.name || (r.customerId ? `Customer #${r.customerId}` : 'â€”')}</p>
+                  <p className="font-medium text-ink">{r.customer?.name || (r.customerId ? `Customer #${r.customerId}` : '—')}</p>
                 </Td>
                 <Td className="text-ink-soft">{r.invoiceRef || (r.orderId ? `Order #${r.orderId}` : `#${r.id}`)}</Td>
                 <Td>{formatDate(r.invoiceDate)}</Td>
@@ -210,7 +210,7 @@ const PaymentReceivables = ({ token }: { token: string }) => {
         {adjust && (
           <div className="flex flex-col gap-4">
             <div className="rounded-xl border border-gold/15 bg-white/70 p-3 text-sm">
-              <p className="font-medium text-ink">{adjust.customer?.name || 'Customer'} â€” outstanding <span className="font-semibold text-espresso">{money(adjust.outstandingAmount)}</span></p>
+              <p className="font-medium text-ink">{adjust.customer?.name || 'Customer'} — outstanding <span className="font-semibold text-espresso">{money(adjust.outstandingAmount)}</span></p>
             </div>
             <div className="flex gap-2">
               <button onClick={() => setAdjustMode('adjust')} className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer ${adjustMode === 'adjust' ? 'bg-sand text-espresso border border-gold/30' : 'text-ink-soft border border-gold/20'}`}>Adjust balance</button>
@@ -226,7 +226,7 @@ const PaymentReceivables = ({ token }: { token: string }) => {
             </Field>
             <div className="flex justify-end gap-3">
               <GhostBtn onClick={() => setAdjust(null)}>Cancel</GhostBtn>
-              <PrimaryBtn onClick={submitAdjust} disabled={working}>{working ? 'Savingâ€¦' : adjustMode === 'write_off' ? 'Write Off' : 'Apply Adjustment'}</PrimaryBtn>
+              <PrimaryBtn onClick={submitAdjust} disabled={working}>{working ? 'Saving…' : adjustMode === 'write_off' ? 'Write Off' : 'Apply Adjustment'}</PrimaryBtn>
             </div>
           </div>
         )}

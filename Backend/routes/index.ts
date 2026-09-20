@@ -37,26 +37,26 @@ wishlistRouter.post('/remove', authUser, validate(wishlistSchema), wishlistRemov
 
 const routes = express.Router();
 
-routes.use('/api/user', authRouter);
-routes.use('/api/user', usersRouter);
-routes.use('/api/product', productsRouter);
-routes.use('/api/order', ordersRouter);
-routes.use('/api/custom-order', customOrderRouter);
-routes.use('/api/coupon', couponsRouter);
-routes.use('/api/notification', notificationsRouter);
-routes.use('/api/customers', customersRouter);
-routes.use('/api/inventory', inventoryRouter);
-routes.use('/api/suppliers', suppliersRouter);
-routes.use('/api/payment', paymentsRouter);
-routes.use('/api/note', notesRouter);
-routes.use('/api/uploads', uploadsRouter);
+routes.use('/user', authRouter);
+routes.use('/user', usersRouter);
+routes.use('/product', productsRouter);
+routes.use('/order', ordersRouter);
+routes.use('/custom-order', customOrderRouter);
+routes.use('/coupon', couponsRouter);
+routes.use('/notification', notificationsRouter);
+routes.use('/customers', customersRouter);
+routes.use('/inventory', inventoryRouter);
+routes.use('/suppliers', suppliersRouter);
+routes.use('/payment', paymentsRouter);
+routes.use('/note', notesRouter);
+routes.use('/uploads', uploadsRouter);
 
-routes.use('/api/cart', cartRouter);
-routes.use('/api/wishlist', wishlistRouter);
+routes.use('/cart', cartRouter);
+routes.use('/wishlist', wishlistRouter);
 
-routes.use('/api/accounts', usersRouter);
-routes.use('/api/accounts', customersRouter);
-routes.use('/api/accounts/vendors', suppliersRouter);
-routes.use('/api/accounts', accountingRouter);
+routes.use('/accounts', usersRouter);
+routes.use('/accounts', customersRouter);
+routes.use('/accounts/vendors', suppliersRouter);
+routes.use('/accounts', accountingRouter);
 
 export default routes;

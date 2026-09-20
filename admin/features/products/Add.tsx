@@ -105,11 +105,11 @@ const Add = ({ token }: AddProps) => {
       <PageHeader title="Add New Perfume" subtitle="Create a new fragrance for your boutique" />
       <form onSubmit={onSubmitHandler} className='grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start w-full bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur'>
 
-      {/* LEFT â€” Images */}
+      {/* LEFT — Images */}
       <div className='flex flex-col gap-6 lg:sticky lg:top-24'>
         <div className='rounded-2xl border border-gold/15 p-5'>
           <p className='mb-1 text-sm text-ink-soft'>Main Image <span className='text-espresso'>*</span></p>
-          <p className='mb-3 text-xs text-ink-soft/70'>The main photo â€” shown as the product thumbnail across the store.</p>
+          <p className='mb-3 text-xs text-ink-soft/70'>The main photo — shown as the product thumbnail across the store.</p>
           <label htmlFor="mainImage" className='relative inline-block'>
             <img
               className={`w-28 h-28 rounded-xl border ${mainImage ? 'border-gold/40' : 'border-dashed border-gold/30'} object-cover bg-cream`}
@@ -118,7 +118,7 @@ const Add = ({ token }: AddProps) => {
               style={{ cursor: 'pointer' }}
             />
             {mainImage && (
-              <span className='absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-gold text-[10px] font-bold text-cream shadow-md'>âœ“</span>
+              <span className='absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-gold text-[10px] font-bold text-cream shadow-md'>✓</span>
             )}
           </label>
           <input onChange={(e) => setMainImage(e.target.files?.[0] || false)} type="file" id="mainImage" hidden accept="image/*" />
@@ -149,7 +149,7 @@ const Add = ({ token }: AddProps) => {
             </button>
           </div>
           <p className='mb-3 text-xs text-ink-soft/70'>
-            Each variant can have its own name, price and description â€” e.g. bottle size, intensity or bundle.
+            Each variant can have its own name, price and description — e.g. bottle size, intensity or bundle.
           </p>
 
           <div className='flex flex-col gap-4'>
@@ -162,7 +162,7 @@ const Add = ({ token }: AddProps) => {
                     title="Remove variant"
                     className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-espresso text-xs font-bold text-cream shadow-md transition-transform hover:scale-110'
                   >
-                    âœ•
+                    ✕
                   </span>
                 </div>
 
@@ -204,7 +204,7 @@ const Add = ({ token }: AddProps) => {
                         onChange={(e) => updateVariant(index, { description: e.target.value })}
                         value={variant.description}
                         className='w-full px-3 py-2'
-                        placeholder='Optional â€” differences: size, intensity, notesâ€¦'
+                        placeholder='Optional — differences: size, intensity, notes…'
                         rows={2}
                       />
                     </div>
@@ -217,7 +217,7 @@ const Add = ({ token }: AddProps) => {
       )}
       </div>
 
-      {/* RIGHT â€” Details */}
+      {/* RIGHT — Details */}
       <div className='flex flex-col gap-4'>
         <div className='rounded-2xl border border-gold/15 p-5 flex flex-col gap-4'>
           <div className='w-full'>

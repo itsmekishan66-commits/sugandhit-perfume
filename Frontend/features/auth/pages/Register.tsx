@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
+import { showToast } from '@/components/feedback/toast'
 import Reveal from '@/components/ui/Reveal'
 import { registerSchema } from '@/validate/schemas'
 import { useAuth } from '@/context/AuthContext'
@@ -21,7 +21,7 @@ const Register = () => {
 
     const parsed = registerSchema.safeParse({ name, email, password, phone, address });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
+      showToast(parsed.error.issues[0].message, 'error');
       return;
     }
     const payload = parsed.data;
@@ -29,13 +29,13 @@ const Register = () => {
     try {
       const { success, message } = await registerUser(payload);
       if (success) {
-        toast.success('Account created successfully. Please sign in.');
+        showToast('Account created successfully. Please sign in.', 'success');
         navigate('/login');
       } else {
-        toast.error(message || 'Registration failed');
+        showToast(message || 'Registration failed', 'error');
       }
     } catch (error) {
-      toast.error((error as Error).message);
+      showToast((error as Error).message, 'error');
     }
   };
 

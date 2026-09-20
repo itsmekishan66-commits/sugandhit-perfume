@@ -61,7 +61,7 @@ const InventoryMovements = ({ token }: { token: string }) => {
           </select>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft/50" />
-            <input className={`${inputCls} w-56 pl-9`} placeholder="Search product, ref, noteâ€¦" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+            <input className={`${inputCls} w-56 pl-9`} placeholder="Search product, ref, note…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
           </div>
         </div>
         {loading ? (
@@ -75,13 +75,13 @@ const InventoryMovements = ({ token }: { token: string }) => {
                 <Td className="text-ink-soft whitespace-nowrap">{formatDateTime(m.createdAt)}</Td>
                 <Td><Pill tone={toneFor(m.type)}>{MOVEMENT_TYPE_LABELS[m.type] ?? m.type}</Pill></Td>
                 <Td className="font-medium text-ink">{m.product?.name || `Product #${m.product?.id ?? '?'}`}</Td>
-                <Td className="text-ink-soft">{m.referenceId || 'â€”'}</Td>
+                <Td className="text-ink-soft">{m.referenceId || '—'}</Td>
                 <Td right className={`tabular-nums font-semibold ${m.change >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                   {m.change >= 0 ? `+${m.change}` : m.change}
                 </Td>
                 <Td right className="tabular-nums text-ink-soft">{m.before}</Td>
                 <Td right className="tabular-nums font-semibold text-espresso">{m.after}</Td>
-                <Td className="text-ink-soft grow">{m.note || 'â€”'}</Td>
+                <Td className="text-ink-soft grow">{m.note || '—'}</Td>
               </Row>
             ))}
           </TableShell>

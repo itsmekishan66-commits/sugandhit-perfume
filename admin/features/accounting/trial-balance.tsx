@@ -62,8 +62,8 @@ const AccountingTrialBalance = ({ token }: { token: string }) => {
                     <Td className="font-medium text-ink font-mono">{r.code}</Td>
                     <Td className="text-ink">{r.name}</Td>
                     <Td><Pill tone="gold">{ACCOUNT_TYPE_LABELS[r.type] ?? r.type}</Pill></Td>
-                    <Td right className="tabular-nums">{r.debit ? money(r.debit) : 'â€”'}</Td>
-                    <Td right className="tabular-nums">{r.credit ? money(r.credit) : 'â€”'}</Td>
+                    <Td right className="tabular-nums">{r.debit ? money(r.debit) : '—'}</Td>
+                    <Td right className="tabular-nums">{r.credit ? money(r.credit) : '—'}</Td>
                     <Td right className={`font-semibold tabular-nums ${r.balance >= 0 ? 'text-ink' : 'text-espresso'}`}>{money(r.balance)}</Td>
                   </Row>
                 ))}

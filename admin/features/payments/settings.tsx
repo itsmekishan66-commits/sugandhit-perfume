@@ -69,7 +69,7 @@ const PaymentSettings = ({ token }: { token: string }) => {
 
               <div className="rounded-xl border border-gold/15 bg-cream/60 p-4 text-sm text-ink-soft">
                 <p className="font-medium text-ink mb-1">Provider mapping</p>
-                <p>The <code className="bg-white/70 border border-gold/20 rounded px-2 py-0.5 text-xs">provider</code> field identifies the gateway (esewa, khalti, stripe, etc). The <code className="bg-white/70 border border-gold/20 rounded px-2 py-0.5 text-xs">eventType</code> string is normalized internally â€” e.g. <code className="bg-white/70 border border-gold/20 rounded px-2 py-0.5 text-xs">charge.refunded</code> maps to a refund event.</p>
+                <p>The <code className="bg-white/70 border border-gold/20 rounded px-2 py-0.5 text-xs">provider</code> field identifies the gateway (esewa, khalti, stripe, etc). The <code className="bg-white/70 border border-gold/20 rounded px-2 py-0.5 text-xs">eventType</code> string is normalized internally — e.g. <code className="bg-white/70 border border-gold/20 rounded px-2 py-0.5 text-xs">charge.refunded</code> maps to a refund event.</p>
               </div>
 
               <Pill tone="green">Endpoint is public (no admin auth required).</Pill>

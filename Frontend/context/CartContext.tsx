@@ -5,6 +5,7 @@ import { getToken } from '@/utils/storage';
 import { apiCartAdd, apiCartGet, apiCartUpdate } from '@/features/cart/cart.service';
 import { apiWishlistAdd, apiWishlistGet, apiWishlistRemove } from '@/features/wishlist/wishlist.service';
 import { useAuth } from './AuthContext';
+import { showToast } from '@/components/feedback/toast';
 import type { CartItems } from '@/types/common';
 import type { Product } from '@/types/product';
 
@@ -44,10 +45,8 @@ const getCartAmount = (cartItems: CartItems, products: Product[]) => {
 interface CartState {
   cartItems: CartItems;
   wishlist: string[];
-  cartToast: string | null;
   setCartItems: (cartItems: CartItems) => void;
   setWishlist: (wishlist: string[]) => void;
-  setCartToast: (message: string | null) => void;
   addToCart: (itemId: string, colors: string, qty?: number) => Promise<void>;
   updateQuantity: (itemId: string, colors: string, quantity: number) => Promise<void>;
   toggleWishlist: (itemId: string) => Promise<void>;
@@ -77,15 +76,13 @@ export const useCart = create<CartState>()(
     (set, get) => ({
       cartItems: {},
       wishlist: [],
-      cartToast: null,
 
       setCartItems: (cartItems) => set({ cartItems }),
       setWishlist: (wishlist) => set({ wishlist }),
-      setCartToast: (cartToast) => set({ cartToast }),
 
       addToCart: async (itemId, colors, qty = 1) => {
         if (!colors) {
-          set({ cartToast: 'Select Product Details.' });
+          showToast('Select Product Details.', 'error');
           return;
         }
         const cartData = structuredClone(get().cartItems);
@@ -96,17 +93,16 @@ export const useCart = create<CartState>()(
           cartData[itemId][colors] = qty;
         }
         set({ cartItems: cartData });
+        showToast('Added to cart', 'success');
         const token = getToken();
         if (token) {
           try {
             const ok = await apiCartAdd(token, itemId, colors, qty);
-            set({ cartToast: ok ? 'Added to cart' : 'Failed to add to cart' });
+            if (!ok) showToast('Failed to add to cart', 'error');
           } catch (error) {
             console.log(error);
-            set({ cartToast: (error as Error).message });
+            showToast((error as Error).message, 'error');
           }
-        } else {
-          set({ cartToast: 'Added to cart' });
         }
       },
 
@@ -114,7 +110,7 @@ export const useCart = create<CartState>()(
         const cartData = structuredClone(get().cartItems);
         if (cartData[itemId]) {
           if (quantity <= 0) {
-            set({ cartToast: 'Item has been removed from cart' });
+            showToast('Removed from cart', 'info');
             delete cartData[itemId][colors];
             if (Object.keys(cartData[itemId]).length === 0) {
               delete cartData[itemId];
@@ -122,6 +118,8 @@ export const useCart = create<CartState>()(
           } else {
             cartData[itemId][colors] = quantity;
           }
+        } else {
+          showToast('Removed from cart', 'info');
         }
         set({ cartItems: cartData });
         const token = getToken();
@@ -129,11 +127,11 @@ export const useCart = create<CartState>()(
           try {
             const ok = await apiCartUpdate(token, itemId, colors, quantity);
             if (!ok) {
-              set({ cartToast: 'Failed to update cart' });
+              showToast('Failed to update cart', 'error');
             }
           } catch (error) {
             console.log(error);
-            set({ cartToast: (error as Error).message });
+            showToast((error as Error).message, 'error');
           }
         }
       },
@@ -143,7 +141,7 @@ export const useCart = create<CartState>()(
         set((state) => ({
           wishlist: adding ? [...state.wishlist, itemId] : state.wishlist.filter((id) => id !== itemId),
         }));
-        set({ cartToast: adding ? 'Added to wishlist' : 'Removed from wishlist' });
+        showToast(adding ? 'Added to wishlist' : 'Removed from wishlist', adding ? 'success' : 'info');
         const token = getToken();
         if (token) {
           try {
@@ -152,31 +150,31 @@ export const useCart = create<CartState>()(
               set((state) => ({
                 wishlist: adding ? state.wishlist.filter((id) => id !== itemId) : [...state.wishlist, itemId],
               }));
-              set({ cartToast: 'Failed to update wishlist' });
+              showToast('Failed to update wishlist', 'error');
             }
           } catch (error) {
             set((state) => ({
               wishlist: adding ? state.wishlist.filter((id) => id !== itemId) : [...state.wishlist, itemId],
             }));
             console.log(error);
-            set({ cartToast: (error as Error).message });
+            showToast((error as Error).message, 'error');
           }
         }
       },
 
       removeFromWishlist: async (itemId) => {
         set((state) => ({ wishlist: state.wishlist.filter((id) => id !== itemId) }));
-        set({ cartToast: 'Removed from wishlist' });
+        showToast('Removed from wishlist', 'info');
         const token = getToken();
         if (token) {
           try {
             const ok = await apiWishlistRemove(token, itemId);
             if (!ok) {
-              set({ cartToast: 'Failed to update wishlist' });
+              showToast('Failed to update wishlist', 'error');
             }
           } catch (error) {
             console.log(error);
-            set({ cartToast: (error as Error).message });
+            showToast((error as Error).message, 'error');
           }
         }
       },
@@ -197,7 +195,7 @@ export const useCart = create<CartState>()(
       },
 
       clearAll: () => {
-        set({ cartItems: {}, wishlist: [], cartToast: null });
+        set({ cartItems: {}, wishlist: [] });
         localStorage.removeItem('cartItems');
         localStorage.removeItem('wishlist');
       },

@@ -134,7 +134,7 @@ const Orders = ({ token }: OrdersProps) => {
                     <p className="flex items-center gap-2 text-ink">
                       {item.name} <span className="text-xs text-ink-soft/60">x {item.quantity}</span>
                     </p>
-                    <p className="text-xs text-ink-soft/70">{item.subCategory} Â· {currency}{item.price}</p>
+                    <p className="text-xs text-ink-soft/70">{item.subCategory} · {currency}{item.price}</p>
                   </div>
                 </div>
               ))}
@@ -146,10 +146,10 @@ const Orders = ({ token }: OrdersProps) => {
             </div>
 
             <div className="text-xs text-ink-soft">
-              <p className="mb-1">ðŸ›’ Items: {order.items.length}</p>
-              <p className="mb-1">ðŸ’³ {order.paymentMethod}</p>
-              <p className="mb-1">ðŸ’° {order.payment ? "Paid" : "Cash on Delivery"}</p>
-              <p>ðŸ“… {new Date(order.date).toLocaleDateString()}</p>
+              <p className="mb-1">🛒 Items: {order.items.length}</p>
+              <p className="mb-1">💳 {order.paymentMethod}</p>
+              <p className="mb-1">💰 {order.payment ? "Paid" : "Cash on Delivery"}</p>
+              <p>📅 {new Date(order.date).toLocaleDateString()}</p>
             </div>
 
             <p className="font-display text-lg font-semibold gold-text">

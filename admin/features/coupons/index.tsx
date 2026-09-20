@@ -3,7 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { backendUrl, currency } from '../../config';
 import { toast } from 'react-toastify';
 import { couponSchema, couponToggleSchema, couponIdSchema } from '../../validate/schemas';
-import { PageHeader } from '../../components';
+import { PageHeader, ConfirmDialog } from '../../components';
 
 interface Coupon {
   _id: string;
@@ -34,6 +34,7 @@ const Coupons = ({ token }: CouponsProps) => {
   const [maxDiscount, setMaxDiscount] = useState('');
   const [validUntil, setValidUntil] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Coupon | null>(null);
 
   const fetchList = async () => {
     try {
@@ -203,7 +204,7 @@ const Coupons = ({ token }: CouponsProps) => {
             <p className="mb-2 text-sm text-ink-soft">Coupon image (optional)</p>
             <label htmlFor="couponImage" className="block">
               {!image ? (
-                <div className="flex h-24 w-24 items-center justify-center rounded-xl border border-dashed border-gold/30 bg-cream text-2xl text-espresso">ðŸ–¼ï¸</div>
+                <div className="flex h-24 w-24 items-center justify-center rounded-xl border border-dashed border-gold/30 bg-cream text-2xl text-espresso">🖼️</div>
               ) : (
                 <img className="w-24 h-24 rounded-xl object-cover border border-gold/20" src={URL.createObjectURL(image)} alt="Upload" style={{ cursor: 'pointer' }} />
               )}
@@ -255,7 +256,7 @@ const Coupons = ({ token }: CouponsProps) => {
           </div>
         </div>
         <button type="submit" disabled={saving} className="btn-primary w-32 py-3 mt-6 disabled:opacity-50">
-          {saving ? 'Savingâ€¦' : 'CREATE'}
+          {saving ? 'Saving…' : 'CREATE'}
         </button>
       </form>
 
@@ -272,7 +273,7 @@ const Coupons = ({ token }: CouponsProps) => {
               {coupon.image ? (
                 <img className="w-12 h-12 object-cover rounded-lg" src={coupon.image} alt="" />
               ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-gold to-espresso text-white text-lg">ðŸŽŸï¸</div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-gold to-espresso text-white text-lg">🎟️</div>
               )}
               <div className="min-w-0">
                 <p className="text-ink font-medium truncate">{coupon.title}</p>
@@ -288,12 +289,24 @@ const Coupons = ({ token }: CouponsProps) => {
                   className="accent-gold cursor-pointer"
                   title="Active"
                 />
-                <p onClick={() => deleteCoupon(coupon._id)} className="cursor-pointer text-lg text-red-500 hover:scale-110 transition-transform">âœ•</p>
+                <p onClick={() => setDeleteTarget(coupon)} className="cursor-pointer text-lg text-red-500 hover:scale-110 transition-transform">✕</p>
               </div>
             </div>
           ))}
         </div>
       </div>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete Coupon"
+        message={
+          <>
+            Are you sure you want to delete coupon <span className="font-medium text-ink">“{deleteTarget?.code}”</span>? Customers will no longer be able to use it.
+          </>
+        }
+        confirmLabel="Delete"
+        onConfirm={() => { if (deleteTarget) void deleteCoupon(deleteTarget._id); setDeleteTarget(null); }}
+        onClose={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };

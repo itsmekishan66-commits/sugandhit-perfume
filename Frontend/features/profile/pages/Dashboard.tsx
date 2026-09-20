@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
+import { showToast } from '@/components/feedback/toast'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
 import { profileSchema } from '@/validate/schemas'
@@ -53,7 +53,7 @@ const Dashboard = () => {
     e.preventDefault();
     const parsed = profileSchema.safeParse(form);
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
+      showToast(parsed.error.issues[0].message, 'error');
       return;
     }
     setSaving(true);
@@ -63,7 +63,7 @@ const Dashboard = () => {
       address: { address: parsed.data.address, city: parsed.data.city || '' },
     });
     setSaving(false);
-    if (ok) { setEdit(false); toast.success('Profile updated'); }
+    if (ok) { setEdit(false); showToast('Profile updated', 'success'); }
   };
 
   const startEdit = () => {
@@ -82,7 +82,7 @@ const Dashboard = () => {
     setUploading(true);
     const ok = await uploadProfileImage(file);
     setUploading(false);
-    if (ok) toast.success('Profile photo updated');
+    if (ok) showToast('Profile photo updated', 'success');
     e.target.value = '';
   };
 
@@ -100,9 +100,9 @@ const Dashboard = () => {
   const copyCoupon = async (code: string) => {
     try {
       await navigator.clipboard.writeText(code);
-      toast.success(`Code ${code} copied`);
+      showToast(`Code ${code} copied`, 'success');
     } catch {
-      toast.error('Could not copy code');
+      showToast('Could not copy code', 'error');
     }
   };
 

@@ -144,7 +144,7 @@ const AccountingJournals = ({ token }: { token: string }) => {
                 <Row key={j._id}>
                   <Td className="font-medium text-ink font-mono">{j.entryNumber || `#${j.id}`}</Td>
                   <Td>{formatDate(j.entryDate)}</Td>
-                  <Td className="max-w-[20rem] text-ink-soft">{j.description || 'â€”'}</Td>
+                  <Td className="max-w-[20rem] text-ink-soft">{j.description || '—'}</Td>
                   <Td><Pill tone={statusTone(j.status)}>{JOURNAL_STATUS_LABELS[j.status] ?? j.status}</Pill></Td>
                   <Td right>
                     <div className="inline-flex gap-2">
@@ -180,16 +180,16 @@ const AccountingJournals = ({ token }: { token: string }) => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
               <div className="rounded-xl border border-gold/15 bg-white/70 p-3"><p className="text-xs text-ink-soft mb-1">Date</p><p className="font-medium text-ink">{formatDate(detail.entryDate)}</p></div>
               <div className="rounded-xl border border-gold/15 bg-white/70 p-3"><p className="text-xs text-ink-soft mb-1">Status</p><Pill tone={statusTone(detail.status)}>{detail.status}</Pill></div>
-              <div className="rounded-xl border border-gold/15 bg-white/70 p-3 col-span-2"><p className="text-xs text-ink-soft mb-1">Description</p><p className="font-medium text-ink">{detail.description || 'â€”'}</p></div>
+              <div className="rounded-xl border border-gold/15 bg-white/70 p-3 col-span-2"><p className="text-xs text-ink-soft mb-1">Description</p><p className="font-medium text-ink">{detail.description || '—'}</p></div>
             </div>
 
             <TableShell head={<><Th>Account</Th><Th right>Debit</Th><Th right>Credit</Th><Th>Description</Th></>}>
               {detail.lines.map((l, i) => (
                 <Row key={i}>
-                  <Td>{accountName(l.accountId) ? `${accountName(l.accountId)!.code} â€” ${accountName(l.accountId)!.name}` : `Account #${l.accountId}`}</Td>
+                  <Td>{accountName(l.accountId) ? `${accountName(l.accountId)!.code} — ${accountName(l.accountId)!.name}` : `Account #${l.accountId}`}</Td>
                   <Td right className="tabular-nums">{l.debit ? money(l.debit) : ''}</Td>
                   <Td right className="tabular-nums">{l.credit ? money(l.credit) : ''}</Td>
-                  <Td className="text-ink-soft">{l.description || 'â€”'}</Td>
+                  <Td className="text-ink-soft">{l.description || '—'}</Td>
                 </Row>
               ))}
             </TableShell>
@@ -225,8 +225,8 @@ const AccountingJournals = ({ token }: { token: string }) => {
               <Row key={idx}>
                 <Td>
                   <select className={`${inputCls} text-sm`} value={l.accountId} onChange={(e) => updateLine(idx, { accountId: Number(e.target.value) })}>
-                    <option value={0}>Selectâ€¦</option>
-                    {chartAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} â€” {a.name}</option>)}
+                    <option value={0}>Select…</option>
+                    {chartAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
                   </select>
                 </Td>
                 <Td right><input type="number" className={`${inputCls} w-32 text-sm text-right`} value={l.debit || ''} onChange={(e) => updateLine(idx, { debit: Number(e.target.value) })} placeholder="0" /></Td>
@@ -241,13 +241,13 @@ const AccountingJournals = ({ token }: { token: string }) => {
           <div className="mt-3 flex justify-end text-sm text-ink-soft gap-4">
             <span>Total Debit: <span className="font-semibold text-ink">{money(totalDebit)}</span></span>
             <span>Total Credit: <span className="font-semibold text-ink">{money(totalCredit)}</span></span>
-            <span className={Math.abs(totalDebit - totalCredit) > 0.01 ? 'text-espresso font-semibold' : 'text-espresso/70'}>{Math.abs(totalDebit - totalCredit) > 0.01 ? `Difference: ${money(Math.abs(totalDebit - totalCredit))}` : 'Balanced âœ“'}</span>
+            <span className={Math.abs(totalDebit - totalCredit) > 0.01 ? 'text-espresso font-semibold' : 'text-espresso/70'}>{Math.abs(totalDebit - totalCredit) > 0.01 ? `Difference: ${money(Math.abs(totalDebit - totalCredit))}` : 'Balanced ✓'}</span>
           </div>
         </div>
 
         <div className="flex justify-end gap-3">
           <GhostBtn onClick={() => setShowForm(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={submit} disabled={working}>{working ? 'Savingâ€¦' : 'Create Entry'}</PrimaryBtn>
+          <PrimaryBtn onClick={submit} disabled={working}>{working ? 'Saving…' : 'Create Entry'}</PrimaryBtn>
         </div>
       </Modal>
     </div>

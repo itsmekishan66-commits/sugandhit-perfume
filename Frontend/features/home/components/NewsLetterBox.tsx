@@ -1,5 +1,5 @@
 import Reveal from '@/components/ui/Reveal'
-import { toast } from 'react-toastify'
+import { showToast } from '@/components/feedback/toast'
 import { subscribeNewsletter } from '../home.service'
 
 const NewsLetterBox = () => {
@@ -9,9 +9,9 @@ const NewsLetterBox = () => {
     const email = String(formData.get('email') || '');
     const result = await subscribeNewsletter(email);
     if (result.success) {
-      toast.success(result.message || 'Subscribed!');
+      showToast(result.message || 'Subscribed!', 'success');
     } else {
-      toast.error(result.message || 'Something went wrong.');
+      showToast(result.message || 'Something went wrong.', 'error');
     }
   };
 

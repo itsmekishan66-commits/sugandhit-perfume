@@ -139,7 +139,7 @@ const PaymentAccounts = ({ token }: { token: string }) => {
               <Row key={a._id}>
                 <Td>
                   <p className="font-medium text-ink">{a.name}</p>
-                  <p className="text-xs text-ink-soft">{a.accountNumber || 'â€”'} {a.branch ? `Â· ${a.branch}` : ''}</p>
+                  <p className="text-xs text-ink-soft">{a.accountNumber || '—'} {a.branch ? `· ${a.branch}` : ''}</p>
                 </Td>
                 <Td>
                   <Pill tone={a.accountType === 'cash' ? 'gold' : a.accountType === 'bank' ? 'green' : 'blue'}>{label(PAYMENT_ACCOUNT_TYPE_LABELS, a.accountType, a.accountType)}</Pill>
@@ -201,11 +201,11 @@ const PaymentAccounts = ({ token }: { token: string }) => {
         </div>
         <div className="mt-5 flex gap-3 justify-end">
           <GhostBtn onClick={() => setShowForm(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={create} disabled={saving}>{saving ? 'Savingâ€¦' : 'Create Account'}</PrimaryBtn>
+          <PrimaryBtn onClick={create} disabled={saving}>{saving ? 'Saving…' : 'Create Account'}</PrimaryBtn>
         </div>
       </Modal>
 
-      <Modal open={!!ledger} title={ledger?.account ? `${ledger.account.name} â€” Ledger` : 'Ledger'} onClose={() => setLedger(null)} wide>
+      <Modal open={!!ledger} title={ledger?.account ? `${ledger.account.name} — Ledger` : 'Ledger'} onClose={() => setLedger(null)} wide>
         {ledger && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
             <StatCard label="Current Balance" value={money(ledger.account.currentBalance)} tint="from-gold-soft to-gold" />

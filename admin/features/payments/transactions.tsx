@@ -216,7 +216,7 @@ const PaymentTransactions = ({ token }: { token: string }) => {
               <Row key={t.id}>
                 <Td className="whitespace-nowrap text-ink-soft">{formatDateTime(t.initiatedAt)}</Td>
                 <Td>
-                  <p className="font-medium text-ink">{t.customerName || (t.customerId ? `Customer #${t.customerId}` : 'â€”')}</p>
+                  <p className="font-medium text-ink">{t.customerName || (t.customerId ? `Customer #${t.customerId}` : '—')}</p>
                   {t.orderId && <p className="text-xs text-ink-soft">Order #{t.orderId}</p>}
                 </Td>
                 <Td>{label(CHANNEL_LABELS, t.channel, t.channel)}</Td>
@@ -252,15 +252,15 @@ const PaymentTransactions = ({ token }: { token: string }) => {
         {detail && (
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-xl border border-gold/15 bg-white/70 p-3"><p className="text-xs text-ink-soft mb-1">Customer</p><p className="font-medium text-ink">{detail.customerName || (detail.customerId ? `Customer #${detail.customerId}` : 'â€”')}</p></div>
+              <div className="rounded-xl border border-gold/15 bg-white/70 p-3"><p className="text-xs text-ink-soft mb-1">Customer</p><p className="font-medium text-ink">{detail.customerName || (detail.customerId ? `Customer #${detail.customerId}` : '—')}</p></div>
               <div className="rounded-xl border border-gold/15 bg-white/70 p-3"><p className="text-xs text-ink-soft mb-1">Status</p><Pill tone={detail.status === 'successful' ? 'green' : 'amber'}>{label(TXN_STATUS_LABELS, detail.status, detail.status)}</Pill></div>
               <div className="rounded-xl border border-gold/15 bg-white/70 p-3"><p className="text-xs text-ink-soft mb-1">Type</p><p className="font-medium text-ink">{label(TXN_TYPE_LABELS, detail.transactionType, detail.transactionType)}</p></div>
-              <div className="rounded-xl border border-gold/15 bg-white/70 p-3"><p className="text-xs text-ink-soft mb-1">Channel / Method</p><p className="font-medium text-ink">{label(CHANNEL_LABELS, detail.channel, detail.channel)}{detail.paymentMethod ? ` Â· ${detail.paymentMethod}` : ''}</p></div>
+              <div className="rounded-xl border border-gold/15 bg-white/70 p-3"><p className="text-xs text-ink-soft mb-1">Channel / Method</p><p className="font-medium text-ink">{label(CHANNEL_LABELS, detail.channel, detail.channel)}{detail.paymentMethod ? ` · ${detail.paymentMethod}` : ''}</p></div>
               <div className="rounded-xl border border-gold/15 bg-white/70 p-3"><p className="text-xs text-ink-soft mb-1">Amount</p><p className="font-display text-lg font-semibold text-espresso">{money(detail.amount)}</p></div>
               <div className="rounded-xl border border-gold/15 bg-white/70 p-3"><p className="text-xs text-ink-soft mb-1">Fee / Tax / Net</p><p className="font-medium text-ink">{money(detail.processingFee)} / {money(detail.taxAmount)} / {money(detail.netAmount)}</p></div>
               <div className="rounded-xl border border-gold/15 bg-white/70 p-3"><p className="text-xs text-ink-soft mb-1">Initiated</p><p className="font-medium text-ink">{formatDateTime(detail.initiatedAt)}</p></div>
-              <div className="rounded-xl border border-gold/15 bg-white/70 p-3"><p className="text-xs text-ink-soft mb-1">Order</p><p className="font-medium text-ink">{detail.orderId ? `#${detail.orderId}` : detail.customOrderId ? `Custom #${detail.customOrderId}` : 'â€”'}</p></div>
-              <div className="rounded-xl border border-gold/15 bg-white/70 p-3 col-span-2"><p className="text-xs text-ink-soft mb-1">Provider Ref</p><p className="font-medium text-ink break-all">{detail.providerTransactionId || 'â€”'}</p></div>
+              <div className="rounded-xl border border-gold/15 bg-white/70 p-3"><p className="text-xs text-ink-soft mb-1">Order</p><p className="font-medium text-ink">{detail.orderId ? `#${detail.orderId}` : detail.customOrderId ? `Custom #${detail.customOrderId}` : '—'}</p></div>
+              <div className="rounded-xl border border-gold/15 bg-white/70 p-3 col-span-2"><p className="text-xs text-ink-soft mb-1">Provider Ref</p><p className="font-medium text-ink break-all">{detail.providerTransactionId || '—'}</p></div>
             </div>
 
             {detail.failureReason && (
@@ -319,7 +319,7 @@ const PaymentTransactions = ({ token }: { token: string }) => {
         </div>
         <div className="mt-5 flex justify-end gap-3">
           <GhostBtn onClick={() => setShowManual(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={submitManual} disabled={working}>{working ? 'Savingâ€¦' : 'Record Payment'}</PrimaryBtn>
+          <PrimaryBtn onClick={submitManual} disabled={working}>{working ? 'Saving…' : 'Record Payment'}</PrimaryBtn>
         </div>
       </Modal>
 
@@ -338,7 +338,7 @@ const PaymentTransactions = ({ token }: { token: string }) => {
         </div>
         <div className="mt-5 flex justify-end gap-3">
           <GhostBtn onClick={() => setShowRefund(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={submitRefund} disabled={working}>{working ? 'Submittingâ€¦' : refund.chargeback ? 'File Chargeback' : 'Request Refund'}</PrimaryBtn>
+          <PrimaryBtn onClick={submitRefund} disabled={working}>{working ? 'Submitting…' : refund.chargeback ? 'File Chargeback' : 'Request Refund'}</PrimaryBtn>
         </div>
       </Modal>
     </div>

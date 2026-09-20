@@ -224,7 +224,7 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
             {list.map((r) => (
               <Row key={r._id}>
                 <Td>
-                  <p className="font-medium text-ink">{formatDate(r.periodStart)} â€” {formatDate(r.periodEnd)}</p>
+                  <p className="font-medium text-ink">{formatDate(r.periodStart)} — {formatDate(r.periodEnd)}</p>
                   <p className="text-xs text-ink-soft">{r.notes || ''}</p>
                 </Td>
                 <Td>{r.accountName || `Account #${r.paymentAccountId}`}</Td>
@@ -247,7 +247,7 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Payment account">
             <select className={inputCls} value={createForm.paymentAccountId} onChange={(e) => setCreateForm({ ...createForm, paymentAccountId: e.target.value })}>
-              <option value="">Select accountâ€¦</option>
+              <option value="">Select account…</option>
               {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
           </Field>
@@ -269,7 +269,7 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
         </div>
         <div className="mt-5 flex justify-end gap-3">
           <GhostBtn onClick={() => setShowCreate(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={create} disabled={working}>{working ? 'Creatingâ€¦' : 'Create'}</PrimaryBtn>
+          <PrimaryBtn onClick={create} disabled={working}>{working ? 'Creating…' : 'Create'}</PrimaryBtn>
         </div>
       </Modal>
 
@@ -286,7 +286,7 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
             <TableShell head={<><Th>External Ref</Th><Th>Status</Th><Th right>External Amount</Th><Th right>Discrepancy</Th><Th>Matched Txn</Th></>}>
               {detail.items.map((i) => (
                 <Row key={i._id}>
-                  <Td className="font-medium text-ink">{i.externalRef || 'â€”'}</Td>
+                  <Td className="font-medium text-ink">{i.externalRef || '—'}</Td>
                   <Td><Pill tone={itemTone(i.status)}>{RECON_ITEM_STATUS_LABELS[i.status] ?? i.status}</Pill></Td>
                   <Td right className="tabular-nums">{money(i.externalAmount)}</Td>
                   <Td right className={`tabular-nums ${i.discrepancy ? 'text-espresso font-semibold' : 'text-ink-soft'}`}>{money(i.discrepancy)}</Td>
@@ -296,15 +296,15 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
                     ) : detail.status === 'in_progress' ? (
                       <div className="inline-flex items-center gap-2">
                         <select className={inputCls} value={matchSel[i.id] ?? ''} onChange={(e) => setMatchSel((p) => ({ ...p, [i.id]: e.target.value }))}>
-                          <option value="">Select txnâ€¦</option>
+                          <option value="">Select txn…</option>
                           {candidates.filter((t) => !detail.items.some((x) => x.transactionId === t.id)).map((t) => (
-                            <option key={t.id} value={t.id}>#{t.id} â€” {money(t.amount)}</option>
+                            <option key={t.id} value={t.id}>#{t.id} — {money(t.amount)}</option>
                           ))}
                         </select>
                         <button onClick={() => matchItem(i)} disabled={working || !matchSel[i.id]} className="btn-gold px-3 py-1 text-xs cursor-pointer disabled:opacity-40">Match</button>
                       </div>
                     ) : (
-                      <span className="text-ink-soft">â€”</span>
+                      <span className="text-ink-soft">—</span>
                     )}
                   </Td>
                 </Row>

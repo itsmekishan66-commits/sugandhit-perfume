@@ -110,6 +110,7 @@
   .from-espresso\/60 { --tw-gradient-from: color-mix(in srgb, var(--color-espresso) 60%, transparent); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position, 0%), var(--tw-gradient-to, transparent) var(--tw-gradient-to-position, 100%)); }
   .from-gold { --tw-gradient-from: var(--color-gold); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position, 0%), var(--tw-gradient-to, transparent) var(--tw-gradient-to-position, 100%)); }
   .from-gold-soft { --tw-gradient-from: var(--color-gold-soft); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position, 0%), var(--tw-gradient-to, transparent) var(--tw-gradient-to-position, 100%)); }
+  .from-ink { --tw-gradient-from: var(--color-ink); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position, 0%), var(--tw-gradient-to, transparent) var(--tw-gradient-to-position, 100%)); }
 
   .to-blush\/60 { --tw-gradient-to: color-mix(in srgb, var(--color-blush) 60%, transparent); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from, transparent) var(--tw-gradient-from-position, 0%), var(--tw-gradient-to) var(--tw-gradient-to-position, 100%)); }
   .to-espresso { --tw-gradient-to: var(--color-espresso); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from, transparent) var(--tw-gradient-from-position, 0%), var(--tw-gradient-to) var(--tw-gradient-to-position, 100%)); }
@@ -118,10 +119,12 @@
   .to-gold\/30 { --tw-gradient-to: color-mix(in srgb, var(--color-gold) 30%, transparent); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from, transparent) var(--tw-gradient-from-position, 0%), var(--tw-gradient-to) var(--tw-gradient-to-position, 100%)); }
   .to-gold\/40 { --tw-gradient-to: color-mix(in srgb, var(--color-gold) 40%, transparent); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from, transparent) var(--tw-gradient-from-position, 0%), var(--tw-gradient-to) var(--tw-gradient-to-position, 100%)); }
   .to-ink { --tw-gradient-to: var(--color-ink); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from, transparent) var(--tw-gradient-from-position, 0%), var(--tw-gradient-to) var(--tw-gradient-to-position, 100%)); }
+  .to-deep { --tw-gradient-to: var(--color-deep); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from, transparent) var(--tw-gradient-from-position, 0%), var(--tw-gradient-to) var(--tw-gradient-to-position, 100%)); }
   .to-sand { --tw-gradient-to: var(--color-sand); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from, transparent) var(--tw-gradient-from-position, 0%), var(--tw-gradient-to) var(--tw-gradient-to-position, 100%)); }
   .to-sand\/50 { --tw-gradient-to: color-mix(in srgb, var(--color-sand) 50%, transparent); --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from, transparent) var(--tw-gradient-from-position, 0%), var(--tw-gradient-to) var(--tw-gradient-to-position, 100%)); }
 
   .via-gold\/50 { --tw-gradient-via: color-mix(in srgb, var(--color-gold) 50%, transparent); --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from, transparent) var(--tw-gradient-from-position, 0%), var(--tw-gradient-via) var(--tw-gradient-via-position, 50%), var(--tw-gradient-to, transparent) var(--tw-gradient-to-position, 100%); --tw-gradient-stops: var(--tw-gradient-via-stops); }
+  .via-gold-soft { --tw-gradient-via: var(--color-gold-soft); --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from, transparent) var(--tw-gradient-from-position, 0%), var(--tw-gradient-via) var(--tw-gradient-via-position, 50%), var(--tw-gradient-to, transparent) var(--tw-gradient-to-position, 100%); --tw-gradient-stops: var(--tw-gradient-via-stops); }
   .via-sand { --tw-gradient-via: var(--color-sand); --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from, transparent) var(--tw-gradient-from-position, 0%), var(--tw-gradient-via) var(--tw-gradient-via-position, 50%), var(--tw-gradient-to, transparent) var(--tw-gradient-to-position, 100%); --tw-gradient-stops: var(--tw-gradient-via-stops); }
   .via-sand\/40 { --tw-gradient-via: color-mix(in srgb, var(--color-sand) 40%, transparent); --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from, transparent) var(--tw-gradient-from-position, 0%), var(--tw-gradient-via) var(--tw-gradient-via-position, 50%), var(--tw-gradient-to, transparent) var(--tw-gradient-to-position, 100%); --tw-gradient-stops: var(--tw-gradient-via-stops); }
 }
@@ -413,4 +416,43 @@
 
 select, input, textarea {
   outline: none;
+}
+
+.sg-toast-container {
+  width: auto;
+  max-width: calc(100vw - 2rem);
+  padding: 0;
+}
+
+.sg-toast-container--bottom-center {
+  bottom: 1.25rem;
+}
+
+.sg-toast-item,
+.Toastify__toast {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin-bottom: 0.75rem;
+  border-radius: 1rem;
+  min-height: 0;
+  cursor: default;
+}
+
+.sg-toast-body,
+.Toastify__toast-body {
+  padding: 0 !important;
+  margin: 0 !important;
+  align-items: stretch;
+  flex: 1 1 auto;
+}
+
+.sg-progress {
+  animation: sg-progress-bar 2.6s linear forwards;
+  transform-origin: left;
+}
+
+@keyframes sg-progress-bar {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
 }

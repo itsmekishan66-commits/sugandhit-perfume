@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
+import { showToast } from '@/components/feedback/toast'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
 import { customAddressSchema } from '@/validate/schemas'
@@ -32,7 +32,7 @@ const CustomPerfume = () => {
         return { ...prev, [layer]: list.filter(n => n.id !== note.id) };
       }
       if (list.length >= MAX_NOTES_PER_LAYER) {
-        toast.info(`You can pick up to ${MAX_NOTES_PER_LAYER} notes per layer`);
+        showToast(`You can pick up to ${MAX_NOTES_PER_LAYER} notes per layer`, 'info');
         return prev;
       }
       return { ...prev, [layer]: [...list, note] };
@@ -47,10 +47,10 @@ const CustomPerfume = () => {
 
   const placeOrder = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!token) { toast.error('Please sign in first'); navigate('/login'); return; }
-    if (!canPlace) { toast.error('Pick at least one note from each layer and a base.'); return; }
+    if (!token) { showToast('Please sign in first', 'error'); navigate('/login'); return; }
+    if (!canPlace) { showToast('Pick at least one note from each layer and a base.', 'error'); return; }
     const parsedAddress = customAddressSchema.safeParse(address);
-    if (!parsedAddress.success) { toast.error(parsedAddress.error.issues[0].message); return; }
+    if (!parsedAddress.success) { showToast(parsedAddress.error.issues[0].message, 'error'); return; }
 
     setPlacing(true);
     try {
@@ -68,13 +68,13 @@ const CustomPerfume = () => {
         address,
       });
       if (res.success) {
-        toast.success('Your signature blend has been added to the bench! ✨');
+        showToast('Your signature blend has been added to the bench! ✨', 'success');
         navigate('/orders');
       } else {
-        toast.error(res.message || 'Order failed');
+        showToast(res.message || 'Order failed', 'error');
       }
     } catch (error) {
-      toast.error((error as Error).message);
+      showToast((error as Error).message, 'error');
     } finally {
       setPlacing(false);
     }

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
 import { contactSchema } from '@/validate/schemas'
-import { toast } from 'react-toastify'
+import { showToast } from '@/components/feedback/toast'
 
 interface ContactResult {
   success: boolean;
@@ -23,7 +23,7 @@ const Contact = () => {
       message: formData.get('message'),
     });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
+      showToast(parsed.error.issues[0].message, 'error');
       return;
     }
     setResult({

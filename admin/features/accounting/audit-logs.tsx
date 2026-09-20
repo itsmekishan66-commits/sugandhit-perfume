@@ -62,7 +62,7 @@ const AccountingAuditLogs = ({ token }: { token: string }) => {
 
   const preview = (v: Record<string, unknown>) => {
     const entries = Object.entries(v ?? {});
-    if (entries.length === 0) return 'â€”';
+    if (entries.length === 0) return '—';
     return entries.map(([k, val]) => `${k}=${typeof val === 'object' ? JSON.stringify(val) : String(val)}`).join(', ');
   };
 
@@ -93,16 +93,16 @@ const AccountingAuditLogs = ({ token }: { token: string }) => {
                 <Td className="whitespace-nowrap text-ink-soft">{formatDateTime(l.createdAt)}</Td>
                 <Td>
                   <p className="font-medium text-ink">{actorName(l.actorId)}</p>
-                  <p className="text-xs text-ink-soft">{l.actorRole || 'system'}{l.ip ? ` Â· ${l.ip}` : ''}</p>
+                  <p className="text-xs text-ink-soft">{l.actorRole || 'system'}{l.ip ? ` · ${l.ip}` : ''}</p>
                 </Td>
                 <Td><Pill tone={tones[l.action] ?? undefined}>{l.action}</Pill></Td>
                 <Td>
                   <span className="text-ink">{l.entityType}</span>
-                  {l.entityId ? <span className="text-xs text-ink-soft"> Â· #{l.entityId}</span> : null}
+                  {l.entityId ? <span className="text-xs text-ink-soft"> · #{l.entityId}</span> : null}
                 </Td>
-                <Td className="text-ink-soft">{l.reason || 'â€”'}</Td>
+                <Td className="text-ink-soft">{l.reason || '—'}</Td>
                 <Td className="text-xs text-ink-soft max-w-lg">
-                  {Object.keys(l.newValue ?? {}).length > 0 ? `New: ${preview(l.newValue)}` : l.action === 'update' ? `Old: ${preview(l.previousValue)}` : 'â€”'}
+                  {Object.keys(l.newValue ?? {}).length > 0 ? `New: ${preview(l.newValue)}` : l.action === 'update' ? `Old: ${preview(l.previousValue)}` : '—'}
                 </Td>
               </Row>
             ))}

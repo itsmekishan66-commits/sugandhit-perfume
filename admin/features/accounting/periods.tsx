@@ -85,7 +85,7 @@ const AccountingPeriods = ({ token }: { token: string }) => {
         <div className="rounded-xl border border-gold/25 bg-sand/50 p-4 text-sm flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-display text-lg font-semibold text-ink">Current Period: {current.name}</p>
-            <p className="text-ink-soft">{formatDate(current.startDate)} â€” {formatDate(current.endDate)}</p>
+            <p className="text-ink-soft">{formatDate(current.startDate)} — {formatDate(current.endDate)}</p>
           </div>
           <Pill tone="green">Open</Pill>
         </div>
@@ -104,7 +104,7 @@ const AccountingPeriods = ({ token }: { token: string }) => {
                 <Td>{formatDate(p.startDate)}</Td>
                 <Td>{formatDate(p.endDate)}</Td>
                 <Td><Pill tone={statusTone(p.status)}>{PERIOD_STATUS_LABELS[p.status] ?? p.status}</Pill></Td>
-                <Td className="text-ink-soft">{p.closedAt ? formatDateTime(p.closedAt) : 'â€”'}</Td>
+                <Td className="text-ink-soft">{p.closedAt ? formatDateTime(p.closedAt) : '—'}</Td>
                 <Td right>
                   <div className="inline-flex gap-2">
                     {(p.status === 'open' || p.status === 'locked') && (
@@ -129,7 +129,7 @@ const AccountingPeriods = ({ token }: { token: string }) => {
         </div>
         <div className="mt-5 flex justify-end gap-3">
           <GhostBtn onClick={() => setShowForm(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={create} disabled={saving}>{saving ? 'Savingâ€¦' : 'Create Period'}</PrimaryBtn>
+          <PrimaryBtn onClick={create} disabled={saving}>{saving ? 'Saving…' : 'Create Period'}</PrimaryBtn>
         </div>
       </Modal>
     </div>

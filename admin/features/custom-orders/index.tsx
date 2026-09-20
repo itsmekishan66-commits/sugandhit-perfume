@@ -141,19 +141,19 @@ const CustomOrders = ({ token }: CustomOrdersProps) => {
           <div key={order._id} className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-5 items-start border border-gold/15 p-6 my-3 text-sm text-ink-soft rounded-2xl shadow-sm bg-gradient-to-br from-white via-sand/40 to-blush/60">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="font-display text-lg font-semibold text-espresso">âœ¨ {order.name || 'Custom Perfume'}</p>
+                <p className="font-display text-lg font-semibold text-espresso">✨ {order.name || 'Custom Perfume'}</p>
                 <span className="text-[11px] bg-ink text-cream rounded-full px-2.5 py-1">{order.bottleSize}</span>
               </div>
               <NotePills title="Top Notes" notes={order.topNotes} />
               <NotePills title="Heart Notes" notes={order.heartNotes} />
               <NotePills title="Base Notes" notes={order.baseNotes} />
-              <p className="text-xs mt-2">ðŸ«§ Base: <span className="text-ink font-medium">{order.perfumeBase}</span> Â· {order.strengthName || order.strength}</p>
-              {order.customLabel && <p className="text-xs mt-1">ðŸ·ï¸ Label: <span className="text-ink font-medium">{order.customLabel}</span></p>}
+              <p className="text-xs mt-2">🫧 Base: <span className="text-ink font-medium">{order.perfumeBase}</span> · {order.strengthName || order.strength}</p>
+              {order.customLabel && <p className="text-xs mt-1">🏷️ Label: <span className="text-ink font-medium">{order.customLabel}</span></p>}
               <p className="font-semibold mt-3 text-ink">
                 {order.address.firstName} {order.address.lastName}
               </p>
-              <p className="text-ink-soft/70 text-xs">{order.address.location}, {order.address.city}, {order.address.district} Â· {order.address.phone}</p>
-              <p className="text-ink-soft/60 text-xs mt-1">ðŸ“… {new Date(order.date).toLocaleDateString()} Â· {order.paymentMethod}</p>
+              <p className="text-ink-soft/70 text-xs">{order.address.location}, {order.address.city}, {order.address.district} · {order.address.phone}</p>
+              <p className="text-ink-soft/60 text-xs mt-1">📅 {new Date(order.date).toLocaleDateString()} · {order.paymentMethod}</p>
             </div>
 
             <div className="flex flex-col gap-3 items-start lg:items-end">

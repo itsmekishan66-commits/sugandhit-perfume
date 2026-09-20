@@ -159,7 +159,7 @@ const AccountingChart = ({ token }: { token: string }) => {
         </div>
         <div className="mt-5 flex justify-end gap-3">
           <GhostBtn onClick={() => { setShowForm(false); setEditAcc(null); }}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={submit} disabled={saving}>{saving ? 'Savingâ€¦' : editAcc ? 'Update Account' : 'Create Account'}</PrimaryBtn>
+          <PrimaryBtn onClick={submit} disabled={saving}>{saving ? 'Saving…' : editAcc ? 'Update Account' : 'Create Account'}</PrimaryBtn>
         </div>
       </Modal>
     </div>

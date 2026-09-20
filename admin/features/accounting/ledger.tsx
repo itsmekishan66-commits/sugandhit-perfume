@@ -69,8 +69,8 @@ const AccountingLedger = ({ token }: { token: string }) => {
       <SectionCard title="Filter">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 p-4">
           <select className={inputCls} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
-            <option value="">Select accountâ€¦</option>
-            {accounts.map((a) => <option key={a.id} value={a.id}>{a.code} â€” {a.name}</option>)}
+            <option value="">Select account…</option>
+            {accounts.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
           </select>
           <input type="number" className={inputCls} placeholder="From (ms)" value={from} onChange={(e) => setFrom(e.target.value)} />
           <input type="number" className={inputCls} placeholder="To (ms)" value={to} onChange={(e) => setTo(e.target.value)} />
@@ -80,7 +80,7 @@ const AccountingLedger = ({ token }: { token: string }) => {
 
       {selected && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard label="Account" value={selected.name} sub={`${selected.code} Â· ${selected.accountType}`} tint="from-gold-soft to-gold" />
+          <StatCard label="Account" value={selected.name} sub={`${selected.code} · ${selected.accountType}`} tint="from-gold-soft to-gold" />
           <StatCard label="Total Debits" value={money(rows.reduce((s, r) => s + r.debit, 0))} tint="from-blush to-sand" />
           <StatCard label="Closing Balance" value={money(closing)} tint="from-sand to-espresso" />
         </div>
@@ -97,10 +97,10 @@ const AccountingLedger = ({ token }: { token: string }) => {
               <Row key={r.lineId}>
                 <Td>{formatDate(r.entryDate)}</Td>
                 <Td className="font-medium text-ink font-mono">{r.entryNumber}</Td>
-                <Td className="text-ink-soft">{r.lineDescription || r.description || 'â€”'}</Td>
-                <Td className="text-ink-soft">{r.referenceType || 'â€”'}</Td>
-                <Td right className="tabular-nums">{r.debit ? money(r.debit) : 'â€”'}</Td>
-                <Td right className="tabular-nums">{r.credit ? money(r.credit) : 'â€”'}</Td>
+                <Td className="text-ink-soft">{r.lineDescription || r.description || '—'}</Td>
+                <Td className="text-ink-soft">{r.referenceType || '—'}</Td>
+                <Td right className="tabular-nums">{r.debit ? money(r.debit) : '—'}</Td>
+                <Td right className="tabular-nums">{r.credit ? money(r.credit) : '—'}</Td>
                 <Td right className={`font-semibold tabular-nums ${r.runningBalance >= 0 ? 'text-ink' : 'text-espresso'}`}>{money(r.runningBalance)}</Td>
               </Row>
             ))}

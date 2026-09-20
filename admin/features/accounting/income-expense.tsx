@@ -157,9 +157,9 @@ const AccountingIncomeExpense = ({ token }: { token: string }) => {
               {income.map((i) => (
                 <Row key={i._id}>
                   <Td>{formatDate(i.date)}</Td>
-                  <Td className="font-medium text-ink">{i.source || 'â€”'}</Td>
+                  <Td className="font-medium text-ink">{i.source || '—'}</Td>
                   <Td className="text-ink-soft">{i.accountName || `Account #${i.accountId}`}</Td>
-                  <Td className="text-ink-soft">{i.description || i.reference || 'â€”'}</Td>
+                  <Td className="text-ink-soft">{i.description || i.reference || '—'}</Td>
                   <Td right className="font-semibold text-espresso tabular-nums">{money(i.amount)}</Td>
                 </Row>
               ))}
@@ -172,9 +172,9 @@ const AccountingIncomeExpense = ({ token }: { token: string }) => {
             {expenses.map((e) => (
               <Row key={e._id}>
                 <Td>{formatDate(e.date)}</Td>
-                <Td className="font-medium text-ink">{e.vendorName || 'â€”'}</Td>
+                <Td className="font-medium text-ink">{e.vendorName || '—'}</Td>
                 <Td className="text-ink-soft">{e.accountName || `Account #${e.accountId}`}</Td>
-                <Td className="text-ink-soft">{e.description || 'â€”'}</Td>
+                <Td className="text-ink-soft">{e.description || '—'}</Td>
                 <Td right className="font-semibold text-espresso tabular-nums">{money(e.amount)}{e.taxAmount ? <span className="text-xs text-ink-soft block">+tax {money(e.taxAmount)}</span> : null}</Td>
                 <Td><Pill tone={e.approvalStatus === 'approved' ? 'green' : e.approvalStatus === 'pending' ? 'amber' : 'red'}>{e.approvalStatus}</Pill></Td>
                 <Td><Pill tone={e.paymentStatus === 'paid' ? 'green' : 'gold'}>{e.paymentStatus}</Pill></Td>
@@ -203,8 +203,8 @@ const AccountingIncomeExpense = ({ token }: { token: string }) => {
           <Field label="Source"><input className={inputCls} value={incomeForm.source} onChange={(e) => setIncomeForm({ ...incomeForm, source: e.target.value })} placeholder="e.g. Order #123" /></Field>
           <Field label="Revenue account">
             <select className={inputCls} value={incomeForm.accountId} onChange={(e) => setIncomeForm({ ...incomeForm, accountId: e.target.value })}>
-              <option value="">Selectâ€¦</option>
-              {chartAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} â€” {a.name}</option>)}
+              <option value="">Select…</option>
+              {chartAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
             </select>
           </Field>
           <Field label="Amount"><input type="number" className={inputCls} value={incomeForm.amount} onChange={(e) => setIncomeForm({ ...incomeForm, amount: e.target.value })} /></Field>
@@ -213,7 +213,7 @@ const AccountingIncomeExpense = ({ token }: { token: string }) => {
         </div>
         <div className="mt-5 flex justify-end gap-3">
           <GhostBtn onClick={() => setShowIncome(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={submitIncome} disabled={saving}>{saving ? 'Savingâ€¦' : 'Record Income'}</PrimaryBtn>
+          <PrimaryBtn onClick={submitIncome} disabled={saving}>{saving ? 'Saving…' : 'Record Income'}</PrimaryBtn>
         </div>
       </Modal>
 
@@ -223,8 +223,8 @@ const AccountingIncomeExpense = ({ token }: { token: string }) => {
           <Field label="Vendor name"><input className={inputCls} value={expenseForm.vendorName} onChange={(e) => setExpenseForm({ ...expenseForm, vendorName: e.target.value })} /></Field>
           <Field label="Expense account">
             <select className={inputCls} value={expenseForm.accountId} onChange={(e) => setExpenseForm({ ...expenseForm, accountId: e.target.value })}>
-              <option value="">Selectâ€¦</option>
-              {chartAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} â€” {a.name}</option>)}
+              <option value="">Select…</option>
+              {chartAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
             </select>
           </Field>
           <Field label="Amount"><input type="number" className={inputCls} value={expenseForm.amount} onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })} /></Field>
@@ -233,7 +233,7 @@ const AccountingIncomeExpense = ({ token }: { token: string }) => {
         </div>
         <div className="mt-5 flex justify-end gap-3">
           <GhostBtn onClick={() => setShowExpense(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={submitExpense} disabled={saving}>{saving ? 'Savingâ€¦' : 'Record Expense'}</PrimaryBtn>
+          <PrimaryBtn onClick={submitExpense} disabled={saving}>{saving ? 'Saving…' : 'Record Expense'}</PrimaryBtn>
         </div>
       </Modal>
     </div>
