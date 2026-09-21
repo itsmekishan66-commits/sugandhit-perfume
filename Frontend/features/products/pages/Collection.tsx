@@ -32,7 +32,13 @@ const Collection = () => {
     let productsCopy = products.slice();
 
     if (showSearch && search) {
-      productsCopy = productsCopy.filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
+      const q = search.toLowerCase();
+      productsCopy = productsCopy.filter(
+        (item) =>
+          item.name.toLowerCase().includes(q) ||
+          (item.subCategory || "").toLowerCase().includes(q) ||
+          (item.category || "").toLowerCase().includes(q)
+      );
     }
 
     if (category.length > 0) {
