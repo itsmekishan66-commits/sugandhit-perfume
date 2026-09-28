@@ -562,3 +562,19 @@ select, input, textarea {
 .flip-card-front {
   transform: rotateY(180deg);
 }
+
+/*
+ * The hero flip card is fluid, so its face radius has to shrink with it.
+ * These rules sit outside @layer on purpose - they must win over utilities.
+ */
+.hero-flip .flip-card-front,
+.hero-flip .flip-card-back {
+  border-radius: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .hero-flip .flip-card-front,
+  .hero-flip .flip-card-back {
+    border-radius: 2.5rem;
+  }
+}
