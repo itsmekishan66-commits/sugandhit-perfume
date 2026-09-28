@@ -17,6 +17,7 @@ const InventoryFeature = lazy(() => import('../features/inventory'));
 const Users = lazy(() => import('../features/users'));
 const UserDetails = lazy(() => import('../features/users/Details'));
 const Settings = lazy(() => import('../features/settings'));
+const Customization = lazy(() => import('../features/customization'));
 
 const Fallback = ({ children }: { children: ReactNode }) => (
   <Suspense fallback={<div className="flex items-center justify-center py-24"><Loading /></div>}>
@@ -40,6 +41,7 @@ const AppRoutes = ({ token }: { token: string }) => (
     <Route path="/accounts" element={<Fallback><AccountsFeature token={token} /></Fallback>} />
     <Route path="/inventory" element={<Fallback><InventoryFeature token={token} /></Fallback>} />
     <Route path="/settings" element={<Fallback><Settings /></Fallback>} />
+    <Route path="/customization" element={<Fallback><Customization token={token} /></Fallback>} />
   </Routes>
 );
 

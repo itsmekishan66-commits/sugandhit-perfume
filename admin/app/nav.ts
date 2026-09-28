@@ -22,6 +22,7 @@ export const navGroups: NavGroup[] = [
       { label: 'Notifications', to: '/notifications', icon: '🔔' },
       { label: 'Users', to: '/users', icon: '👥' },
       { label: 'Settings', to: '/settings', icon: '⚙️' },
+      { label: 'Customization', to: '/customization', icon: '🎨' },
     ],
   },
   {
@@ -57,4 +58,5 @@ export const navItems: NavLinkItem[] = [
   { label: 'Stock', to: '/inventory', icon: '🗃️' },
   { label: 'Users', to: '/users', icon: '👥' },
   { label: 'Settings', to: '/settings', icon: '⚙️' },
+  { label: 'Custom', to: '/customization', icon: '🎨' },
 ];
