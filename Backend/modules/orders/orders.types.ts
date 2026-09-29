@@ -9,6 +9,7 @@ export interface PlaceCustomOrderInput {
   userId: number;
   name?: string;
   bottleSize?: string;
+  bottleType?: string;
   topNotes: string[];
   heartNotes: string[];
   baseNotes: string[];
@@ -17,7 +18,7 @@ export interface PlaceCustomOrderInput {
   strengthName?: string;
   customLabel?: string;
   amount: string;
-  address: Record<string, string>;
+  address?: Record<string, string>;
 }
 
 export interface SerializedOrder {
@@ -39,6 +40,7 @@ export interface SerializedCustomOrder {
   userId: number;
   name: string;
   bottleSize: string;
+  bottleType: string;
   topNotes: string[];
   heartNotes: string[];
   baseNotes: string[];

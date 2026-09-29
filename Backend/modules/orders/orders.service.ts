@@ -74,6 +74,7 @@ export const placeCustomOrder = async (data: PlaceCustomOrderInput) => {
     userId: Number(data.userId),
     name: data.name || 'Custom Perfume',
     bottleSize: data.bottleSize || '50ml',
+    bottleType: data.bottleType || '',
     topNotes: data.topNotes,
     heartNotes: data.heartNotes,
     baseNotes: data.baseNotes,
@@ -82,7 +83,7 @@ export const placeCustomOrder = async (data: PlaceCustomOrderInput) => {
     strengthName: data.strengthName || 'Eau de Parfum',
     customLabel: data.customLabel || '',
     amount: data.amount,
-    address: data.address,
+    address: data.address ?? {},
   });
 };
 

@@ -56,6 +56,7 @@ export const insertCustomOrder = async (data: {
   userId: number;
   name: string;
   bottleSize: string;
+  bottleType: string;
   topNotes: string[];
   heartNotes: string[];
   baseNotes: string[];
@@ -70,6 +71,7 @@ export const insertCustomOrder = async (data: {
     userId: data.userId,
     name: data.name,
     bottleSize: data.bottleSize,
+    bottleType: data.bottleType,
     topNotes: data.topNotes,
     heartNotes: data.heartNotes,
     baseNotes: data.baseNotes,

@@ -1,16 +1,16 @@
 import { api, apiFetch } from '@/services/api';
-import type { ApiOrder } from '@/types/common';
+import type { ApiCustomOrder, ApiOrder } from '@/types/common';
 
 export async function fetchUserOrders(
   token: string
-): Promise<{ orders: ApiOrder[]; customOrders: ApiOrder[] }> {
+): Promise<{ orders: ApiOrder[]; customOrders: ApiCustomOrder[] }> {
   const [ordersRes, customRes] = await Promise.all([
     apiFetch<{ success: boolean; orders?: ApiOrder[] }>(
       api('/api/order/userorders'),
       { method: 'POST', body: {} },
       token
     ),
-    apiFetch<{ success: boolean; orders?: ApiOrder[] }>(
+    apiFetch<{ success: boolean; orders?: ApiCustomOrder[] }>(
       api('/api/custom-order/userorders'),
       { method: 'POST', body: {} },
       token

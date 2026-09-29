@@ -1,19 +1,21 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { useEffect, useRef, type ReactNode } from 'react';
 import { getToken } from '@/utils/storage';
 import { apiCartAdd, apiCartGet, apiCartUpdate } from '@/features/cart/cart.service';
 import { apiWishlistAdd, apiWishlistGet, apiWishlistRemove } from '@/features/wishlist/wishlist.service';
-import { useAuth } from './AuthContext';
 import { showToast } from '@/components/feedback/toast';
-import type { CartItems } from '@/types/common';
+import type { CartItems, CustomBlendCartItem } from '@/types/common';
 import type { Product } from '@/types/product';
 
-const getWishlistCount = (wishlist: string[], products: Product[]) =>
+export const getWishlistCount = (wishlist: string[], products: Product[]) =>
   wishlist.filter((id) => products.some((product) => product._id === id)).length;
 
-const getCartCount = (cartItems: CartItems, products: Product[]) => {
-  let totalCount = 0;
+export const getCartCount = (
+  cartItems: CartItems,
+  products: Product[],
+  customBlends: CustomBlendCartItem[] = []
+) => {
+  let totalCount = customBlends.reduce((sum, blend) => sum + (Number(blend.qty) || 0), 0);
   for (const items in cartItems) {
     if (!products.some((product) => product._id === items)) continue;
     for (const item in cartItems[items]) {
@@ -25,8 +27,15 @@ const getCartCount = (cartItems: CartItems, products: Product[]) => {
   return totalCount;
 };
 
-const getCartAmount = (cartItems: CartItems, products: Product[]) => {
-  let totalAmount = 0;
+export const getCartAmount = (
+  cartItems: CartItems,
+  products: Product[],
+  customBlends: CustomBlendCartItem[] = []
+) => {
+  let totalAmount = customBlends.reduce(
+    (sum, blend) => sum + (Number(blend.price) || 0) * (Number(blend.qty) || 0),
+    0
+  );
   for (const items in cartItems) {
     const itemInfo = products.find((product) => product._id === items);
     if (!itemInfo) continue;
@@ -44,10 +53,15 @@ const getCartAmount = (cartItems: CartItems, products: Product[]) => {
 
 interface CartState {
   cartItems: CartItems;
+  customBlends: CustomBlendCartItem[];
   wishlist: string[];
   setCartItems: (cartItems: CartItems) => void;
+  setCustomBlends: (customBlends: CustomBlendCartItem[]) => void;
   setWishlist: (wishlist: string[]) => void;
   addToCart: (itemId: string, colors: string, qty?: number) => Promise<void>;
+  addCustomBlend: (blend: Omit<CustomBlendCartItem, 'key' | 'qty'>) => void;
+  updateCustomBlendQty: (key: string, qty: number) => void;
+  removeCustomBlend: (key: string) => void;
   updateQuantity: (itemId: string, colors: string, quantity: number) => Promise<void>;
   toggleWishlist: (itemId: string) => Promise<void>;
   removeFromWishlist: (itemId: string) => Promise<void>;
@@ -58,7 +72,18 @@ interface CartState {
 const mergeLegacyState = (persistedState: unknown, currentState: CartState) => {
   const persisted = persistedState as Partial<CartState> | undefined;
   if (persisted && typeof persisted.cartItems === 'object' && Array.isArray(persisted.wishlist)) {
-    return { ...currentState, ...persisted };
+    return {
+      ...currentState,
+      ...persisted,
+      // Blends saved before quantities existed get a default of 1, and blends
+      // saved before bottle types existed fall back to the classic bottle.
+      customBlends: (persisted.customBlends || []).map((blend) => ({
+        ...blend,
+        qty: Number(blend.qty) > 0 ? Number(blend.qty) : 1,
+        bottleType: blend.bottleType || 'classic',
+        bottleTypeName: blend.bottleTypeName || 'Classic Clear Glass',
+      })),
+    };
   }
   try {
     const legacyCart = localStorage.getItem('cartItems');
@@ -75,9 +100,11 @@ export const useCart = create<CartState>()(
   persist(
     (set, get) => ({
       cartItems: {},
+      customBlends: [],
       wishlist: [],
 
       setCartItems: (cartItems) => set({ cartItems }),
+      setCustomBlends: (customBlends) => set({ customBlends }),
       setWishlist: (wishlist) => set({ wishlist }),
 
       addToCart: async (itemId, colors, qty = 1) => {
@@ -104,6 +131,33 @@ export const useCart = create<CartState>()(
             showToast((error as Error).message, 'error');
           }
         }
+      },
+
+      addCustomBlend: (blend) => {
+        const key = `blend-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        set((state) => ({ customBlends: [...state.customBlends, { ...blend, key, qty: 1 }] }));
+        showToast('Your blend has been added to the cart', 'success');
+      },
+
+      updateCustomBlendQty: (key, qty) => {
+        set((state) => {
+          const target = state.customBlends.find((blend) => blend.key === key);
+          if (!target) return state;
+          if (qty <= 0) {
+            showToast('Blend removed from cart', 'info');
+            return { customBlends: state.customBlends.filter((blend) => blend.key !== key) };
+          }
+          return {
+            customBlends: state.customBlends.map((blend) =>
+              blend.key === key ? { ...blend, qty } : blend
+            ),
+          };
+        });
+      },
+
+      removeCustomBlend: (key) => {
+        set((state) => ({ customBlends: state.customBlends.filter((blend) => blend.key !== key) }));
+        showToast('Blend removed from cart', 'info');
       },
 
       updateQuantity: async (itemId, colors, quantity) => {
@@ -195,7 +249,7 @@ export const useCart = create<CartState>()(
       },
 
       clearAll: () => {
-        set({ cartItems: {}, wishlist: [] });
+        set({ cartItems: {}, customBlends: [], wishlist: [] });
         localStorage.removeItem('cartItems');
         localStorage.removeItem('wishlist');
       },
@@ -203,30 +257,13 @@ export const useCart = create<CartState>()(
     {
       name: 'sugandhit-shop-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ cartItems: state.cartItems, wishlist: state.wishlist }),
+      partialize: (state) => ({
+        cartItems: state.cartItems,
+        customBlends: state.customBlends,
+        wishlist: state.wishlist,
+      }),
       merge: mergeLegacyState,
       version: 1,
     }
   )
 );
-
-const CartProvider = ({ children }: { children: ReactNode }) => {
-  const token = useAuth().token;
-  const prevToken = useRef('');
-
-  useEffect(() => {
-    if (token === prevToken.current) return;
-    const prev = prevToken.current;
-    prevToken.current = token;
-    if (token) {
-      useCart.getState().hydrateFromServer(token).catch(() => undefined);
-    } else if (prev !== '') {
-      useCart.getState().clearAll();
-    }
-  }, [token]);
-
-  return children;
-};
-
-export { CartProvider, getCartAmount, getCartCount, getWishlistCount };
-export default CartProvider;

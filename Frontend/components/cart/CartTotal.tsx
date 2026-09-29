@@ -5,7 +5,8 @@ import { CURRENCY, DELIVERY_FEE } from '@/config/constants'
 const CartTotal = () => {
   const { products } = useApp();
   const cartItems = useCart((s) => s.cartItems);
-  const subtotal = getCartAmount(cartItems, products);
+  const customBlends = useCart((s) => s.customBlends);
+  const subtotal = getCartAmount(cartItems, products, customBlends);
   const total = subtotal === 0 ? 0 : subtotal + DELIVERY_FEE;
 
   return (

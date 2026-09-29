@@ -1,24 +1,9 @@
 import { sql } from 'drizzle-orm';
 import db from '../client.js';
-import { admins, notes, perfumebases, chartOfAccounts, paymentAccounts } from '../schema/index.js';
+import { admins, chartOfAccounts, paymentAccounts } from '../schema/index.js';
 import { hashPassword } from '../../shared/utils/crypto.js';
-import { defaultNotes } from './notes.js';
-import { defaultBases } from './bases.js';
+import { adminCredentials, defaultPaymentAccount } from './users.js';
 import { DEFAULT_CHART_OF_ACCOUNTS } from '../../shared/constants/finance.constants.js';
-
-export const seedPalette = async () => {
-  const { rows } = await db.execute(
-    sql`select (select count(*) from notes) + (select count(*) from perfumebases) as total`
-  );
-  const total = Number(rows[0].total);
-  if (total > 0) {
-    console.log(`Palette already seeded (${total} rows).`);
-    return;
-  }
-  await db.insert(notes).values(defaultNotes);
-  await db.insert(perfumebases).values(defaultBases);
-  console.log('Palette seeded');
-};
 
 export const seedAdmins = async () => {
   await db.execute(sql`
@@ -32,17 +17,12 @@ export const seedAdmins = async () => {
       created_at timestamp with time zone default now()
     )
   `);
-  const credentials = [
-    { name: 'Super Admin', email: 'superadmin@admin.com', password: 'super@12345', role: 'superadmin' },
-    { name: 'Manager', email: 'manager@sugandhit.com', password: 'manager@12345', role: 'admin' },
-    { name: 'Editor', email: 'editor@sugandhit.com', password: 'editor@12345', role: 'admin' },
-  ];
   const existing = await db.query.admins.findFirst();
   if (existing) {
     console.log('Admins already seeded.');
     return;
   }
-  for (const admin of credentials) {
+  for (const admin of adminCredentials) {
     await db.insert(admins).values({
       name: admin.name,
       email: admin.email,
@@ -50,7 +30,7 @@ export const seedAdmins = async () => {
       role: admin.role,
     });
   }
-  console.log(`Admins seeded (${credentials.length})`);
+  console.log(`Admins seeded (${adminCredentials.length})`);
 };
 
 export const seedChartOfAccounts = async () => {
@@ -71,9 +51,7 @@ export const seedChartOfAccounts = async () => {
     }))
   );
   await db.insert(paymentAccounts).values({
-    name: 'Cash in Hand',
-    accountType: 'cash',
-    openingBalance: '0',
+    ...defaultPaymentAccount,
     createdAt: now,
     updatedAt: now,
   });

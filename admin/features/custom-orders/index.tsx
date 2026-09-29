@@ -7,7 +7,7 @@ import { PageHeader } from "../../components";
 
 interface NotePillsProps {
   title: string;
-  notes?: string[];
+  notes?: { name?: string; icon?: string }[];
 }
 
 const NotePills = ({ title, notes }: NotePillsProps) => (
@@ -16,7 +16,7 @@ const NotePills = ({ title, notes }: NotePillsProps) => (
     <div className="flex flex-wrap gap-1">
       {notes?.map((n, i) => (
         <span key={i} className="text-[11px] bg-gradient-to-r from-cream to-sand/50 border border-gold/20 rounded-full px-2.5 py-1 text-espresso">
-          {n}
+          {[n.icon, n.name].filter(Boolean).join(' ') || '—'}
         </span>
       ))}
     </div>
@@ -24,21 +24,22 @@ const NotePills = ({ title, notes }: NotePillsProps) => (
 );
 
 interface Address {
-  firstName: string;
-  lastName: string;
-  location: string;
-  city: string;
-  district: string;
-  phone: string;
+  firstName?: string;
+  lastName?: string;
+  location?: string;
+  city?: string;
+  district?: string;
+  phone?: string;
 }
 
 interface CustomOrder {
   _id: string;
   name?: string;
   bottleSize?: string;
-  topNotes?: string[];
-  heartNotes?: string[];
-  baseNotes?: string[];
+  bottleType?: string;
+  topNotes?: { name?: string; icon?: string }[];
+  heartNotes?: { name?: string; icon?: string }[];
+  baseNotes?: { name?: string; icon?: string }[];
   perfumeBase?: string;
   strengthName?: string;
   strength?: string;
@@ -144,15 +145,23 @@ const CustomOrders = ({ token }: CustomOrdersProps) => {
                 <p className="font-display text-lg font-semibold text-espresso">✨ {order.name || 'Custom Perfume'}</p>
                 <span className="text-[11px] bg-ink text-cream rounded-full px-2.5 py-1">{order.bottleSize}</span>
               </div>
+              {order.bottleType && (
+                <p className="text-xs mb-2">🧴 Bottle type: <span className="text-ink font-medium">{order.bottleType}</span></p>
+              )}
               <NotePills title="Top Notes" notes={order.topNotes} />
               <NotePills title="Heart Notes" notes={order.heartNotes} />
               <NotePills title="Base Notes" notes={order.baseNotes} />
               <p className="text-xs mt-2">🫧 Base: <span className="text-ink font-medium">{order.perfumeBase}</span> · {order.strengthName || order.strength}</p>
               {order.customLabel && <p className="text-xs mt-1">🏷️ Label: <span className="text-ink font-medium">{order.customLabel}</span></p>}
               <p className="font-semibold mt-3 text-ink">
-                {order.address.firstName} {order.address.lastName}
+                {order.address.firstName || order.address.lastName
+                  ? `${order.address.firstName || ''} ${order.address.lastName || ''}`.trim()
+                  : 'No delivery address provided'}
               </p>
-              <p className="text-ink-soft/70 text-xs">{order.address.location}, {order.address.city}, {order.address.district} · {order.address.phone}</p>
+              <p className="text-ink-soft/70 text-xs">
+                {[order.address.location, order.address.city, order.address.district].filter(Boolean).join(', ')}
+                {order.address.phone ? ` · ${order.address.phone}` : ''}
+              </p>
               <p className="text-ink-soft/60 text-xs mt-1">📅 {new Date(order.date).toLocaleDateString()} · {order.paymentMethod}</p>
             </div>
 
@@ -164,6 +173,7 @@ const CustomOrders = ({ token }: CustomOrdersProps) => {
                 <option value="Shipped">Shipped</option>
                 <option value="Out For Delivery">Out For Delivery</option>
                 <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
               </select>
             </div>
           </div>

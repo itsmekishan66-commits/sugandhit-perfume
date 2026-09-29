@@ -1,6 +1,7 @@
 export { users, admins } from './users.js';
-export { products, notes, perfumebases } from './products.js';
+export { products } from './products.js';
 export type { ProductVariant } from './products.js';
+export { notes, perfumebases, bottlesizes, bottletypes, customizationSettings } from './customization.js';
 export { orders, customorders } from './orders.js';
 export { cartitems, wishlistitems, accountsReceivable, accountsReceivablePayments } from './customers.js';
 export { purchaseOrders, purchaseOrderLines, inventoryMovements } from './inventory.js';

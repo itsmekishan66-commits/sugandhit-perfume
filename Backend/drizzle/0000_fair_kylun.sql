@@ -94,6 +94,25 @@ CREATE TABLE "audit_logs" (
 	"created_at" bigint NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "bottlesizes" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"label" text NOT NULL,
+	"ml" text NOT NULL,
+	"price" numeric(12, 2) DEFAULT '0' NOT NULL,
+	"description" text DEFAULT '' NOT NULL,
+	"active" boolean DEFAULT true NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "bottletypes" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"code" text NOT NULL,
+	"description" text DEFAULT '' NOT NULL,
+	"image" text DEFAULT '' NOT NULL,
+	"extra_price" numeric(12, 2) DEFAULT '0' NOT NULL,
+	"active" boolean DEFAULT true NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "cartitems" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
@@ -136,11 +155,19 @@ CREATE TABLE "coupons" (
 	CONSTRAINT "coupons_code_unique" UNIQUE("code")
 );
 --> statement-breakpoint
+CREATE TABLE "customization_settings" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"max_notes_per_layer" integer DEFAULT 3 NOT NULL,
+	"delivery_fee" numeric(12, 2) DEFAULT '100' NOT NULL,
+	"updated_at" bigint NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "customorders" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"name" text DEFAULT 'Custom Perfume' NOT NULL,
 	"bottle_size" text DEFAULT '50ml' NOT NULL,
+	"bottle_type" text DEFAULT '' NOT NULL,
 	"top_notes" jsonb NOT NULL,
 	"heart_notes" jsonb NOT NULL,
 	"base_notes" jsonb NOT NULL,
@@ -240,6 +267,7 @@ CREATE TABLE "notes" (
 	"icon" text DEFAULT '🌿' NOT NULL,
 	"color" text DEFAULT '#C586A5' NOT NULL,
 	"description" text DEFAULT '' NOT NULL,
+	"price" numeric(12, 2) DEFAULT '0' NOT NULL,
 	"active" boolean DEFAULT true NOT NULL
 );
 --> statement-breakpoint
@@ -399,6 +427,7 @@ CREATE TABLE "products" (
 	"sub_category" text NOT NULL,
 	"colors" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"sku" text,
+	"cost" numeric(12, 2) DEFAULT '0' NOT NULL,
 	"stock" integer DEFAULT 0 NOT NULL,
 	"reorder_level" integer DEFAULT 0 NOT NULL,
 	"bestseller" boolean DEFAULT false,

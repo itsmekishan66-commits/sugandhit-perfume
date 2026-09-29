@@ -17,6 +17,8 @@ export const customorders = pgTable('customorders', {
   userId: integer('user_id').notNull(),
   name: text('name').notNull().default('Custom Perfume'),
   bottleSize: text('bottle_size').notNull().default('50ml'),
+  /** Human readable bottle type name chosen on /customize (e.g. "Classic Clear Glass"). */
+  bottleType: text('bottle_type').notNull().default(''),
   topNotes: jsonb('top_notes').$type<string[]>().notNull(),
   heartNotes: jsonb('heart_notes').$type<string[]>().notNull(),
   baseNotes: jsonb('base_notes').$type<string[]>().notNull(),

@@ -15,27 +15,41 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const clearError = () => setError('');
 
   const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError('');
 
     const parsed = registerSchema.safeParse({ name, email, password, phone, address });
     if (!parsed.success) {
-      showToast(parsed.error.issues[0].message, 'error');
+      const message = parsed.error.issues[0].message;
+      setError(message);
+      showToast(message, 'error');
       return;
     }
     const payload = parsed.data;
 
+    setBusy(true);
     try {
       const { success, message } = await registerUser(payload);
       if (success) {
         showToast('Account created successfully. Please sign in.', 'success');
         navigate('/login');
       } else {
-        showToast(message || 'Registration failed', 'error');
+        const reason = message || 'We could not create your account. Please try again.';
+        setError(reason);
+        showToast(reason, 'error');
       }
-    } catch (error) {
-      showToast((error as Error).message, 'error');
+    } catch (err) {
+      const reason = (err as Error).message;
+      setError(reason);
+      showToast(reason, 'error');
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -53,18 +67,30 @@ const Register = () => {
           <p className="text-xs tracking-luxe uppercase text-ink-soft mt-2">Create your account</p>
         </div>
 
-        <input className={inputClass + " mb-5"} type="text" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} required />
-        <input className={inputClass + " mb-5"} type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input className={inputClass + " mb-5"} type="tel" placeholder="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-        <input className={inputClass + " mb-5"} type="text" placeholder="Address" value={address} onChange={(e) => setAddress(e.target.value)} required />
-        <input className={inputClass} type="password" placeholder="Password (min 6 chars)" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <input className={inputClass + " mb-5"} type="text" placeholder="Full name" value={name} onChange={(e) => { setName(e.target.value); clearError(); }} required />
+        <input className={inputClass + " mb-5"} type="email" placeholder="Email" value={email} onChange={(e) => { setEmail(e.target.value); clearError(); }} required />
+        <input className={inputClass + " mb-5"} type="tel" placeholder="Phone number" value={phone} onChange={(e) => { setPhone(e.target.value); clearError(); }} required />
+        <input className={inputClass + " mb-5"} type="text" placeholder="Address" value={address} onChange={(e) => { setAddress(e.target.value); clearError(); }} required />
+        <input className={inputClass} type="password" placeholder="Password (min 6 chars)" value={password} onChange={(e) => { setPassword(e.target.value); clearError(); }} required />
 
         <div className="flex justify-between text-ink-soft my-5 text-xs">
           <p className="cursor-pointer hover:text-espresso transition-colors">Forgot password?</p>
           <p onClick={() => navigate('/login')} className="cursor-pointer text-gold font-medium">Login instead</p>
         </div>
 
-        <button className="btn-primary w-full">Create Account</button>
+        {error && (
+          <p
+            role="alert"
+            className="mb-4 flex items-start gap-2 rounded-2xl border border-red-300/60 bg-red-50/80 px-4 py-3 text-xs leading-snug text-red-700"
+          >
+            <span className="font-medium">Could not register:</span>
+            <span className="min-w-0 flex-1">{error}</span>
+          </p>
+        )}
+
+        <button className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed" disabled={busy}>
+          {busy ? 'Creating account…' : 'Create Account'}
+        </button>
 
         <p className="text-center text-[11px] text-ink-soft mt-5">
           By continuing you agree to our Terms & Privacy.

@@ -30,6 +30,23 @@ export const SIZE_CONFIG: SizeOption[] = [
   { label: '100 ml', ml: '100ml', price: 999, desc: 'For the committed' },
 ];
 
+export interface BottleTypeOption {
+  name: string;
+  code: string;
+  extraPrice: number;
+  description: string;
+  image: string;
+}
+
+/** Fallback bottle types, used only when the backend palette has none yet. */
+export const BOTTLE_TYPE_CONFIG: BottleTypeOption[] = [
+  { name: 'Classic Clear Glass', code: 'classic', extraPrice: 0, description: 'Timeless clear glass with a gold cap', image: 'https://unsplash.com/photos/IBY3ImxMilY/download?w=800&q=80' },
+  { name: 'Matte Black', code: 'matte-black', extraPrice: 100, description: 'Sleek, modern and understated', image: 'https://unsplash.com/photos/37EmTaUlAPs/download?w=800&q=80' },
+  { name: 'Frosted Crystal', code: 'frosted', extraPrice: 150, description: 'Soft-touch frosted glass with a subtle glow', image: 'https://unsplash.com/photos/QE2T4ttelQk/download?w=800&q=80' },
+  { name: 'Vintage Amber', code: 'vintage-amber', extraPrice: 200, description: 'Apothecary-inspired warm amber glass', image: 'https://unsplash.com/photos/gdUxNykbuZc/download?w=800&q=80' },
+  { name: 'Faceted Crystal', code: 'faceted', extraPrice: 250, description: 'Cut-crystal gem bottle, gift-worthy', image: 'https://unsplash.com/photos/8m4V_wPWwbY/download?w=800&q=80' },
+];
+
 export interface LayerSelection {
   top: Note[];
   heart: Note[];
@@ -52,6 +69,7 @@ export interface CustomNoteInput {
 export interface CustomOrderPayload {
   name: string;
   bottleSize: string;
+  bottleType: string;
   topNotes: CustomNoteInput[];
   heartNotes: CustomNoteInput[];
   baseNotes: CustomNoteInput[];
@@ -60,7 +78,7 @@ export interface CustomOrderPayload {
   strengthName: string;
   customLabel: string;
   amount: number;
-  address: CustomAddress;
+  address?: CustomAddress;
 }
 
-export type { PaletteBase } from '@/types/product';
+export type { PaletteBase, PaletteBottleType } from '@/types/product';

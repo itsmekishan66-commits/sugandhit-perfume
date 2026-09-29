@@ -1,6 +1,10 @@
 import { defineConfig } from 'drizzle-kit';
 import 'dotenv/config';
 
+declare const process: {
+  env: Record<string, string | undefined>;
+};
+
 export default defineConfig({
   dialect: 'postgresql',
   schema: './database/schema/index.ts',

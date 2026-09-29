@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { AppProvider } from '@/context/AppContext';
-import { AuthProvider } from '@/context/AuthContext';
-import { CartProvider } from '@/context/CartContext';
+import { AppProvider } from '@/context/AppProvider';
+import { AuthProvider } from '@/context/AuthProvider';
+import { CartProvider } from '@/context/CartProvider';
 
 const Providers = ({ children }: { children: ReactNode }) => (
   <BrowserRouter>

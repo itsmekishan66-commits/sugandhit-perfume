@@ -14,10 +14,11 @@ const Navbar = () => {
   const { products, setShowSearch } = useApp();
   const { token, logout } = useAuth();
   const cartItems = useCart((s) => s.cartItems);
+  const customBlends = useCart((s) => s.customBlends);
   const wishlist = useCart((s) => s.wishlist);
   const navigate = useNavigate();
 
-  const cartCount = getCartCount(cartItems, products);
+  const cartCount = getCartCount(cartItems, products, customBlends);
   const wishlistCount = getWishlistCount(wishlist, products);
 
   const location = useLocation();

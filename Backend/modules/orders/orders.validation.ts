@@ -43,9 +43,10 @@ const noteLayerSchema = z
 export const customOrderPlaceSchema = z.object({
   userId: z.number().int().positive('Invalid user.'),
   name: z.string().trim().min(1).max(24, 'Custom blend name must be under 24 characters.'),
-  bottleSize: z.enum(['30ml', '50ml', '100ml'], {
-    message: 'Invalid bottle size.',
-  }),
+  // Bottle sizes are admin-managed (bottlesizes table), so accept any non-empty size.
+  bottleSize: z.string().trim().min(1, 'Invalid bottle size.'),
+  // Bottle types are admin-managed (bottletypes table), so accept any non-empty type.
+  bottleType: z.string().trim().min(1, 'Invalid bottle type.'),
   topNotes: noteLayerSchema,
   heartNotes: noteLayerSchema,
   baseNotes: noteLayerSchema,
@@ -54,5 +55,5 @@ export const customOrderPlaceSchema = z.object({
   strengthName: z.string().trim().optional(),
   customLabel: z.string().max(24, 'Custom label must be under 24 characters.').optional(),
   amount: z.union([z.string(), z.number()]),
-  address: customAddressSchema,
+  address: customAddressSchema.optional(),
 });

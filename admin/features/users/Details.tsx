@@ -23,6 +23,7 @@ interface HistoryOrder {
   items?: { name?: string; quantity?: number; price?: string | number; subCategory?: string; image?: string[] }[];
   name?: string;
   bottleSize?: string;
+  bottleType?: string;
   status: string;
   paymentMethod?: string;
   payment?: boolean;
@@ -256,7 +257,8 @@ const Details = ({ token }: DetailsProps) => {
                     <div className="text-sm text-ink-soft mb-2">
                       {order.type === 'Custom Blend' ? (
                         <p>
-                          {order.name || 'Custom Perfume'} · {order.bottleSize || ''} ·{' '}
+                          {order.name || 'Custom Perfume'} · {order.bottleSize || ''}
+                          {order.bottleType ? ` · ${order.bottleType}` : ''} ·{' '}
                           <span
                             className={`font-medium ${order.status === 'Delivered' || order.status === 'Completed' ? 'text-espresso' : 'text-ink'}`}
                           >

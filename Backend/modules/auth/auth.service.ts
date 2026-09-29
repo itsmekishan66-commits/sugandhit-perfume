@@ -36,10 +36,10 @@ export const registerUser = async ({ name, email, password, phone = '', address 
 export const loginUser = async ({ email, password }: LoginInput) => {
   if (!email || !password) throw new Error('Please enter email and password.');
   const user = await db.query.users.findFirst({ where: eq(users.email, email) });
-  if (!user) throw new Error("User doesn't exist.");
+  if (!user) throw new Error('No account found with that email. Please check the email or create an account.');
 
   const isMatch = await verifyPassword(password, user.password);
-  if (!isMatch) throw new Error('Invalid credentials');
+  if (!isMatch) throw new Error('That password did not match our records. Please try again.');
 
   return createToken(user.id);
 };

@@ -17,12 +17,12 @@ export const navGroups: NavGroup[] = [
       { label: 'Add Products', to: '/add', icon: '➕' },
       { label: 'Product List', to: '/list', icon: '📦' },
       { label: 'Orders', to: '/orders', icon: '🛍️' },
+      { label: 'Customization', to: '/customization', icon: '🎨' },
       { label: 'Custom Orders', to: '/custom-orders', icon: '✨' },
       { label: 'Coupons', to: '/coupons', icon: '🎟️' },
       { label: 'Notifications', to: '/notifications', icon: '🔔' },
       { label: 'Users', to: '/users', icon: '👥' },
       { label: 'Settings', to: '/settings', icon: '⚙️' },
-      { label: 'Customization', to: '/customization', icon: '🎨' },
     ],
   },
   {
@@ -50,6 +50,7 @@ export const navItems: NavLinkItem[] = [
   { label: 'Add', to: '/add', icon: '➕' },
   { label: 'Products', to: '/list', icon: '📦' },
   { label: 'Orders', to: '/orders', icon: '🛍️' },
+  { label: 'Custom', to: '/customization', icon: '🎨' },
   { label: 'Custom', to: '/custom-orders', icon: '✨' },
   { label: 'Coupons', to: '/coupons', icon: '🎟️' },
   { label: 'Notify', to: '/notifications', icon: '🔔' },
@@ -58,5 +59,4 @@ export const navItems: NavLinkItem[] = [
   { label: 'Stock', to: '/inventory', icon: '🗃️' },
   { label: 'Users', to: '/users', icon: '👥' },
   { label: 'Settings', to: '/settings', icon: '⚙️' },
-  { label: 'Custom', to: '/customization', icon: '🎨' },
 ];

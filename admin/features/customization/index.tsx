@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { PageHeader, ConfirmDialog } from '../../components';
+import { api } from '../../services/api';
 
 interface Note {
   id: string;
@@ -8,6 +9,7 @@ interface Note {
   icon: string;
   color: string;
   price: number;
+  description?: string;
 }
 
 interface PaletteBase {
@@ -26,23 +28,35 @@ interface SizeOption {
   desc: string;
 }
 
+interface BottleTypeOption {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  image: string;
+  extraPrice: number;
+}
+
 interface CustomizationData {
   topNotes: Note[];
   heartNotes: Note[];
   baseNotes: Note[];
   bases: PaletteBase[];
   sizes: SizeOption[];
+  bottleTypes: BottleTypeOption[];
   maxNotesPerLayer: number;
   deliveryFee: number;
 }
 
 type LayerKey = 'topNotes' | 'heartNotes' | 'baseNotes';
-type TabKey = 'notes' | 'bases' | 'sizes' | 'settings';
-type SectionKey = LayerKey | 'bases' | 'sizes' | 'settings';
+type TabKey = 'notes' | 'bases' | 'sizes' | 'bottletypes' | 'settings';
+type SectionKey = LayerKey | 'bases' | 'sizes' | 'bottleTypes' | 'settings';
 
 interface Message {
   kind: 'error' | 'info' | 'success';
   text: string;
+  /** Sticky messages stay until the user edits a field, cancels, or saves. */
+  sticky?: boolean;
 }
 
 interface Drafts {
@@ -51,6 +65,7 @@ interface Drafts {
   baseNotes: Note[];
   bases: PaletteBase[];
   sizes: SizeOption[];
+  bottleTypes: BottleTypeOption[];
 }
 
 const STORAGE_KEY = 'sugandhit_customization_data_v1';
@@ -58,6 +73,21 @@ const STORAGE_KEY = 'sugandhit_customization_data_v1';
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 
 const genId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+/** Keeps prices as real numbers so blank/NaN input never corrupts the saved data. */
+const toNumber = (value: unknown): number => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+};
+
+/** Compares two row lists by their user-visible content only (ignores ids). */
+const sameContent = <T,>(a: T[], b: T[], content: (row: T) => unknown): boolean =>
+  JSON.stringify(a.map(content)) === JSON.stringify(b.map(content));
+
+const noteContent = (n: Note) => ({ name: n.name, icon: n.icon, color: n.color, price: toNumber(n.price) });
+const baseContent = (b: PaletteBase) => ({ name: b.name, code: b.code, description: b.description, extraPrice: toNumber(b.extraPrice) });
+const sizeContent = (s: SizeOption) => ({ label: s.label, ml: s.ml, price: toNumber(s.price), desc: s.desc });
+const bottleTypeContent = (b: BottleTypeOption) => ({ name: b.name, code: b.code, description: b.description, image: b.image, extraPrice: toNumber(b.extraPrice) });
 
 const DEFAULT_DATA: CustomizationData = {
   topNotes: [],
@@ -68,6 +98,13 @@ const DEFAULT_DATA: CustomizationData = {
     { id: '1', label: '30 ml', ml: '30ml', price: 399, desc: 'Samples & travel' },
     { id: '2', label: '50 ml', ml: '50ml', price: 699, desc: 'Most chosen' },
     { id: '3', label: '100 ml', ml: '100ml', price: 999, desc: 'For the committed' },
+  ],
+  bottleTypes: [
+    { id: '1', name: 'Classic Clear Glass', code: 'classic', description: 'Timeless clear glass with a gold cap', image: 'https://unsplash.com/photos/IBY3ImxMilY/download?w=800&q=80', extraPrice: 0 },
+    { id: '2', name: 'Matte Black', code: 'matte-black', description: 'Sleek, modern and understated', image: 'https://unsplash.com/photos/37EmTaUlAPs/download?w=800&q=80', extraPrice: 100 },
+    { id: '3', name: 'Frosted Crystal', code: 'frosted', description: 'Soft-touch frosted glass with a subtle glow', image: 'https://unsplash.com/photos/QE2T4ttelQk/download?w=800&q=80', extraPrice: 150 },
+    { id: '4', name: 'Vintage Amber', code: 'vintage-amber', description: 'Apothecary-inspired warm amber glass', image: 'https://unsplash.com/photos/gdUxNykbuZc/download?w=800&q=80', extraPrice: 200 },
+    { id: '5', name: 'Faceted Crystal', code: 'faceted', description: 'Cut-crystal gem bottle, gift-worthy', image: 'https://unsplash.com/photos/8m4V_wPWwbY/download?w=800&q=80', extraPrice: 250 },
   ],
   maxNotesPerLayer: 3,
   deliveryFee: 100,
@@ -85,7 +122,36 @@ const EMPTY_DRAFTS: Drafts = {
   baseNotes: [],
   bases: [],
   sizes: [],
+  bottleTypes: [],
 };
+
+/** Maps the admin's layer keys to the API layer slugs. */
+const LAYER_API: Record<LayerKey, string> = { topNotes: 'top', heartNotes: 'heart', baseNotes: 'base' };
+
+/* Server shapes returned by GET /api/note/palette and the PUT save endpoints. */
+interface ServerNote { id: number; name: string; layer: string; icon: string; color: string; description: string; price: number; active: boolean; }
+interface ServerBase { id: number; name: string; code: string; description: string; extraPrice: number; active: boolean; }
+interface ServerSize { id: number; label: string; ml: string; price: number; desc: string; active: boolean; }
+interface ServerBottleType { id: number; name: string; code: string; description: string; image: string; extraPrice: number; active: boolean; }
+interface ServerSettings { maxNotesPerLayer: number; deliveryFee: number; }
+interface PalettePayload {
+  top: ServerNote[];
+  heart: ServerNote[];
+  base: ServerNote[];
+  bases: ServerBase[];
+  sizes: ServerSize[];
+  bottleTypes: ServerBottleType[];
+  settings: ServerSettings | null;
+}
+
+const noteFromServer = (n: ServerNote): Note => ({ id: String(n.id), name: n.name, icon: n.icon, color: n.color, price: toNumber(n.price), description: n.description });
+const noteToServer = (n: Note) => ({ name: n.name, icon: n.icon, color: n.color, price: toNumber(n.price), description: n.description ?? '' });
+const baseFromServer = (b: ServerBase): PaletteBase => ({ id: String(b.id), name: b.name, code: b.code, description: b.description, extraPrice: toNumber(b.extraPrice) });
+const baseToServer = (b: PaletteBase) => ({ name: b.name, code: b.code, description: b.description, extraPrice: toNumber(b.extraPrice) });
+const sizeFromServer = (s: ServerSize): SizeOption => ({ id: String(s.id), label: s.label, ml: s.ml, price: toNumber(s.price), desc: s.desc });
+const sizeToServer = (s: SizeOption) => ({ label: s.label, ml: s.ml, price: toNumber(s.price), desc: s.desc });
+const bottleTypeFromServer = (b: ServerBottleType): BottleTypeOption => ({ id: String(b.id), name: b.name, code: b.code, description: b.description, image: b.image ?? '', extraPrice: toNumber(b.extraPrice) });
+const bottleTypeToServer = (b: BottleTypeOption) => ({ name: b.name, code: b.code, description: b.description, image: b.image ?? '', extraPrice: toNumber(b.extraPrice) });
 
 const loadCustomizationData = (): CustomizationData => {
   try {
@@ -97,7 +163,7 @@ const loadCustomizationData = (): CustomizationData => {
   return clone(DEFAULT_DATA);
 };
 
-const Customization = () => {
+const Customization = ({ token }: { token: string }) => {
   const [data, setData] = useState<CustomizationData>(loadCustomizationData);
   const [activeTab, setActiveTab] = useState<TabKey>('notes');
   const [message, setMessage] = useState<{ section: SectionKey } & Message | null>(null);
@@ -109,36 +175,149 @@ const Customization = () => {
     baseNotes: null,
     bases: null,
     sizes: null,
+    bottleTypes: null,
   });
-  const [deleteTarget, setDeleteTarget] = useState<{ layer: LayerKey; id: string; name: string } | { section: 'bases' | 'sizes'; id: string; name: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ layer: LayerKey; id: string; name: string } | { section: 'bases' | 'sizes' | 'bottleTypes'; id: string; name: string } | null>(null);
+
+  /* Load the live palette (notes + bases + sizes + settings) from the backend on mount. */
+  useEffect(() => {
+    let mounted = true;
+    const loadFromServer = async () => {
+      try {
+        const res = await api<{ palette: PalettePayload }>('/api/note/palette', token);
+        if (mounted && res?.palette) applyPalette(res.palette);
+      } catch {
+        /* Keep the localStorage defaults when the server is unreachable. */
+      }
+    };
+    loadFromServer();
+    return () => {
+      mounted = false;
+    };
+  }, [token]);
 
   useEffect(() => {
-    if (!message) return;
+    if (!message || message.sticky) return;
     const t = setTimeout(() => setMessage(null), 3500);
     return () => clearTimeout(t);
   }, [message]);
 
-  const notify = (section: SectionKey, kind: Message['kind'], text: string, msg?: string) => {
-    setMessage({ section, kind, text });
+  const notify = (section: SectionKey, kind: Message['kind'], text: string, msg?: string, sticky = false) => {
+    setMessage({ section, kind, text, sticky });
     if (kind === 'error') toast.error(msg ?? text);
     else if (kind === 'info') toast.info(msg ?? text);
     else toast.success(msg ?? text);
   };
 
+  /** Drops a sticky "nothing changed" notice as soon as the user touches a field. */
+  const clearStickyMessage = (section: SectionKey) => {
+    setMessage(prev => (prev && prev.section === section && prev.sticky ? null : prev));
+  };
+
   const sectionMessage = (section: SectionKey): Message | null =>
-    message && message.section === section ? { kind: message.kind, text: message.text } : null;
+    message && message.section === section
+      ? { kind: message.kind, text: message.text, sticky: message.sticky }
+      : null;
 
   const persist = (next: CustomizationData) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   };
 
+  /** Replaces a single tab/section in state with server rows and persists the cache. */
+  const applySection = (key: SectionKey, rows: Note[] | PaletteBase[] | SizeOption[] | BottleTypeOption[]) => {
+    setData(prev => {
+      const next = { ...prev, [key]: rows } as CustomizationData;
+      persist(next);
+      return next;
+    });
+  };
+
+  /* ---------- server sync ---------- */
+
+  const syncNotes = async (layer: LayerKey, rows: Note[]) => {
+    try {
+      const res = await api<{ notes: ServerNote[] }>(`/api/customization/notes/${LAYER_API[layer]}`, token, {
+        method: 'PUT',
+        body: { notes: rows.map(noteToServer) },
+      });
+      applySection(layer, (res?.notes || []).map(noteFromServer));
+    } catch (error) {
+      notify(layer, 'error', `Could not sync ${LAYER_META[layer].title}.`, (error as Error).message);
+    }
+  };
+
+  const syncBases = async (rows: PaletteBase[]) => {
+    try {
+      const res = await api<{ bases: ServerBase[] }>('/api/customization/bases', token, {
+        method: 'PUT',
+        body: { bases: rows.map(baseToServer) },
+      });
+      applySection('bases', (res?.bases || []).map(baseFromServer));
+    } catch (error) {
+      notify('bases', 'error', 'Could not sync Perfume Bases.', (error as Error).message);
+    }
+  };
+
+  const syncSizes = async (rows: SizeOption[]) => {
+    try {
+      const res = await api<{ sizes: ServerSize[] }>('/api/customization/sizes', token, {
+        method: 'PUT',
+        body: { sizes: rows.map(sizeToServer) },
+      });
+      applySection('sizes', (res?.sizes || []).map(sizeFromServer));
+    } catch (error) {
+      notify('sizes', 'error', 'Could not sync Bottle Sizes.', (error as Error).message);
+    }
+  };
+
+  const syncBottleTypes = async (rows: BottleTypeOption[]) => {
+    try {
+      const res = await api<{ bottleTypes: ServerBottleType[] }>('/api/customization/bottletypes', token, {
+        method: 'PUT',
+        body: { bottleTypes: rows.map(bottleTypeToServer) },
+      });
+      applySection('bottleTypes', (res?.bottleTypes || []).map(bottleTypeFromServer));
+    } catch (error) {
+      notify('bottleTypes', 'error', 'Could not sync Bottle Types.', (error as Error).message);
+    }
+  };
+
+  const syncSettings = async () => {
+    try {
+      await api('/api/customization/settings', token, {
+        method: 'PUT',
+        body: { maxNotesPerLayer: data.maxNotesPerLayer, deliveryFee: data.deliveryFee },
+      });
+    } catch (error) {
+      notify('settings', 'error', 'Could not sync Settings.', (error as Error).message);
+    }
+  };
+
+  /** Maps a palette payload onto the admin's local shape (used on mount & reset). */
+  const applyPalette = (p: PalettePayload) => {
+    const next: CustomizationData = {
+      topNotes: (p.top || []).map(noteFromServer),
+      heartNotes: (p.heart || []).map(noteFromServer),
+      baseNotes: (p.base || []).map(noteFromServer),
+      bases: (p.bases || []).map(baseFromServer),
+      sizes: (p.sizes || []).map(sizeFromServer),
+      bottleTypes: (p.bottleTypes || []).map(bottleTypeFromServer),
+      maxNotesPerLayer: p.settings?.maxNotesPerLayer ?? DEFAULT_DATA.maxNotesPerLayer,
+      deliveryFee: p.settings?.deliveryFee ?? DEFAULT_DATA.deliveryFee,
+    };
+    setData(next);
+    persist(next);
+  };
+
   /* ---------- generic draft helpers ---------- */
 
   const addDraft = <K extends keyof Drafts>(key: K, item: Drafts[K][number]) => {
+    clearStickyMessage(key);
     setDrafts(prev => ({ ...prev, [key]: [...prev[key], item] }));
   };
 
   const updateDraftRow = <K extends keyof Drafts>(key: K, index: number, field: keyof Drafts[K][number], value: string | number) => {
+    clearStickyMessage(key);
     setDrafts(prev => {
       const rows = [...prev[key]];
       const original = rows[index];
@@ -148,7 +327,20 @@ const Customization = () => {
   };
 
   const removeDraftRow = <K extends keyof Drafts>(key: K, index: number) => {
-    setDrafts(prev => ({ ...prev, [key]: (prev[key] as unknown as unknown[]).filter((_, i) => i !== index) }));
+    clearStickyMessage(key);
+    setDrafts(prev => {
+      const kept = (prev[key] as unknown as unknown[]).filter((_, i) => i !== index);
+      // Removing the last row closes the editor, so drop the stale editing id too.
+      if (kept.length === 0) setEditing(p => ({ ...p, [key]: null }));
+      return { ...prev, [key]: kept };
+    });
+  };
+
+  /** Closes the draft editor without saving (discards pending rows). */
+  const cancelDrafts = <K extends keyof Drafts>(key: K) => {
+    setDrafts(prev => ({ ...prev, [key]: [] }));
+    setEditing(prev => ({ ...prev, [key]: null }));
+    setMessage(null);
   };
 
   /* ---------- Notes ---------- */
@@ -169,13 +361,15 @@ const Customization = () => {
       return;
     }
     const editId = editing[layer];
-    const kept = data[layer].filter(n => n.id !== editId);
-    const nextNotes = [...kept, ...rows];
-    const content = (n: Note) => ({ name: n.name, icon: n.icon, color: n.color, price: n.price });
-    if (JSON.stringify(nextNotes.map(content)) === JSON.stringify(data[layer].map(content))) {
-      notify(layer, 'info', 'Nothing changed to save.', 'Nothing changed to save');
-      setDrafts(prev => ({ ...prev, [layer]: [] }));
-      setEditing(prev => ({ ...prev, [layer]: null }));
+    const editIdx = editId ? rows.findIndex(n => n.id === editId) : -1;
+    const nextNotes =
+      editId && editIdx !== -1
+        ? data[layer].map(n => (n.id === editId ? { ...n, ...rows[editIdx] } : n))
+        : [...data[layer].filter(n => n.id !== editId), ...rows];
+    if (sameContent(nextNotes, data[layer], noteContent)) {
+      // Keep the editor open so the user can tweak the row or press Cancel.
+      const text = editId ? 'Nothing changed to update.' : 'Nothing changed to save.';
+      notify(layer, 'info', text, text, true);
       return;
     }
     const next = { ...data, [layer]: nextNotes };
@@ -184,6 +378,7 @@ const Customization = () => {
     setDrafts(prev => ({ ...prev, [layer]: [] }));
     setEditing(prev => ({ ...prev, [layer]: null }));
     notify(layer, 'success', `${meta.title} saved.`);
+    void syncNotes(layer, nextNotes);
   };
 
   const editNote = (layer: LayerKey, id: string) => {
@@ -201,6 +396,7 @@ const Customization = () => {
     setEditing(prev => (prev[layer] === id ? { ...prev, [layer]: null } : prev));
     if (editing[layer] === id) setDrafts(prev => ({ ...prev, [layer]: [] }));
     notify(layer, 'success', 'Note deleted.');
+    void syncNotes(layer, next[layer]);
   };
 
   const confirmDeleteNote = () => {
@@ -231,13 +427,15 @@ const Customization = () => {
       return;
     }
     const editId = editing.bases;
-    const kept = data.bases.filter(b => b.id !== editId);
-    const nextBases = [...kept, ...rows];
-    const content = (b: PaletteBase) => ({ name: b.name, code: b.code, description: b.description, extraPrice: b.extraPrice });
-    if (JSON.stringify(nextBases.map(content)) === JSON.stringify(data.bases.map(content))) {
-      notify('bases', 'info', 'Nothing changed to save.', 'Nothing changed to save');
-      setDrafts(prev => ({ ...prev, bases: [] }));
-      setEditing(prev => ({ ...prev, bases: null }));
+    const editIdx = editId ? rows.findIndex(b => b.id === editId) : -1;
+    const nextBases =
+      editId && editIdx !== -1
+        ? data.bases.map(b => (b.id === editId ? { ...b, ...rows[editIdx] } : b))
+        : [...data.bases.filter(b => b.id !== editId), ...rows];
+    if (sameContent(nextBases, data.bases, baseContent)) {
+      // Keep the editor open so the user can tweak the row or press Cancel.
+      const text = editId ? 'Nothing changed to update.' : 'Nothing changed to save.';
+      notify('bases', 'info', text, text, true);
       return;
     }
     const next = { ...data, bases: nextBases };
@@ -246,6 +444,7 @@ const Customization = () => {
     setDrafts(prev => ({ ...prev, bases: [] }));
     setEditing(prev => ({ ...prev, bases: null }));
     notify('bases', 'success', 'Perfume bases saved.');
+    void syncBases(nextBases);
   };
 
   const editBase = (id: string) => {
@@ -263,6 +462,7 @@ const Customization = () => {
     setEditing(prev => (prev.bases === id ? { ...prev, bases: null } : prev));
     if (editing.bases === id) setDrafts(prev => ({ ...prev, bases: [] }));
     notify('bases', 'success', 'Base deleted.');
+    void syncBases(next.bases);
   };
 
   const confirmDeleteBase = () => {
@@ -293,13 +493,16 @@ const Customization = () => {
       return;
     }
     const editId = editing.sizes;
-    const kept = data.sizes.filter(s => s.id !== editId);
-    const nextSizes = [...kept, ...rows];
-    const content = (s: SizeOption) => ({ label: s.label, ml: s.ml, price: s.price, desc: s.desc });
-    if (JSON.stringify(nextSizes.map(content)) === JSON.stringify(data.sizes.map(content))) {
-      notify('sizes', 'info', 'Nothing changed to save.', 'Nothing changed to save');
-      setDrafts(prev => ({ ...prev, sizes: [] }));
-      setEditing(prev => ({ ...prev, sizes: null }));
+    // When editing, patch the saved row in place so the list order never shifts.
+    const editIdx = editId ? rows.findIndex(r => r.id === editId) : -1;
+    const nextSizes =
+      editId && editIdx !== -1
+        ? data.sizes.map(s => (s.id === editId ? { ...s, ...rows[editIdx] } : s))
+        : [...data.sizes, ...rows];
+    if (sameContent(nextSizes, data.sizes, sizeContent)) {
+      // Keep the editor open so the user can tweak the row or press Cancel.
+      const text = editId ? 'Nothing changed to update.' : 'Nothing changed to save.';
+      notify('sizes', 'info', text, text, true);
       return;
     }
     const next = { ...data, sizes: nextSizes };
@@ -308,6 +511,7 @@ const Customization = () => {
     setDrafts(prev => ({ ...prev, sizes: [] }));
     setEditing(prev => ({ ...prev, sizes: null }));
     notify('sizes', 'success', 'Bottle sizes saved.');
+    void syncSizes(nextSizes);
   };
 
   const editSize = (id: string) => {
@@ -325,11 +529,83 @@ const Customization = () => {
     setEditing(prev => (prev.sizes === id ? { ...prev, sizes: null } : prev));
     if (editing.sizes === id) setDrafts(prev => ({ ...prev, sizes: [] }));
     notify('sizes', 'success', 'Size deleted.');
+    void syncSizes(next.sizes);
   };
 
   const confirmDeleteSize = () => {
     if (!deleteTarget || !('section' in deleteTarget) || deleteTarget.section !== 'sizes') return;
     deleteSize(deleteTarget.id);
+    setDeleteTarget(null);
+  };
+
+  /* ---------- Bottle Types ---------- */
+
+  const addBottleTypeDraft = () =>
+    addDraft('bottleTypes', { id: genId(), name: '', code: '', description: '', image: '', extraPrice: 0 });
+
+  const saveBottleTypes = () => {
+    const rows = drafts.bottleTypes;
+    if (rows.length === 0) {
+      notify('bottleTypes', 'info', 'Nothing changed to save.', 'Nothing changed to save');
+      return;
+    }
+    const blankNameIdx = rows.findIndex(b => !b.name.trim());
+    if (blankNameIdx !== -1) {
+      notify('bottleTypes', 'error', `Bottle Type #${blankNameIdx + 1} name is required.`, 'Field required');
+      return;
+    }
+    const blankCodeIdx = rows.findIndex(b => !b.code.trim());
+    if (blankCodeIdx !== -1) {
+      notify('bottleTypes', 'error', `Bottle Type #${blankCodeIdx + 1} code is required.`, 'Field required');
+      return;
+    }
+    const badImageIdx = rows.findIndex(b => b.image.trim() && !/^https?:\/\//i.test(b.image.trim()));
+    if (badImageIdx !== -1) {
+      notify('bottleTypes', 'error', `Bottle Type #${badImageIdx + 1} image must be a valid http(s) URL.`, 'Invalid image URL');
+      return;
+    }
+    const editId = editing.bottleTypes;
+    const editIdx = editId ? rows.findIndex(b => b.id === editId) : -1;
+    const nextBottleTypes =
+      editId && editIdx !== -1
+        ? data.bottleTypes.map(b => (b.id === editId ? { ...b, ...rows[editIdx] } : b))
+        : [...data.bottleTypes.filter(b => b.id !== editId), ...rows];
+    if (sameContent(nextBottleTypes, data.bottleTypes, bottleTypeContent)) {
+      // Keep the editor open so the user can tweak the row or press Cancel.
+      const text = editId ? 'Nothing changed to update.' : 'Nothing changed to save.';
+      notify('bottleTypes', 'info', text, text, true);
+      return;
+    }
+    const next = { ...data, bottleTypes: nextBottleTypes };
+    setData(next);
+    persist(next);
+    setDrafts(prev => ({ ...prev, bottleTypes: [] }));
+    setEditing(prev => ({ ...prev, bottleTypes: null }));
+    notify('bottleTypes', 'success', 'Bottle types saved.');
+    void syncBottleTypes(nextBottleTypes);
+  };
+
+  const editBottleType = (id: string) => {
+    const item = data.bottleTypes.find(b => b.id === id);
+    if (!item) return;
+    setEditing(prev => ({ ...prev, bottleTypes: id }));
+    setDrafts(prev => ({ ...prev, bottleTypes: [clone(item)] }));
+    setMessage(null);
+  };
+
+  const deleteBottleType = (id: string) => {
+    const next = { ...data, bottleTypes: data.bottleTypes.filter(b => b.id !== id) };
+    setData(next);
+    persist(next);
+    setEditing(prev => (prev.bottleTypes === id ? { ...prev, bottleTypes: null } : prev));
+    if (editing.bottleTypes === id) setDrafts(prev => ({ ...prev, bottleTypes: [] }));
+    notify('bottleTypes', 'success', 'Bottle type deleted.');
+    void syncBottleTypes(next.bottleTypes);
+  };
+
+  const confirmDeleteBottleType = () => {
+    if (!deleteTarget || !('section' in deleteTarget) || deleteTarget.section !== 'bottleTypes') return;
+    deleteBottleType(deleteTarget.id);
     setDeleteTarget(null);
   };
 
@@ -352,14 +628,25 @@ const Customization = () => {
     } catch { /* ignore */ }
     persist(data);
     notify('settings', 'success', 'Settings saved.');
+    void syncSettings();
   };
 
-  const resetAll = () => {
+  const resetAll = async () => {
     localStorage.removeItem(STORAGE_KEY);
-    setData(clone(DEFAULT_DATA));
     setDrafts(clone(EMPTY_DRAFTS));
-    setEditing({ topNotes: null, heartNotes: null, baseNotes: null, bases: null, sizes: null });
+    setEditing({ topNotes: null, heartNotes: null, baseNotes: null, bases: null, sizes: null, bottleTypes: null });
     setMessage(null);
+    try {
+      const res = await api<{ palette: PalettePayload }>('/api/note/palette', token);
+      if (res?.palette) {
+        applyPalette(res.palette);
+        toast.success('Customization reset to server defaults.');
+        return;
+      }
+    } catch {
+      /* fall through to local defaults */
+    }
+    setData(clone(DEFAULT_DATA));
     toast.success('Customization reset to defaults.');
   };
 
@@ -446,7 +733,7 @@ const Customization = () => {
                     </div>
                     <div className="w-28">
                       <label className={labelCls}>Price (Rs.)</label>
-                      <input type="number" min="0" className={fieldCls} value={note.price === 0 ? '' : note.price} onChange={(e) => updateDraftRow(layer, i, 'price', e.target.value === '' ? 0 : Number(e.target.value))} placeholder="0" />
+                      <input type="number" min="0" className={fieldCls} value={note.price === 0 ? '' : note.price} onChange={(e) => updateDraftRow(layer, i, 'price', toNumber(e.target.value))} placeholder="0" />
                     </div>
                   </div>
                   <button type="button" onClick={() => removeDraftRow(layer, i)} className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm transition-colors" title="Remove row">
@@ -459,9 +746,14 @@ const Customization = () => {
             {/* Save button — bottom right */}
             <div className="flex flex-col items-end gap-2">
               {renderSectionMessage(layer)}
-              <button onClick={() => saveNotes(layer)} className="btn-primary px-6 py-2.5 text-sm">
-                {isEditing ? 'Update Notes' : 'Save Notes'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => cancelDrafts(layer)} className={smallOutlineBtn}>
+                  Cancel
+                </button>
+                <button onClick={() => saveNotes(layer)} className="btn-primary px-6 py-2.5 text-sm">
+                  {isEditing ? 'Update Notes' : 'Save Notes'}
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -478,7 +770,7 @@ const Customization = () => {
                     <span className="inline-block w-3 h-3 rounded-full shrink-0" style={{ background: note.color }} />
                     <span className="text-lg">{note.icon}</span>
                     <span className="font-medium">{note.name}</span>
-                    <span className="text-sm text-ink-soft">{note.price > 0 ? `+ Rs. ${note.price}` : 'Free'}</span>
+                    <span className="text-sm text-ink-soft">Rs. {note.price}</span>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <button onClick={() => editNote(layer, note.id)} className={smallOutlineBtn}>Edit</button>
@@ -532,7 +824,7 @@ const Customization = () => {
                     </div>
                     <div className="w-28">
                       <label className={labelCls}>Extra Price (Rs.)</label>
-                      <input type="number" min="0" className={fieldCls} value={base.extraPrice} onChange={(e) => updateDraftRow('bases', i, 'extraPrice', Number(e.target.value))} placeholder="0" />
+                      <input type="number" min="0" className={fieldCls} value={base.extraPrice} onChange={(e) => updateDraftRow('bases', i, 'extraPrice', toNumber(e.target.value))} placeholder="0" />
                     </div>
                   </div>
                   <button type="button" onClick={() => removeDraftRow('bases', i)} className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm transition-colors" title="Remove row">
@@ -544,9 +836,14 @@ const Customization = () => {
 
             <div className="flex flex-col items-end gap-2">
               {renderSectionMessage('bases')}
-              <button onClick={saveBases} className="btn-primary px-6 py-2.5 text-sm">
-                {isEditing ? 'Update Base' : 'Save Bases'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => cancelDrafts('bases')} className={smallOutlineBtn}>
+                  Cancel
+                </button>
+                <button onClick={saveBases} className="btn-primary px-6 py-2.5 text-sm">
+                  {isEditing ? 'Update Base' : 'Save Bases'}
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -612,7 +909,7 @@ const Customization = () => {
                     </div>
                     <div className="w-28">
                       <label className={labelCls}>Price (Rs.)</label>
-                      <input type="number" min="0" className={fieldCls} value={size.price} onChange={(e) => updateDraftRow('sizes', i, 'price', Number(e.target.value))} placeholder="399" />
+                      <input type="number" min="0" className={fieldCls} value={size.price} onChange={(e) => updateDraftRow('sizes', i, 'price', toNumber(e.target.value))} placeholder="399" />
                     </div>
                     <div className="flex-2 min-w-50">
                       <label className={labelCls}>Description</label>
@@ -628,9 +925,14 @@ const Customization = () => {
 
             <div className="flex flex-col items-end gap-2">
               {renderSectionMessage('sizes')}
-              <button onClick={saveSizes} className="btn-primary px-6 py-2.5 text-sm">
-                {isEditing ? 'Update Size' : 'Save Sizes'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => cancelDrafts('sizes')} className={smallOutlineBtn}>
+                  Cancel
+                </button>
+                <button onClick={saveSizes} className="btn-primary px-6 py-2.5 text-sm">
+                  {isEditing ? 'Update Size' : 'Save Sizes'}
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -651,6 +953,115 @@ const Customization = () => {
                   <div className="flex gap-2 shrink-0">
                     <button onClick={() => editSize(size.id)} className={smallOutlineBtn}>Edit</button>
                     <button onClick={() => setDeleteTarget({ section: 'sizes', id: size.id, name: size.label })} className={smallDangerBtn}>Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+      </div>
+    );
+  };
+
+  /* ---------- render: bottle types block ---------- */
+
+  const renderBottleTypeBlock = () => {
+    const rows = drafts.bottleTypes;
+    const saved = data.bottleTypes;
+    const isEditing = editing.bottleTypes !== null;
+
+    return (
+      <div className="rounded-2xl border border-gold/15 bg-white/70 p-6">
+        <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+          <div>
+            <h3 className="font-display text-xl font-semibold">Bottle Types</h3>
+            <p className="text-sm text-ink-soft italic">The glass your blend is poured into — shown with an image on /customize</p>
+          </div>
+          <button onClick={addBottleTypeDraft} className={addBtnCls}>
+            + Add Bottle Type
+          </button>
+        </div>
+
+        {rows.length > 0 && (
+          <>
+            <div className="space-y-3 mb-4">
+              {rows.map((type, i) => (
+                <div key={type.id} className="flex gap-3 items-end justify-between p-4 border border-gold/30 rounded-xl bg-sand/40">
+                  <div className="flex gap-3 flex-1 flex-wrap items-end">
+                    <div className="w-24 shrink-0">
+                      <label className={labelCls}>Image</label>
+                      {type.image ? (
+                        <img
+                          src={type.image}
+                          alt={type.name || 'Bottle type'}
+                          className="w-24 h-24 object-cover rounded-xl border border-gold/20 bg-cream/50"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '0.2'; }}
+                        />
+                      ) : (
+                        <div className="w-24 h-24 rounded-xl border border-dashed border-gold/30 bg-cream/40" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-35">
+                      <label className={labelCls}>Name</label>
+                      <input className={fieldCls} value={type.name} onChange={(e) => updateDraftRow('bottleTypes', i, 'name', e.target.value)} placeholder="Classic Clear Glass" />
+                    </div>
+                    <div className="flex-1 min-w-30">
+                      <label className={labelCls}>Code</label>
+                      <input className={fieldCls} value={type.code} onChange={(e) => updateDraftRow('bottleTypes', i, 'code', e.target.value)} placeholder="classic" />
+                    </div>
+                    <div className="w-28 shrink-0">
+                      <label className={labelCls}>Extra Price (Rs.)</label>
+                      <input type="number" min="0" className={fieldCls} value={type.extraPrice} onChange={(e) => updateDraftRow('bottleTypes', i, 'extraPrice', toNumber(e.target.value))} placeholder="0" />
+                    </div>
+                    <div className="flex-2 min-w-50">
+                      <label className={labelCls}>Description</label>
+                      <input className={fieldCls} value={type.description} onChange={(e) => updateDraftRow('bottleTypes', i, 'description', e.target.value)} placeholder="Timeless clear glass" />
+                    </div>
+                    <div className="flex-2 min-w-60">
+                      <label className={labelCls}>Image URL</label>
+                      <input className={fieldCls} value={type.image} onChange={(e) => updateDraftRow('bottleTypes', i, 'image', e.target.value)} placeholder="https://…" />
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => removeDraftRow('bottleTypes', i)} className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm transition-colors" title="Remove row">
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col items-end gap-2">
+              {renderSectionMessage('bottleTypes')}
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => cancelDrafts('bottleTypes')} className={smallOutlineBtn}>
+                  Cancel
+                </button>
+                <button onClick={saveBottleTypes} className="btn-primary px-6 py-2.5 text-sm">
+                  {isEditing ? 'Update Bottle Type' : 'Save Bottle Types'}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {renderSavedList(
+          saved.length === 0 ? (
+            emptyState('No saved bottle types yet')
+          ) : (
+            <div className="space-y-2">
+              {saved.map(type => (
+                <div key={type.id} className="flex items-center justify-between gap-3 border border-gold/15 rounded-xl px-4 py-2.5 bg-cream/40">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {type.image
+                      ? <img src={type.image} alt={type.name} className="w-10 h-10 rounded-lg object-cover border border-gold/20 shrink-0" />
+                      : <span className="w-10 h-10 rounded-lg border border-dashed border-gold/30 shrink-0" />}
+                    <span className="font-medium">{type.name}</span>
+                    <span className="text-xs bg-gold/15 text-ink-soft px-2 py-0.5 rounded">{type.code}</span>
+                    <span className="text-sm text-ink-soft italic hidden sm:inline">{type.description}</span>
+                    <span className="text-sm font-semibold gold-text">{type.extraPrice > 0 ? `+ Rs. ${type.extraPrice}` : 'Included'}</span>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button onClick={() => editBottleType(type.id)} className={smallOutlineBtn}>Edit</button>
+                    <button onClick={() => setDeleteTarget({ section: 'bottleTypes', id: type.id, name: type.name })} className={smallDangerBtn}>Delete</button>
                   </div>
                 </div>
               ))}
@@ -718,6 +1129,9 @@ const Customization = () => {
         <button onClick={() => setActiveTab('sizes')} className={tabBtnCls(activeTab === 'sizes')}>
           📏 Sizes
         </button>
+        <button onClick={() => setActiveTab('bottletypes')} className={tabBtnCls(activeTab === 'bottletypes')}>
+          🧴 Bottle Types
+        </button>
         <button onClick={() => setActiveTab('settings')} className={tabBtnCls(activeTab === 'settings')}>
           ⚙️ Settings
         </button>
@@ -727,8 +1141,6 @@ const Customization = () => {
           </button>
         </div>
       </div>
-
-      {/* Status message removed — now shown above each section's save button */}
 
       {/* Notes Tab */}
       {activeTab === 'notes' && (
@@ -742,6 +1154,9 @@ const Customization = () => {
 
       {/* Sizes Tab */}
       {activeTab === 'sizes' && renderSizeBlock()}
+
+      {/* Bottle Types Tab */}
+      {activeTab === 'bottletypes' && renderBottleTypeBlock()}
 
       {/* Settings Tab */}
       {activeTab === 'settings' && renderSettings()}
@@ -761,6 +1176,7 @@ const Customization = () => {
           if ('layer' in deleteTarget) confirmDeleteNote();
           else if (deleteTarget.section === 'bases') confirmDeleteBase();
           else if (deleteTarget.section === 'sizes') confirmDeleteSize();
+          else if (deleteTarget.section === 'bottleTypes') confirmDeleteBottleType();
         }}
         onClose={() => setDeleteTarget(null)}
       />

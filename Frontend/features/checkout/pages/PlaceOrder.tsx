@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart, getCartAmount } from "@/context/CartContext";
 import { orderAddressSchema } from "@/validate/schemas";
 import { DELIVERY_FEE } from "@/config/constants";
+import { placeCustomOrder } from "@/features/customization/customization.service";
 import { buildOrderItems, placeOrder } from "../checkout.service";
 import type { AddressForm } from "../checkout.types";
 
@@ -18,8 +19,12 @@ const PlaceOrder = () => {
   const { token } = useAuth();
   const { products } = useApp();
   const cartItems = useCart((s) => s.cartItems);
+  const customBlends = useCart((s) => s.customBlends);
   const setCartItems = useCart((s) => s.setCartItems);
-  const subtotal = getCartAmount(cartItems, products);
+  const setCustomBlends = useCart((s) => s.setCustomBlends);
+  const perfumeSubtotal = getCartAmount(cartItems, products);
+  const subtotal = getCartAmount(cartItems, products, customBlends);
+  const blendUnits = customBlends.reduce((sum, blend) => sum + blend.qty, 0);
   const [formData, setFormData] = useState<AddressForm>({
     firstName: '',
     lastName: '',
@@ -58,29 +63,52 @@ const PlaceOrder = () => {
     }
     try {
       const orderItems = buildOrderItems(cartItems, products);
+      const hasPerfumes = orderItems.length > 0;
 
-      const orderData = {
-        address: formData,
-        items: orderItems,
-        amount: subtotal + DELIVERY_FEE
+      // The perfume order carries the delivery fee; each custom blend is placed as its
+      // own order, and the first blend picks up delivery when no perfumes are in the cart.
+      if (method !== 'cod') {
+        showToast('This payment method is coming soon — try Cash on Delivery.', 'info');
+        return;
       }
 
-      switch (method) {
-        case 'cod': {
-          const res = await placeOrder(token, orderData);
-          if (res.success) {
-            setCartItems({});
-            showToast("Order placed — we'll begin blending now!", 'success');
-            navigate('/orders');
-          } else {
-            showToast(res.message || "Order failed", 'error');
-          }
-          break;
+      if (hasPerfumes) {
+        const res = await placeOrder(token, {
+          address: formData,
+          items: orderItems,
+          amount: perfumeSubtotal + DELIVERY_FEE
+        });
+        if (!res.success) {
+          showToast(res.message || "Order failed", 'error');
+          return;
         }
-        default:
-          showToast('This payment method is coming soon — try Cash on Delivery.', 'info');
-          break;
       }
+
+      for (const [index, blend] of customBlends.entries()) {
+        const delivery = !hasPerfumes && index === 0 ? DELIVERY_FEE : 0;
+        const res = await placeCustomOrder(token, {
+          name: blend.name,
+          bottleSize: blend.bottleSize,
+          bottleType: blend.bottleTypeName || blend.bottleType,
+          topNotes: blend.topNotes,
+          heartNotes: blend.heartNotes,
+          baseNotes: blend.baseNotes,
+          perfumeBase: blend.perfumeBase,
+          strength: blend.strength,
+          strengthName: blend.strengthName,
+          customLabel: blend.customLabel,
+          amount: Number(blend.price) * blend.qty + delivery
+        });
+        if (!res.success) {
+          showToast(res.message || 'Custom blend order failed', 'error');
+          return;
+        }
+      }
+
+      setCartItems({});
+      setCustomBlends([]);
+      showToast("Order placed — we'll begin blending now!", 'success');
+      navigate('/orders');
     } catch (error) {
       showToast((error as Error).message, 'error');
     }
@@ -113,6 +141,11 @@ const PlaceOrder = () => {
         <div className="mt-2">
           <CartTotal />
         </div>
+        {blendUnits > 0 && (
+          <p className="text-xs text-ink-soft bg-white/70 border border-gold/20 rounded-xl p-3 mt-3">
+            {blendUnits} custom blend{blendUnits > 1 ? 's' : ''} included — we&apos;ll hand-blend {blendUnits > 1 ? 'them' : 'it'} fresh for you.
+          </p>
+        )}
         <div className="mt-8">
           <Title text1={'Payment'} text2={'Method'} />
           <div className="flex gap-3 flex-col sm:flex-row">

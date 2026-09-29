@@ -42,9 +42,36 @@ export interface PaletteBase {
   active: boolean;
 }
 
+export interface PaletteSize {
+  id: number;
+  label: string;
+  ml: string;
+  price: number;
+  desc: string;
+  active: boolean;
+}
+
+export interface PaletteBottleType {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  image: string;
+  extraPrice: number;
+  active: boolean;
+}
+
+export interface PaletteSettings {
+  maxNotesPerLayer: number;
+  deliveryFee: number;
+}
+
 export interface Palette {
   top: Note[];
   heart: Note[];
   base: Note[];
   bases: PaletteBase[];
+  sizes?: PaletteSize[];
+  bottleTypes?: PaletteBottleType[];
+  settings?: PaletteSettings | null;
 }

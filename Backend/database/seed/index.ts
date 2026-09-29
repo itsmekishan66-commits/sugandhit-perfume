@@ -1,12 +1,14 @@
 import 'dotenv/config';
-import { seedPalette, seedAdmins, seedChartOfAccounts } from './users.seed.js';
+import { seedAdmins, seedChartOfAccounts } from './users.seed.js';
 import { seedProducts } from './products.seed.js';
+import { seedCustomization } from './customization.seed.js';
 
 try {
-  await seedPalette();
   await seedProducts();
   await seedAdmins();
   await seedChartOfAccounts();
+  // Creates the notes / bases / sizes / bottletypes / settings tables, then seeds each.
+  await seedCustomization();
   process.exit(0);
 } catch (e) {
   console.error(e);
