@@ -1,1 +1,3 @@
-export const inputCls = 'w-full px-3 py-2 rounded-xl';
+const inputCls = 'w-full px-3 py-2 rounded-xl';
+
+export default inputCls;

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { adminLogin, seedDashboardNotes } from '../services/auth';
-import { AuthContext } from './auth-context';
+import { adminLogin, seedDashboardNotes } from '@/services/auth.service';
+import { AuthContext } from '@/context/AuthContext';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string>(() => localStorage.getItem('token') || '');
