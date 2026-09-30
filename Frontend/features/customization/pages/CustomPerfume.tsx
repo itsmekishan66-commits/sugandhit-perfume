@@ -1,3 +1,4 @@
+
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { showToast } from '@/components/feedback/toast'
@@ -7,7 +8,7 @@ import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
 import { CUSTOM_BLEND_DELIVERY_FEE } from '@/config/constants'
-import { BOTTLE_TYPE_CONFIG, LAYERS, MAX_NOTES_PER_LAYER, SIZE_CONFIG } from '../customization.types'
+import { LAYERS, MAX_NOTES_PER_LAYER, SIZE_CONFIG } from '../customization.types'
 import type { LayerKey, LayerSelection } from '../customization.types'
 import type { Note, PaletteBase } from '@/types/product'
 import type { CustomBlendCartItem } from '@/types/common'
@@ -20,7 +21,7 @@ const CustomPerfume = () => {
 
   // Sizes & settings come from the backend palette when available, else fall back to constants.
   const sizes = palette.sizes?.length ? palette.sizes : SIZE_CONFIG;
-  const bottleTypes = palette.bottleTypes?.length ? palette.bottleTypes : BOTTLE_TYPE_CONFIG;
+  const bottleTypes = palette.bottleTypes ?? [];
   const maxNotes = palette.settings?.maxNotesPerLayer ?? MAX_NOTES_PER_LAYER;
   const deliveryFee = palette.settings?.deliveryFee ?? CUSTOM_BLEND_DELIVERY_FEE;
 
@@ -188,6 +189,9 @@ const CustomPerfume = () => {
                     </p>
                   </button>
                 ))}
+                {(palette.bases || []).length === 0 && (
+                  <p className="text-sm text-ink-soft">{paletteLoaded ? 'Nothing to show' : 'Loading bases…'}</p>
+                )}
               </div>
             </div>
           </Reveal>
@@ -243,6 +247,9 @@ const CustomPerfume = () => {
                     </button>
                   );
                 })}
+                {bottleTypes.length === 0 && (
+                  <p className="text-sm text-ink-soft">{paletteLoaded ? 'Nothing to show' : 'Loading bottle types…'}</p>
+                )}
               </div>
             </div>
           </Reveal>

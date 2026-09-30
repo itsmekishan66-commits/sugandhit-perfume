@@ -273,7 +273,7 @@ const Coupons = ({ token }: CouponsProps) => {
               {coupon.image ? (
                 <img className="w-12 h-12 object-cover rounded-lg" src={coupon.image} alt="" />
               ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-gold to-espresso text-white text-lg">🎟️</div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-linear-to-br from-gold to-espresso text-white text-lg">🎟️</div>
               )}
               <div className="min-w-0">
                 <p className="text-ink font-medium truncate">{coupon.title}</p>

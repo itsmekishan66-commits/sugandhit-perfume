@@ -313,7 +313,7 @@ const CustomizeCTA = () => {
             <div className="mt-4 p-4 rounded-2xl bg-white/3 border border-white/6 backdrop-blur-sm">
               <p className="text-[10px] tracking-luxe uppercase text-gold/60 mb-3">Choose Your Base</p>
               <div className="grid grid-cols-4 gap-1.5">
-                {['Oil', 'EDP', 'EDC', 'Attar'].map((type) => (
+                {['Oil', 'EDP', 'Parfume', 'EDT'].map((type) => (
                   <button
                     key={type}
                     onClick={() => setBaseType(type)}

@@ -68,8 +68,6 @@ interface Drafts {
   bottleTypes: BottleTypeOption[];
 }
 
-const STORAGE_KEY = 'sugandhit_customization_data_v1';
-
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 
 const genId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -89,25 +87,19 @@ const baseContent = (b: PaletteBase) => ({ name: b.name, code: b.code, descripti
 const sizeContent = (s: SizeOption) => ({ label: s.label, ml: s.ml, price: toNumber(s.price), desc: s.desc });
 const bottleTypeContent = (b: BottleTypeOption) => ({ name: b.name, code: b.code, description: b.description, image: b.image, extraPrice: toNumber(b.extraPrice) });
 
-const DEFAULT_DATA: CustomizationData = {
+/**
+ * Empty starting state. The backend is the single source of truth for this page — nothing
+ * is seeded in the client, so an unreachable server shows empty lists (never fake rows).
+ */
+const EMPTY_DATA: CustomizationData = {
   topNotes: [],
   heartNotes: [],
   baseNotes: [],
   bases: [],
-  sizes: [
-    { id: '1', label: '30 ml', ml: '30ml', price: 399, desc: 'Samples & travel' },
-    { id: '2', label: '50 ml', ml: '50ml', price: 699, desc: 'Most chosen' },
-    { id: '3', label: '100 ml', ml: '100ml', price: 999, desc: 'For the committed' },
-  ],
-  bottleTypes: [
-    { id: '1', name: 'Classic Clear Glass', code: 'classic', description: 'Timeless clear glass with a gold cap', image: 'https://unsplash.com/photos/IBY3ImxMilY/download?w=800&q=80', extraPrice: 0 },
-    { id: '2', name: 'Matte Black', code: 'matte-black', description: 'Sleek, modern and understated', image: 'https://unsplash.com/photos/37EmTaUlAPs/download?w=800&q=80', extraPrice: 100 },
-    { id: '3', name: 'Frosted Crystal', code: 'frosted', description: 'Soft-touch frosted glass with a subtle glow', image: 'https://unsplash.com/photos/QE2T4ttelQk/download?w=800&q=80', extraPrice: 150 },
-    { id: '4', name: 'Vintage Amber', code: 'vintage-amber', description: 'Apothecary-inspired warm amber glass', image: 'https://unsplash.com/photos/gdUxNykbuZc/download?w=800&q=80', extraPrice: 200 },
-    { id: '5', name: 'Faceted Crystal', code: 'faceted', description: 'Cut-crystal gem bottle, gift-worthy', image: 'https://unsplash.com/photos/8m4V_wPWwbY/download?w=800&q=80', extraPrice: 250 },
-  ],
-  maxNotesPerLayer: 3,
-  deliveryFee: 100,
+  sizes: [],
+  bottleTypes: [],
+  maxNotesPerLayer: 0,
+  deliveryFee: 0,
 };
 
 const LAYER_META: Record<LayerKey, { title: string; sub: string }> = {
@@ -153,20 +145,16 @@ const sizeToServer = (s: SizeOption) => ({ label: s.label, ml: s.ml, price: toNu
 const bottleTypeFromServer = (b: ServerBottleType): BottleTypeOption => ({ id: String(b.id), name: b.name, code: b.code, description: b.description, image: b.image ?? '', extraPrice: toNumber(b.extraPrice) });
 const bottleTypeToServer = (b: BottleTypeOption) => ({ name: b.name, code: b.code, description: b.description, image: b.image ?? '', extraPrice: toNumber(b.extraPrice) });
 
-const loadCustomizationData = (): CustomizationData => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return { ...clone(DEFAULT_DATA), ...JSON.parse(raw) };
-  } catch {
-    /* ignore */
-  }
-  return clone(DEFAULT_DATA);
-};
-
 const Customization = ({ token }: { token: string }) => {
-  const [data, setData] = useState<CustomizationData>(loadCustomizationData);
+  const [data, setData] = useState<CustomizationData>(clone(EMPTY_DATA));
   const [activeTab, setActiveTab] = useState<TabKey>('notes');
   const [message, setMessage] = useState<{ section: SectionKey } & Message | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  /** Bumped to re-run the mount fetch (used by the Retry button). */
+  const [reloadKey, setReloadKey] = useState(0);
+  /** Last settings the server confirmed, so "nothing changed" can be judged without local storage. */
+  const [savedSettings, setSavedSettings] = useState<ServerSettings | null>(null);
 
   const [drafts, setDrafts] = useState<Drafts>(clone(EMPTY_DRAFTS));
   const [editing, setEditing] = useState<Record<keyof Drafts, string | null>>({
@@ -183,18 +171,27 @@ const Customization = ({ token }: { token: string }) => {
   useEffect(() => {
     let mounted = true;
     const loadFromServer = async () => {
+      setLoading(true);
       try {
         const res = await api<{ palette: PalettePayload }>('/api/note/palette', token);
-        if (mounted && res?.palette) applyPalette(res.palette);
-      } catch {
-        /* Keep the localStorage defaults when the server is unreachable. */
+        if (!mounted) return;
+        if (res?.palette) {
+          applyPalette(res.palette);
+          setLoadError(null);
+        } else {
+          setLoadError('Server returned no customization data.');
+        }
+      } catch (error) {
+        if (mounted) setLoadError((error as Error).message || 'Could not load customization data.');
+      } finally {
+        if (mounted) setLoading(false);
       }
     };
     loadFromServer();
     return () => {
       mounted = false;
     };
-  }, [token]);
+  }, [token, reloadKey]);
 
   useEffect(() => {
     if (!message || message.sticky) return;
@@ -219,17 +216,9 @@ const Customization = ({ token }: { token: string }) => {
       ? { kind: message.kind, text: message.text, sticky: message.sticky }
       : null;
 
-  const persist = (next: CustomizationData) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  };
-
-  /** Replaces a single tab/section in state with server rows and persists the cache. */
+  /** Replaces a single tab/section in state with the rows the server just confirmed. */
   const applySection = (key: SectionKey, rows: Note[] | PaletteBase[] | SizeOption[] | BottleTypeOption[]) => {
-    setData(prev => {
-      const next = { ...prev, [key]: rows } as CustomizationData;
-      persist(next);
-      return next;
-    });
+    setData(prev => ({ ...prev, [key]: rows }) as CustomizationData);
   };
 
   /* ---------- server sync ---------- */
@@ -283,11 +272,13 @@ const Customization = ({ token }: { token: string }) => {
   };
 
   const syncSettings = async () => {
+    const next: ServerSettings = { maxNotesPerLayer: data.maxNotesPerLayer, deliveryFee: data.deliveryFee };
     try {
-      await api('/api/customization/settings', token, {
+      const res = await api<{ settings: ServerSettings | null }>('/api/customization/settings', token, {
         method: 'PUT',
-        body: { maxNotesPerLayer: data.maxNotesPerLayer, deliveryFee: data.deliveryFee },
+        body: next,
       });
+      setSavedSettings(res?.settings ?? next);
     } catch (error) {
       notify('settings', 'error', 'Could not sync Settings.', (error as Error).message);
     }
@@ -302,11 +293,11 @@ const Customization = ({ token }: { token: string }) => {
       bases: (p.bases || []).map(baseFromServer),
       sizes: (p.sizes || []).map(sizeFromServer),
       bottleTypes: (p.bottleTypes || []).map(bottleTypeFromServer),
-      maxNotesPerLayer: p.settings?.maxNotesPerLayer ?? DEFAULT_DATA.maxNotesPerLayer,
-      deliveryFee: p.settings?.deliveryFee ?? DEFAULT_DATA.deliveryFee,
+      maxNotesPerLayer: p.settings?.maxNotesPerLayer ?? 0,
+      deliveryFee: p.settings?.deliveryFee ?? 0,
     };
     setData(next);
-    persist(next);
+    setSavedSettings(p.settings ? { maxNotesPerLayer: next.maxNotesPerLayer, deliveryFee: next.deliveryFee } : null);
   };
 
   /* ---------- generic draft helpers ---------- */
@@ -374,7 +365,6 @@ const Customization = ({ token }: { token: string }) => {
     }
     const next = { ...data, [layer]: nextNotes };
     setData(next);
-    persist(next);
     setDrafts(prev => ({ ...prev, [layer]: [] }));
     setEditing(prev => ({ ...prev, [layer]: null }));
     notify(layer, 'success', `${meta.title} saved.`);
@@ -392,7 +382,6 @@ const Customization = ({ token }: { token: string }) => {
   const deleteNote = (layer: LayerKey, id: string) => {
     const next = { ...data, [layer]: data[layer].filter(n => n.id !== id) };
     setData(next);
-    persist(next);
     setEditing(prev => (prev[layer] === id ? { ...prev, [layer]: null } : prev));
     if (editing[layer] === id) setDrafts(prev => ({ ...prev, [layer]: [] }));
     notify(layer, 'success', 'Note deleted.');
@@ -440,7 +429,6 @@ const Customization = ({ token }: { token: string }) => {
     }
     const next = { ...data, bases: nextBases };
     setData(next);
-    persist(next);
     setDrafts(prev => ({ ...prev, bases: [] }));
     setEditing(prev => ({ ...prev, bases: null }));
     notify('bases', 'success', 'Perfume bases saved.');
@@ -458,7 +446,6 @@ const Customization = ({ token }: { token: string }) => {
   const deleteBase = (id: string) => {
     const next = { ...data, bases: data.bases.filter(b => b.id !== id) };
     setData(next);
-    persist(next);
     setEditing(prev => (prev.bases === id ? { ...prev, bases: null } : prev));
     if (editing.bases === id) setDrafts(prev => ({ ...prev, bases: [] }));
     notify('bases', 'success', 'Base deleted.');
@@ -507,7 +494,6 @@ const Customization = ({ token }: { token: string }) => {
     }
     const next = { ...data, sizes: nextSizes };
     setData(next);
-    persist(next);
     setDrafts(prev => ({ ...prev, sizes: [] }));
     setEditing(prev => ({ ...prev, sizes: null }));
     notify('sizes', 'success', 'Bottle sizes saved.');
@@ -525,7 +511,6 @@ const Customization = ({ token }: { token: string }) => {
   const deleteSize = (id: string) => {
     const next = { ...data, sizes: data.sizes.filter(s => s.id !== id) };
     setData(next);
-    persist(next);
     setEditing(prev => (prev.sizes === id ? { ...prev, sizes: null } : prev));
     if (editing.sizes === id) setDrafts(prev => ({ ...prev, sizes: [] }));
     notify('sizes', 'success', 'Size deleted.');
@@ -578,7 +563,6 @@ const Customization = ({ token }: { token: string }) => {
     }
     const next = { ...data, bottleTypes: nextBottleTypes };
     setData(next);
-    persist(next);
     setDrafts(prev => ({ ...prev, bottleTypes: [] }));
     setEditing(prev => ({ ...prev, bottleTypes: null }));
     notify('bottleTypes', 'success', 'Bottle types saved.');
@@ -596,7 +580,6 @@ const Customization = ({ token }: { token: string }) => {
   const deleteBottleType = (id: string) => {
     const next = { ...data, bottleTypes: data.bottleTypes.filter(b => b.id !== id) };
     setData(next);
-    persist(next);
     setEditing(prev => (prev.bottleTypes === id ? { ...prev, bottleTypes: null } : prev));
     if (editing.bottleTypes === id) setDrafts(prev => ({ ...prev, bottleTypes: [] }));
     notify('bottleTypes', 'success', 'Bottle type deleted.');
@@ -616,38 +599,37 @@ const Customization = ({ token }: { token: string }) => {
       notify('settings', 'error', 'Max Notes Per Layer is required (min 1).', 'Field required');
       return;
     }
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw) as Partial<CustomizationData>;
-        if (saved.maxNotesPerLayer === data.maxNotesPerLayer && saved.deliveryFee === data.deliveryFee) {
-          notify('settings', 'info', 'Nothing changed to save.', 'Nothing changed to save');
-          return;
-        }
-      }
-    } catch { /* ignore */ }
-    persist(data);
+    if (savedSettings && savedSettings.maxNotesPerLayer === data.maxNotesPerLayer && savedSettings.deliveryFee === data.deliveryFee) {
+      notify('settings', 'info', 'Nothing changed to save.', 'Nothing changed to save');
+      return;
+    }
     notify('settings', 'success', 'Settings saved.');
     void syncSettings();
   };
 
+  /** Re-reads the palette from the server; "defaults" always means the server's current rows. */
   const resetAll = async () => {
-    localStorage.removeItem(STORAGE_KEY);
     setDrafts(clone(EMPTY_DRAFTS));
     setEditing({ topNotes: null, heartNotes: null, baseNotes: null, bases: null, sizes: null, bottleTypes: null });
     setMessage(null);
+    setLoading(true);
     try {
       const res = await api<{ palette: PalettePayload }>('/api/note/palette', token);
       if (res?.palette) {
         applyPalette(res.palette);
-        toast.success('Customization reset to server defaults.');
+        setLoadError(null);
+        toast.success('Customization reloaded from the server.');
         return;
       }
-    } catch {
-      /* fall through to local defaults */
+      setLoadError('Server returned no customization data.');
+      toast.error('Server returned no customization data.');
+    } catch (error) {
+      const msg = (error as Error).message || 'Could not load customization data.';
+      setLoadError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
     }
-    setData(clone(DEFAULT_DATA));
-    toast.success('Customization reset to defaults.');
   };
 
   /* ---------- UI helpers ---------- */
@@ -1085,8 +1067,8 @@ const Customization = ({ token }: { token: string }) => {
             min="1"
             max="10"
             className={fieldCls}
-            value={data.maxNotesPerLayer}
-            onChange={(e) => setData(prev => ({ ...prev, maxNotesPerLayer: Number(e.target.value) }))}
+            value={data.maxNotesPerLayer || ''}
+            onChange={(e) => setData(prev => ({ ...prev, maxNotesPerLayer: toNumber(e.target.value) }))}
           />
         </div>
         <div>
@@ -1095,8 +1077,8 @@ const Customization = ({ token }: { token: string }) => {
             type="number"
             min="0"
             className={fieldCls}
-            value={data.deliveryFee}
-            onChange={(e) => setData(prev => ({ ...prev, deliveryFee: Number(e.target.value) }))}
+            value={data.deliveryFee || ''}
+            onChange={(e) => setData(prev => ({ ...prev, deliveryFee: toNumber(e.target.value) }))}
           />
         </div>
       </div>
@@ -1136,30 +1118,49 @@ const Customization = ({ token }: { token: string }) => {
           ⚙️ Settings
         </button>
         <div className="ml-auto">
-          <button onClick={resetAll} className="px-4 py-2 text-sm text-ink-soft hover:text-espresso border border-gold/20 rounded-lg transition-colors">
-            Reset to Defaults
+          <button
+            onClick={resetAll}
+            disabled={loading}
+            className="px-4 py-2 text-sm text-ink-soft hover:text-espresso border border-gold/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Reloading…' : 'Reload from Server'}
           </button>
         </div>
       </div>
 
+      {loadError && (
+        <div className="mb-6 px-4 py-3 rounded-xl text-sm font-medium border bg-red-50 text-red-600 border-red-200 flex items-center justify-between gap-4">
+          <span>Could not load customization data from the server: {loadError}</span>
+          <button onClick={() => setReloadKey(k => k + 1)} className="shrink-0 px-3 py-1.5 text-sm border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
+            Retry
+          </button>
+        </div>
+      )}
+
+      {loading && !loadError && (
+        <p className="mb-6 text-sm text-ink-soft text-center py-6 border border-dashed border-gold/20 rounded-xl">
+          Loading customization data…
+        </p>
+      )}
+
       {/* Notes Tab */}
-      {activeTab === 'notes' && (
+      {!loading && activeTab === 'notes' && (
         <div className="space-y-6">
           {(['topNotes', 'heartNotes', 'baseNotes'] as LayerKey[]).map(layer => renderNoteBlock(layer))}
         </div>
       )}
 
       {/* Bases Tab */}
-      {activeTab === 'bases' && renderBaseBlock()}
+      {!loading && activeTab === 'bases' && renderBaseBlock()}
 
       {/* Sizes Tab */}
-      {activeTab === 'sizes' && renderSizeBlock()}
+      {!loading && activeTab === 'sizes' && renderSizeBlock()}
 
       {/* Bottle Types Tab */}
-      {activeTab === 'bottletypes' && renderBottleTypeBlock()}
+      {!loading && activeTab === 'bottletypes' && renderBottleTypeBlock()}
 
       {/* Settings Tab */}
-      {activeTab === 'settings' && renderSettings()}
+      {!loading && activeTab === 'settings' && renderSettings()}
 
       {/* Delete confirmation */}
       <ConfirmDialog
