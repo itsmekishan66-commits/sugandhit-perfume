@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Plus, Eye, Lock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
@@ -225,7 +225,7 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
       </div>
       <SectionCard title="Reconciliation Periods">
         {loading ? (
-          <div className="flex items-center justify-center py-12"><Loading /></div>
+          <Loading />
         ) : list.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No reconciliations yet.</p>
         ) : (

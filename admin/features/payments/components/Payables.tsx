@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
@@ -219,7 +219,7 @@ const PaymentPayables = ({ token }: { token: string }) => {
         </div>
         {tab === 'bills' ? (
           loading ? (
-            <div className="flex items-center justify-center py-12"><Loading /></div>
+            <Loading />
           ) : payables.length === 0 ? (
             <p className="text-center text-ink-soft/60 py-10">No bills yet. Record your first vendor bill.</p>
           ) : (

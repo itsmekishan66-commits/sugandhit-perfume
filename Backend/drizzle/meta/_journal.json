@@ -15,6 +15,13 @@
       "when": 1790676814242,
       "tag": "0001_optimal_wildside",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790836596296,
+      "tag": "0002_shop_settings",
+      "breakpoints": true
     }
   ]
 }

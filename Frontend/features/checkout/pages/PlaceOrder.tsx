@@ -4,6 +4,7 @@ import Title from "@/components/ui/Title";
 import { showToast } from "@/components/feedback/toast";
 import CartTotal from "@/components/cart/CartTotal";
 import { assets } from "@/assets/assets";
+import Loading from "@/components/ui/Loading";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useCart, getCartAmount } from "@/context/CartContext";
@@ -17,7 +18,7 @@ const PlaceOrder = () => {
   const [method, setMethod] = useState('cod');
   const navigate = useNavigate();
   const { token } = useAuth();
-  const { products } = useApp();
+  const { products, productsLoaded } = useApp();
   const cartItems = useCart((s) => s.cartItems);
   const customBlends = useCart((s) => s.customBlends);
   const setCartItems = useCart((s) => s.setCartItems);
@@ -46,6 +47,16 @@ const PlaceOrder = () => {
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
         <p className="font-display text-3xl italic text-ink-soft">You need to sign in first.</p>
         <button onClick={() => navigate('/login')} className="btn-gold mt-6">Sign in to Checkout</button>
+      </div>
+    );
+  }
+
+  // Totals are derived from `products`, so a real cart would otherwise render as
+  // "Rs. 0" and submit as "Your cart is empty" while the catalogue is still loading.
+  if (!productsLoaded) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center py-14">
+        <Loading variant="inline" className="w-55 md:w-100" label="Loading checkout" />
       </div>
     );
   }

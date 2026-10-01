@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
@@ -143,7 +143,7 @@ const InventoryStock = ({ token }: { token: string }) => {
           <span className="text-xs text-ink-soft ml-auto">Stock adjustments and returns live on the Returns tab.</span>
         </div>
         {loading ? (
-          <div className="flex items-center justify-center py-12"><Loading /></div>
+          <Loading />
         ) : items.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No products found.</p>
         ) : (

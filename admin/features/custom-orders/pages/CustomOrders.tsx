@@ -1,9 +1,10 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
 import { backendUrl, currency } from "@/config/constants";
 import { toast } from "react-toastify";
 import { orderStatusSchema } from "@/validate/schemas";
 import PageHeader from "@/components/data-display/PageHeader";
+import Loading from "@/components/feedback/Loading";
 
 interface NotePillsProps {
   title: string;
@@ -57,10 +58,12 @@ interface CustomOrdersProps {
 
 const CustomOrders = ({ token }: CustomOrdersProps) => {
   const [orders, setOrders] = useState<CustomOrder[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchAllOrders = async () => {
     if (!token) return;
 
+    setLoading(true);
     try {
       const response = await fetch(backendUrl + "/api/custom-order/list", {
         method: 'POST',
@@ -74,6 +77,8 @@ const CustomOrders = ({ token }: CustomOrdersProps) => {
       }
     } catch (error) {
       toast.error((error as Error).message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -123,6 +128,8 @@ const CustomOrders = ({ token }: CustomOrdersProps) => {
       ignore = true;
     };
   }, [token]);
+
+  if (loading) return <Loading />;
 
   return (
     <>

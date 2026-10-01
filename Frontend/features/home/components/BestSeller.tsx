@@ -2,10 +2,11 @@ import { useMemo } from "react";
 import Title from "@/components/ui/Title";
 import ProductItem from "@/components/product/ProductItem";
 import Reveal from "@/components/ui/Reveal";
+import Loading from "@/components/ui/Loading";
 import { useApp } from "@/context/AppContext";
 
 const BestSeller = () => {
-  const { products } = useApp();
+  const { products, productsLoaded } = useApp();
   const bestseller = useMemo(() => {
     const best = products.filter((item) => item.bestseller);
     return best.length ? best.slice(0, 4) : products.slice(0, 4);
@@ -21,6 +22,15 @@ const BestSeller = () => {
           </Reveal>
         ))}
       </div>
+      {!productsLoaded ? (
+        <div className="mt-10">
+          <Loading variant="inline" className="w-55 md:w-100" label="Loading best sellers" />
+        </div>
+      ) : bestseller.length === 0 ? (
+        <p className="text-center text-ink-soft mt-10">
+          Best sellers are being restocked. ✨
+        </p>
+      ) : null}
     </section>
   );
 };

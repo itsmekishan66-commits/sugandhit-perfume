@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import { backendUrl, currency } from '@/config/constants';
@@ -127,7 +127,7 @@ const Users = ({ token }: UsersProps) => {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12"><Loading /></div>
+          <Loading />
         ) : tab === 'customers' ? (
           <>
             {customers.length === 0 ? (

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { showToast } from '@/components/feedback/toast'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
+import Loading from '@/components/ui/Loading'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
@@ -129,7 +130,11 @@ const CustomPerfume = () => {
               );
             })}
             {notes.length === 0 && (
-              <p className="text-sm text-ink-soft">{paletteLoaded ? 'Nothing to show' : 'Loading notes…'}</p>
+              paletteLoaded ? (
+                <p className="text-sm text-ink-soft">Nothing to show</p>
+              ) : (
+                <Loading variant="inline" className="w-30" label={`Loading ${layer.title} notes`} />
+              )
             )}
           </div>
 
@@ -190,7 +195,11 @@ const CustomPerfume = () => {
                   </button>
                 ))}
                 {(palette.bases || []).length === 0 && (
-                  <p className="text-sm text-ink-soft">{paletteLoaded ? 'Nothing to show' : 'Loading bases…'}</p>
+                  paletteLoaded ? (
+                    <p className="text-sm text-ink-soft">Nothing to show</p>
+                  ) : (
+                    <Loading variant="inline" className="w-30" label="Loading bases" />
+                  )
                 )}
               </div>
             </div>
@@ -248,7 +257,11 @@ const CustomPerfume = () => {
                   );
                 })}
                 {bottleTypes.length === 0 && (
-                  <p className="text-sm text-ink-soft">{paletteLoaded ? 'Nothing to show' : 'Loading bottle types…'}</p>
+                  paletteLoaded ? (
+                    <p className="text-sm text-ink-soft">Nothing to show</p>
+                  ) : (
+                    <Loading variant="inline" className="w-30" label="Loading bottle types" />
+                  )
                 )}
               </div>
             </div>

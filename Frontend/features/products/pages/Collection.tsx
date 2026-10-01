@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import ProductItem from '@/components/product/ProductItem'
 import Reveal from '@/components/ui/Reveal'
+import Loading from '@/components/ui/Loading'
 import { ChevronDown } from "lucide-react";
 import { useApp } from '@/context/AppContext';
 import { PRODUCT_CATEGORIES, FRAGRANCE_FAMILIES } from '@/features/categories/catalog';
 
 const Collection = () => {
-  const { products, search, showSearch } = useApp();
+  const { products, search, showSearch, productsLoaded } = useApp();
   const [showFilter, setShowFilter] = useState(true);
   const [category, setCategory] = useState<string[]>([]);
   const [subCategory, setSubCategory] = useState<string[]>([]);
@@ -118,9 +119,13 @@ const Collection = () => {
             </Reveal>
           ))}
         </div>
-        {filterProducts.length === 0 && (
+        {!productsLoaded ? (
+          <div className="flex items-center justify-center py-20">
+            <Loading variant="inline" className="w-55 md:w-100" label="Loading collection" />
+          </div>
+        ) : filterProducts.length === 0 ? (
           <p className="text-center text-ink-soft py-20">No perfumes match those filters. Try softening your search ✨</p>
-        )}
+        ) : null}
       </div>
     </div>
   );

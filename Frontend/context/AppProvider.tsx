@@ -16,10 +16,13 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
   const [palette, setPalette] = useState<Palette>({ top: [], heart: [], base: [], bases: [] });
   const [paletteLoaded, setPaletteLoaded] = useState(false);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [couponsLoaded, setCouponsLoaded] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notificationsLoaded, setNotificationsLoaded] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
@@ -32,6 +35,10 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
         }
       } catch (error) {
         console.log(error);
+      } finally {
+        if (active) {
+          setProductsLoaded(true);
+        }
       }
     };
     const loadPalette = async () => {
@@ -56,6 +63,10 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
         }
       } catch (error) {
         console.log(error);
+      } finally {
+        if (active) {
+          setCouponsLoaded(true);
+        }
       }
     };
     loadProducts();
@@ -82,6 +93,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
       const clear = setTimeout(() => {
         setNotifications([]);
         setUnreadNotifications(0);
+        setNotificationsLoaded(true);
       }, 0);
       return () => clearTimeout(clear);
     }
@@ -91,6 +103,7 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
         if (!active) return;
         setNotifications(result.notifications);
         setUnreadNotifications(result.unread);
+        setNotificationsLoaded(true);
       })
       .catch((error) => console.log(error));
     return () => {
@@ -124,9 +137,12 @@ const AppProvider = ({ children }: { children: ReactNode }) => {
     showSearch,
     setShowSearch,
     products,
+    productsLoaded,
     palette,
     paletteLoaded,
     coupons,
+    couponsLoaded,
+    notificationsLoaded,
     notifications,
     unreadNotifications,
     refreshNotifications,

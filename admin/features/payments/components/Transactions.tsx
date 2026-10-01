@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Plus, Eye, Undo2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
@@ -204,7 +204,7 @@ const PaymentTransactions = ({ token }: { token: string }) => {
 
       <SectionCard title="Payment Transactions">
         {loading ? (
-          <div className="flex items-center justify-center py-12"><Loading /></div>
+          <Loading />
         ) : items.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No transactions found.</p>
         ) : (

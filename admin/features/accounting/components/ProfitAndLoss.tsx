@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
 import SectionCard from '@/components/data-display/SectionCard';
@@ -98,7 +98,7 @@ const AccountingPnL = ({ token }: { token: string }) => {
             </SectionCard>
           )}
 
-          {loading ? <div className="flex items-center justify-center py-10"><Loading /></div> : (
+          {loading ? <Loading /> : (
             <>
               {section('Revenue', data.revenueRows, data.revenue)}
               {section('Cost of Goods Sold', data.cogsRows, data.cogs)}

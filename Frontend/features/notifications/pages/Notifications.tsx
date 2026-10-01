@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
+import Loading from '@/components/ui/Loading'
 import { Bell, BellRing, Gift, Star, Tag } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { formatDateTime } from '@/utils/dates'
@@ -17,7 +18,7 @@ const notificationMeta: Record<string, { icon: ReactNode; tint: string }> = {
 const NotificationFilterTypes = ['All', 'order', 'promo', 'sale', 'system'] as const;
 
 const NotificationsPage = () => {
-  const { notifications, unreadNotifications, markNotificationsRead } = useApp();
+  const { notifications, unreadNotifications, markNotificationsRead, notificationsLoaded } = useApp();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<string>('All');
 
@@ -59,7 +60,11 @@ const NotificationsPage = () => {
             ))}
           </div>
 
-          {visible.length === 0 ? (
+          {!notificationsLoaded ? (
+            <div className="flex items-center justify-center py-14">
+              <Loading variant="inline" className="w-55 md:w-100" label="Loading notifications" />
+            </div>
+          ) : visible.length === 0 ? (
             <div className="text-center py-14">
               <Bell className="w-9 h-9 mx-auto text-ink-soft opacity-30 mb-3" />
               <p className="font-display text-2xl italic text-ink-soft">No notifications yet…</p>

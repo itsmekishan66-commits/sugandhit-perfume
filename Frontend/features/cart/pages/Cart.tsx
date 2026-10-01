@@ -4,6 +4,7 @@ import { Trash } from "lucide-react"
 import Title from '@/components/ui/Title';
 import CartTotal from '@/components/cart/CartTotal';
 import Reveal from '@/components/ui/Reveal';
+import Loading from '@/components/ui/Loading';
 import { useApp } from '@/context/AppContext';
 import { useCart } from '@/context/CartContext';
 import { CURRENCY } from '@/config/constants';
@@ -83,7 +84,7 @@ const BlendCard = ({
 );
 
 const Cart = () => {
-  const { products, palette } = useApp();
+  const { products, palette, productsLoaded } = useApp();
   const navigate = useNavigate();
   const cartItems = useCart((s) => s.cartItems);
   const customBlends = useCart((s) => s.customBlends);
@@ -118,7 +119,11 @@ const Cart = () => {
     <div className="pt-2 min-h-[60vh]">
       <Title text1={'Your'} text2={'Cart'} />
 
-      {isEmpty ? (
+      {!productsLoaded ? (
+        <div className="flex items-center justify-center py-24">
+          <Loading variant="inline" className="w-55 md:w-100" label="Loading cart" />
+        </div>
+      ) : isEmpty ? (
         <div className="text-center py-24">
           <p className="font-display text-3xl italic text-ink-soft">Your cart is empty…</p>
           <p className="text-ink-soft mt-3">Explore our collection or compose your own scent.</p>

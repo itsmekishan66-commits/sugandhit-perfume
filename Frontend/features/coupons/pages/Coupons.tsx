@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
+import Loading from '@/components/ui/Loading'
 import { Check, Copy, Gift, Tag } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import type { Coupon } from '@/types/common'
 
 const CouponsPage = () => {
-  const { coupons } = useApp();
+  const { coupons, couponsLoaded } = useApp();
   const navigate = useNavigate();
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -39,7 +40,11 @@ const CouponsPage = () => {
           <span>Collect codes at checkout — apply them in your cart to unlock savings.</span>
         </Reveal>
 
-        {coupons.length === 0 ? (
+        {!couponsLoaded ? (
+          <div className="rounded-3xl border border-gold/15 bg-white/70 p-12 flex items-center justify-center">
+            <Loading variant="inline" className="w-55 md:w-100" label="Loading offers" />
+          </div>
+        ) : coupons.length === 0 ? (
           <Reveal className="rounded-3xl border border-gold/15 bg-white/70 p-12 text-center">
             <Gift className="w-9 h-9 mx-auto text-ink-soft opacity-30 mb-3" />
             <p className="font-display text-2xl italic text-ink-soft">No offers right now</p>

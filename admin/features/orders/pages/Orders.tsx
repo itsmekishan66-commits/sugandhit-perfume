@@ -1,9 +1,10 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
 import { backendUrl, currency } from "@/config/constants";
 import { toast } from "react-toastify";
 import { orderStatusSchema } from "@/validate/schemas";
 import PageHeader from "@/components/data-display/PageHeader";
+import Loading from "@/components/feedback/Loading";
 
 interface OrderItem {
   name: string;
@@ -39,10 +40,12 @@ interface OrdersProps {
 
 const Orders = ({ token }: OrdersProps) => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchAllOrders = async () => {
     if (!token) return;
 
+    setLoading(true);
     try {
       const response = await fetch(backendUrl + "/api/order/list", {
         method: 'POST',
@@ -56,6 +59,8 @@ const Orders = ({ token }: OrdersProps) => {
       }
     } catch (error) {
       toast.error((error as Error).message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -104,6 +109,8 @@ const Orders = ({ token }: OrdersProps) => {
       ignore = true;
     };
   }, [token]);
+
+  if (loading) return <Loading />;
 
   return (
     <>

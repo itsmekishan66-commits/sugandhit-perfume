@@ -3,13 +3,14 @@ import { useParams } from 'react-router-dom'
 import { Star } from "lucide-react"
 import RelatedProducts from '@/components/product/RelatedProducts';
 import Reveal from '@/components/ui/Reveal';
+import Loading from '@/components/ui/Loading';
 import { useApp } from '@/context/AppContext';
 import { useCart } from '@/context/CartContext';
 import { CURRENCY } from '@/config/constants';
 
 const Product = () => {
   const { productId } = useParams();
-  const { products } = useApp();
+  const { products, productsLoaded } = useApp();
   const addToCart = useCart((s) => s.addToCart);
   const [imageState, setImageState] = useState<{ id: string | null; src: string }>({ id: null, src: '' });
   const [colors, setColors] = useState('100ml');
@@ -150,8 +151,14 @@ const Product = () => {
 
       <RelatedProducts category={productData.category} subCategory={productData.subCategory} />
     </div>
+  ) : productsLoaded ? (
+    <div className="py-40 text-center text-ink-soft font-display text-2xl italic">
+      We could not find this fragrance.
+    </div>
   ) : (
-    <div className="py-40 text-center text-ink-soft font-display text-2xl italic">Bottling your page…</div>
+    <div className="py-40">
+      <Loading className="w-55 md:w-100" label="Loading product" />
+    </div>
   );
 };
 

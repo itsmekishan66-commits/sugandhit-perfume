@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
@@ -160,7 +160,7 @@ const AccountingIncomeExpense = ({ token }: { token: string }) => {
       <SectionCard>
         <Tabs tabs={[{ key: 'income', label: `Income (${income.length})` }, { key: 'expenses', label: `Expenses (${expenses.length})` }]} active={tab} onChange={setTab} />
         {loading ? (
-          <div className="flex items-center justify-center py-12"><Loading /></div>
+          <Loading />
         ) : tab === 'income' ? (
           income.length === 0 ? (
             <p className="text-center text-ink-soft/60 py-10">No income records yet.</p>

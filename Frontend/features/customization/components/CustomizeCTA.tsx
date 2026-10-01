@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Reveal from '@/components/ui/Reveal'
-import { Loader } from 'lucide-react';
+import Loading from '@/components/ui/Loading'
 // import { useApp } from '@/context/AppContext'
 
 interface Note {
@@ -300,7 +300,11 @@ const CustomizeCTA = () => {
                       animationDelay: `${i * 0.5}s`,
                     }}
                   >
-                    <span className="text-sm">{selections[tier]?.emoji || <Loader className="w-4 h-4" />}</span>
+                    <span className="text-sm">
+                    {selections[tier]?.emoji || (
+                      <Loading variant="inline" className="w-6" label={`Select a ${tier} note`} />
+                    )}
+                  </span>
                     <span className="text-[8px] tracking-wider uppercase text-cream/40 mt-0.5">
                       {tier}
                     </span>

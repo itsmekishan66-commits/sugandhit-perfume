@@ -164,9 +164,7 @@ const Edit = ({ token }: EditProps) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loading />
-      </div>
+      <Loading />
     );
   }
 

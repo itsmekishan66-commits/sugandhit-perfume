@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { showToast } from '@/components/feedback/toast'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
+import Loading from '@/components/ui/Loading'
 import { profileSchema } from '@/validate/schemas'
 import { Bell, BellRing, Camera, Copy, Gift, Heart, Pencil, Star, Tag } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
@@ -16,12 +17,22 @@ import type { ReactNode } from 'react'
 
 const Dashboard = () => {
   const { token, userProfile, updateUserProfile, uploadProfileImage, logout } = useAuth();
-  const { products, coupons, notifications, unreadNotifications, markNotificationsRead } = useApp();
+  const {
+    products,
+    productsLoaded,
+    coupons,
+    couponsLoaded,
+    notifications,
+    notificationsLoaded,
+    unreadNotifications,
+    markNotificationsRead,
+  } = useApp();
   const wishlist = useCart((s) => s.wishlist);
   const toggleWishlist = useCart((s) => s.toggleWishlist);
   const navigate = useNavigate();
   const [orders, setOrders] = useState<ApiOrder[]>([]);
   const [custom, setCustom] = useState<ApiOrder[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [form, setForm] = useState({ name: '', phone: '', address: '', city: '' });
   const [edit, setEdit] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -29,12 +40,20 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!token) return;
+    let active = true;
     fetchUserOrders(token)
       .then(({ orders: o, customOrders: c }) => {
+        if (!active) return;
         setOrders(o);
         setCustom(c);
       })
-      .catch((error) => console.log(error));
+      .catch((error) => console.log(error))
+      .finally(() => {
+        if (active) setOrdersLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [token]);
 
   if (!token) {
@@ -215,7 +234,11 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {notifications.length === 0 ? (
+            {!notificationsLoaded ? (
+              <div className="flex items-center justify-center py-8">
+                <Loading variant="inline" className="w-30" label="Loading notifications" />
+              </div>
+            ) : notifications.length === 0 ? (
               <div className="text-center py-8">
                 <Bell className="w-8 h-8 mx-auto text-ink-soft opacity-30 mb-2" />
                 <p className="text-ink-soft text-sm">No notifications yet.</p>
@@ -259,7 +282,11 @@ const Dashboard = () => {
               )}
             </div>
 
-            {wishlisted.length === 0 ? (
+            {!productsLoaded ? (
+              <div className="flex items-center justify-center py-8">
+                <Loading variant="inline" className="w-30" label="Loading wishlist" />
+              </div>
+            ) : wishlisted.length === 0 ? (
               <div className="text-center py-8">
                 <Heart className="w-8 h-8 mx-auto text-ink-soft opacity-30 mb-2" />
                 <p className="text-ink-soft text-sm">Your wishlist is empty.</p>
@@ -311,7 +338,11 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {coupons.length === 0 ? (
+        {!couponsLoaded ? (
+          <div className="flex items-center justify-center py-8">
+            <Loading variant="inline" className="w-30" label="Loading coupons" />
+          </div>
+        ) : coupons.length === 0 ? (
           <p className="text-center text-ink-soft py-8 text-sm">No coupons right now — check back soon!</p>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -373,9 +404,13 @@ const Dashboard = () => {
                 </div>
               </div>
             ))}
-          {orders.length === 0 && custom.length === 0 && (
+          {ordersLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loading variant="inline" className="w-30" label="Loading orders" />
+            </div>
+          ) : orders.length === 0 && custom.length === 0 ? (
             <p className="text-center text-ink-soft py-10">No orders yet. <button className="text-gold font-medium" onClick={() => navigate('/customize')}>Design your first signature blend →</button></p>
-          )}
+          ) : null}
         </div>
       </Reveal>
     </div>

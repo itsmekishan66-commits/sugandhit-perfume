@@ -13,6 +13,7 @@ import paymentsRouter from '../modules/payments/payments.routes.js';
 import accountingRouter from '../modules/accounting/accounting.routes.js';
 import notesRouter from '../modules/notes/notes.routes.js';
 import customizationRouter from '../modules/customization/customization.routes.js';
+import settingsRouter from '../modules/settings/settings.routes.js';
 import uploadsRouter from '../modules/uploads/uploads.routes.js';
 import authUser from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validation.middleware.js';
@@ -51,6 +52,7 @@ routes.use('/suppliers', suppliersRouter);
 routes.use('/payment', paymentsRouter);
 routes.use('/note', notesRouter);
 routes.use('/customization', customizationRouter);
+routes.use('/settings', settingsRouter);
 routes.use('/uploads', uploadsRouter);
 
 routes.use('/cart', cartRouter);

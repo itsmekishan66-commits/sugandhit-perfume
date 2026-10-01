@@ -20,7 +20,7 @@ const Settings = lazy(() => import('@/features/settings/pages/Settings'));
 const Customization = lazy(() => import('@/features/customization/pages/Customization'));
 
 const Fallback = ({ children }: { children: ReactNode }) => (
-  <Suspense fallback={<div className="flex items-center justify-center py-24"><Loading /></div>}>
+  <Suspense fallback={<Loading />}>
     {children}
   </Suspense>
 );
@@ -40,7 +40,7 @@ const AppRoutes = ({ token }: { token: string }) => (
     <Route path="/users/:id" element={<Fallback><UserDetails token={token} /></Fallback>} />
     <Route path="/accounts" element={<Fallback><AccountsFeature token={token} /></Fallback>} />
     <Route path="/inventory" element={<Fallback><InventoryFeature token={token} /></Fallback>} />
-    <Route path="/settings" element={<Fallback><Settings /></Fallback>} />
+    <Route path="/settings" element={<Fallback><Settings token={token} /></Fallback>} />
     <Route path="/customization" element={<Fallback><Customization token={token} /></Fallback>} />
   </Routes>
 );

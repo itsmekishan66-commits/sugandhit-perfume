@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
 import SectionCard from '@/components/data-display/SectionCard';
@@ -164,7 +164,7 @@ const PaymentReceivables = ({ token }: { token: string }) => {
         </select>
       }>
         {loading ? (
-          <div className="flex items-center justify-center py-12"><Loading /></div>
+          <Loading />
         ) : items.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No receivables found.</p>
         ) : (
@@ -246,7 +246,7 @@ const PaymentReceivables = ({ token }: { token: string }) => {
 
       <Modal open={!!statement || statementLoading} title="Customer Statement" onClose={() => setStatement(null)} wide>
         {statementLoading ? (
-          <div className="flex items-center justify-center py-16"><Loading /></div>
+          <Loading variant="inline" className="w-55 md:w-100 py-6" label="Loading statement" />
         ) : statement ? (
           <div className="flex flex-col gap-4">
             <div className="rounded-xl border border-gold/15 bg-cream/60 p-4 text-sm flex flex-wrap items-center justify-between gap-2">

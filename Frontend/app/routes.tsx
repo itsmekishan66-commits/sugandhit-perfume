@@ -17,6 +17,7 @@ import Wishlist from '@/features/wishlist/pages/Wishlist';
 import AuthLayout from '@/layouts/AuthLayout';
 import CheckoutLayout from '@/layouts/CheckoutLayout';
 import MainLayout from '@/layouts/MainLayout';
+import PageGate from './PageGate';
 
 const AppRoutes = () => (
   <Routes>
@@ -30,16 +31,58 @@ const AppRoutes = () => (
       <Route path="/Register" element={<Register />} />
     </Route>
     <Route element={<MainLayout />}>
-      <Route path="/" element={<Home />} />
-      <Route path="/about" element={<About />} />
+      <Route
+        path="/"
+        element={
+          <PageGate needs="products" label="Loading home">
+            <Home />
+          </PageGate>
+        }
+      />
+      <Route
+        path="/about"
+        element={
+          <PageGate needs="products" label="Loading about">
+            <About />
+          </PageGate>
+        }
+      />
+      <Route
+        path="/contact"
+        element={
+          <PageGate needs="products" label="Loading contact">
+            <Contact />
+          </PageGate>
+        }
+      />
       <Route path="/Cart" element={<Cart />} />
       <Route path="/wishlist" element={<Wishlist />} />
-      <Route path="/collection" element={<Collection />} />
-      <Route path="/contact" element={<Contact />} />
+      <Route
+        path="/collection"
+        element={
+          <PageGate needs="products" label="Loading collection">
+            <Collection />
+          </PageGate>
+        }
+      />
       <Route path="/Orders" element={<Orders />} />
       <Route path="/product/:productId" element={<Product />} />
-      <Route path="/customize" element={<CustomPerfume />} />
-      <Route path="/dashboard" element={<Dashboard />} />
+      <Route
+        path="/customize"
+        element={
+          <PageGate needs="palette" label="Loading the studio">
+            <CustomPerfume />
+          </PageGate>
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          <PageGate needs="products" label="Loading dashboard">
+            <Dashboard />
+          </PageGate>
+        }
+      />
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/coupons" element={<Coupons />} />
     </Route>

@@ -27,3 +27,4 @@ export {
   expenseRecords,
   auditLogs,
 } from './accounting.js';
+export { shopSettings } from './settings.js';

@@ -2,6 +2,7 @@
 import { backendUrl, currency } from "@/config/constants";
 import { Link } from "react-router-dom";
 import PageHeader from "@/components/data-display/PageHeader";
+import Loading from "@/components/feedback/Loading";
 const DashboardCharts = lazy(() => import('@/features/dashboard/components/DashboardCharts'));
 
 interface DashboardProps {
@@ -150,15 +151,7 @@ return (
         ))}
       </div>
 
-      <Suspense
-        fallback={
-          <div className="grid lg:grid-cols-2 gap-4 mb-6">
-            {[0, 1].map((i) => (
-              <div key={i} className="h-72 animate-pulse rounded-2xl border border-gold/15 bg-sand/40" />
-            ))}
-          </div>
-        }
-      >
+      <Suspense fallback={<Loading className="w-55 md:w-100" label="Loading charts" />}>
         <DashboardCharts
           products={products}
           orders={orders}

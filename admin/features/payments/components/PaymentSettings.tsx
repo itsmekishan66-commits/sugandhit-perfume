@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
 import SectionCard from '@/components/data-display/SectionCard';
@@ -33,7 +33,7 @@ const PaymentSettings = ({ token }: { token: string }) => {
       <PageHeader title="Payment Settings" subtitle="Gateway configuration and webhooks" />
 
       {loading && !status ? (
-        <div className="flex items-center justify-center py-12"><Loading /></div>
+        <Loading />
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

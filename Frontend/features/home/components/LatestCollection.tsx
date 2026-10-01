@@ -2,10 +2,11 @@ import { useMemo } from 'react'
 import Title from '@/components/ui/Title'
 import ProductItem from '@/components/product/ProductItem'
 import Reveal from '@/components/ui/Reveal'
+import Loading from '@/components/ui/Loading'
 import { useApp } from '@/context/AppContext'
 
 const LatestCollection = () => {
-  const { products } = useApp();
+  const { products, productsLoaded } = useApp();
   const latest = useMemo(() => products.slice(0, 8), [products]);
 
   return (
@@ -18,11 +19,15 @@ const LatestCollection = () => {
           </Reveal>
         ))}
       </div>
-      {latest.length === 0 && (
+      {!productsLoaded ? (
+        <div className="mt-10">
+          <Loading variant="inline" className="w-55 md:w-100" label="Loading collection" />
+        </div>
+      ) : latest.length === 0 ? (
         <p className="text-center text-ink-soft mt-10">
           Our curated collection is being bottled right now. ✨
         </p>
-      )}
+      ) : null}
     </section>
   );
 };

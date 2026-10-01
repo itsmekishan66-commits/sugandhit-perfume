@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
 import SectionCard from '@/components/data-display/SectionCard';
@@ -62,7 +62,7 @@ const AccountingTrialBalance = ({ token }: { token: string }) => {
 
           <SectionCard title="Accounts">
             {loading ? (
-              <div className="flex items-center justify-center py-12"><Loading /></div>
+              <Loading />
             ) : (
               <TableShell head={<><Th>Code</Th><Th>Account</Th><Th>Type</Th><Th right>Debit</Th><Th right>Credit</Th><Th right>Balance</Th></>}>
                 {data.rows.map((r) => (

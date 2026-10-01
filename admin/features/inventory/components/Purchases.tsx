@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Plus, PackageCheck, Search, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
@@ -315,7 +315,7 @@ const InventoryPurchases = ({ token }: { token: string }) => {
           <span className="text-xs text-ink-soft">Receiving stock also creates a vendor bill and posts Inventory Dr / AP Cr.</span>
         </div>
         {loading ? (
-          <div className="flex items-center justify-center py-12"><Loading /></div>
+          <Loading />
         ) : list.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No purchase orders yet.</p>
         ) : (

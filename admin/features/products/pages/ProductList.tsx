@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { backendUrl, currency } from '@/config/constants';
 import { toast } from 'react-toastify';
@@ -7,7 +7,8 @@ import PageHeader from '@/components/data-display/PageHeader';
 import ConfirmDialog from '@/components/feedback/ConfirmDialog';
 import Modal from '@/components/feedback/Modal';
 import RowActions from '@/components/data-display/RowActions';
-import { money } from '@/utils/format';
+import { money } from '@/utils/format';
+import Loading from '@/components/feedback/Loading';
 
 interface VariantLike {
   name?: string;
@@ -43,11 +44,13 @@ interface ListProps {
 
 const List = ({ token }: ListProps) => {
   const navigate = useNavigate();
-  const [list, setList] = useState<Product[]>([]);
+  const [list, setList] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [viewTarget, setViewTarget] = useState<Product | null>(null);
 
   const fetchList = async () => {
+    setLoading(true);
     try {
       const response = await fetch(backendUrl + '/api/product/list', {
         headers: { token }
@@ -61,6 +64,8 @@ const List = ({ token }: ListProps) => {
     } catch (error) {
       console.log(error);
       toast.error((error as Error).message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -119,6 +124,8 @@ const List = ({ token }: ListProps) => {
       ignore = true;
     };
   }, [token]);
+
+  if (loading) return <Loading />;
 
   return (
     <>

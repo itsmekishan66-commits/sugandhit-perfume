@@ -1,10 +1,11 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { backendUrl, currency } from '@/config/constants';
 import { toast } from 'react-toastify';
 import { couponSchema, couponToggleSchema, couponIdSchema } from '@/validate/schemas';
 import PageHeader from '@/components/data-display/PageHeader';
 import ConfirmDialog from '@/components/feedback/ConfirmDialog';
+import Loading from '@/components/feedback/Loading';
 
 interface Coupon {
   _id: string;
@@ -25,6 +26,7 @@ interface CouponsProps {
 
 const Coupons = ({ token }: CouponsProps) => {
   const [list, setList] = useState<Coupon[]>([]);
+  const [loading, setLoading] = useState(true);
   const [image, setImage] = useState<File | false>(false);
   const [code, setCode] = useState('');
   const [title, setTitle] = useState('');
@@ -38,6 +40,7 @@ const Coupons = ({ token }: CouponsProps) => {
   const [deleteTarget, setDeleteTarget] = useState<Coupon | null>(null);
 
   const fetchList = async () => {
+    setLoading(true);
     try {
       const response = await fetch(backendUrl + '/api/coupon/admin/list', {
         method: 'POST',
@@ -52,6 +55,8 @@ const Coupons = ({ token }: CouponsProps) => {
     } catch (error) {
       console.log(error);
       toast.error((error as Error).message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -193,6 +198,8 @@ const Coupons = ({ token }: CouponsProps) => {
   }, [token]);
 
   const inputClass = 'w-full max-w-[500px] px-3 py-2';
+
+  if (loading) return <Loading />;
 
   return (
     <div className="flex flex-col gap-6">

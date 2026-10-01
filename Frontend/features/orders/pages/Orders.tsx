@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
+import Loading from '@/components/ui/Loading'
 import { useAuth } from '@/context/AuthContext'
 import { fetchUserOrders } from '../orders.service'
 import type { ApiCustomOrder, ApiOrder } from '@/types/common'
@@ -83,18 +84,27 @@ const Orders = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<ApiOrder[]>([]);
   const [customOrders, setCustomOrders] = useState<ApiCustomOrder[]>([]);
+  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<OrderTab>('all');
 
   useEffect(() => {
     if (!token) return;
+    let active = true;
     fetchUserOrders(token)
       .then(({ orders: o, customOrders: c }) => {
+        if (!active) return;
         setOrders(o);
         setCustomOrders(c);
       })
       .catch((error) => {
         console.log(error);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
       });
+    return () => {
+      active = false;
+    };
   }, [token]);
 
   if (!token) {
@@ -153,7 +163,11 @@ const Orders = () => {
         ))}
       </div>
 
-      {activeTabEmpty ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-24">
+          <Loading variant="inline" className="w-55 md:w-100" label="Loading orders" />
+        </div>
+      ) : activeTabEmpty ? (
         <div className="text-center py-24">
           <p className="font-display text-3xl italic text-ink-soft">{empty.title}</p>
           <p className="text-ink-soft mt-3">{empty.sub}</p>

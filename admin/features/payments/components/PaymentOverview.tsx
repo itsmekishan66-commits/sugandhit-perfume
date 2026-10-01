@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ArrowDownLeft, ArrowUpRight, Wallet, AlertTriangle, RefreshCw, CheckCircle2, Clock, XCircle, TrendingUp, Layers } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
@@ -98,7 +98,7 @@ const Payment = ({ token }: { token: string }) => {
       />
 
       {loading && !data ? (
-        <div className="flex items-center justify-center py-12"><Loading /></div>
+        <Loading />
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

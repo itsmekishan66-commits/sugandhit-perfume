@@ -2,12 +2,13 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Heart } from "lucide-react"
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
+import Loading from '@/components/ui/Loading'
 import { useApp } from '@/context/AppContext'
 import { useCart } from '@/context/CartContext'
 import { CURRENCY } from '@/config/constants'
 
 const Wishlist = () => {
-  const { products } = useApp();
+  const { products, productsLoaded } = useApp();
   const navigate = useNavigate();
   const wishlist = useCart((s) => s.wishlist);
   const toggleWishlist = useCart((s) => s.toggleWishlist);
@@ -19,7 +20,11 @@ const Wishlist = () => {
     <div className="pt-2 min-h-[70vh] flex flex-col">
       <Title text1={'Your'} text2={'Wishlist'} />
 
-      {wishlisted.length === 0 ? (
+      {!productsLoaded ? (
+        <div className="flex-1 flex items-center justify-center py-24">
+          <Loading variant="inline" className="w-55 md:w-100" label="Loading wishlist" />
+        </div>
+      ) : wishlisted.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center py-24">
           <p className="font-display text-3xl italic text-ink-soft">Your wishlist is empty…</p>
           <p className="text-ink-soft mt-3 px-4">Save the scents you adore and find them here.</p>

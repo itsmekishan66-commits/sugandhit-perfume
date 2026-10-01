@@ -8,9 +8,12 @@ export interface AppContextValue {
   showSearch: boolean;
   setShowSearch: (value: boolean) => void;
   products: Product[];
+  productsLoaded: boolean;
   palette: Palette;
   paletteLoaded: boolean;
   coupons: Coupon[];
+  couponsLoaded: boolean;
+  notificationsLoaded: boolean;
   notifications: AppNotification[];
   unreadNotifications: number;
   refreshNotifications: () => Promise<void>;

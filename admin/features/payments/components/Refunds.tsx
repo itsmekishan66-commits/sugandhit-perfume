@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
 import SectionCard from '@/components/data-display/SectionCard';
@@ -92,7 +92,7 @@ const PaymentRefunds = ({ token }: { token: string }) => {
         </select>
       }>
         {loading ? (
-          <div className="flex items-center justify-center py-12"><Loading /></div>
+          <Loading />
         ) : items.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No refunds found.</p>
         ) : (

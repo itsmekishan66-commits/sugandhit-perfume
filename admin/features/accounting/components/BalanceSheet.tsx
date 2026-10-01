@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
 import SectionCard from '@/components/data-display/SectionCard';
@@ -8,6 +8,7 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Pill from '@/components/data-display/Pill';
+import Loading from '@/components/feedback/Loading';
 import inputCls from '@/components/ui/input';
 import { api } from '@/services/api';
 import { money } from '@/utils/format';
@@ -26,7 +27,7 @@ interface Data {
 const AccountingBalanceSheet = ({ token }: { token: string }) => {
   const [data, setData] = useState<Data | null>(null);
   const [asOf, setAsOf] = useState('');
-  const [, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -71,7 +72,7 @@ const AccountingBalanceSheet = ({ token }: { token: string }) => {
         </div>
       </SectionCard>
 
-      {data && (
+      {loading ? <Loading /> : data ? (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard label="Total Assets" value={money(data.assets.total)} tint="from-gold-soft to-gold" />
@@ -95,7 +96,7 @@ const AccountingBalanceSheet = ({ token }: { token: string }) => {
             <span className="text-xs opacity-60">Assets {money(data.assets.total)} vs Liabilities &amp; Equity {money(data.totalLiabilitiesAndEquity)}.</span>
           </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 };

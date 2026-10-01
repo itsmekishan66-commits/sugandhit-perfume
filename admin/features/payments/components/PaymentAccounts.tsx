@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Plus, Eye, X, Power } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
@@ -130,7 +130,7 @@ const PaymentAccounts = ({ token }: { token: string }) => {
 
       <SectionCard title="Accounts">
         {loading ? (
-          <div className="flex items-center justify-center py-12"><Loading /></div>
+          <Loading />
         ) : accounts.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No payment accounts yet. Add your first account to start recording payments.</p>
         ) : (

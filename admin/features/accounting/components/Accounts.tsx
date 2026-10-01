@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { TrendingUp, Wallet, Building2, AlertTriangle, ArrowDownLeft, ArrowUpRight, Layers } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
@@ -56,7 +56,7 @@ const Accounts = ({ token }: { token: string }) => {
       <PageHeader title="Accounts" subtitle="Accounting overview and double-entry journal engine" />
 
       {loading && !data ? (
-        <div className="flex items-center justify-center py-12"><Loading /></div>
+        <Loading />
       ) : data ? (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

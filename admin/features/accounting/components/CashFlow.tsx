@@ -1,9 +1,10 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
 import SectionCard from '@/components/data-display/SectionCard';
 import StatCard from '@/components/data-display/StatCard';
 import Pill from '@/components/data-display/Pill';
+import Loading from '@/components/feedback/Loading';
 import inputCls from '@/components/ui/input';
 import { api } from '@/services/api';
 import { money } from '@/utils/format';
@@ -62,7 +63,7 @@ const AccountingCashFlow = ({ token }: { token: string }) => {
         </div>
       </SectionCard>
 
-      {data && !loading && (
+      {loading ? <Loading /> : data ? (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard label="Opening Balance" value={money(data.openingBalance)} tint="from-blush to-sand" />
@@ -79,7 +80,7 @@ const AccountingCashFlow = ({ token }: { token: string }) => {
             <Pill tone={data.netCash >= 0 ? 'green' : 'red'}>Net change: {money(data.netCash)}</Pill>
           </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 };

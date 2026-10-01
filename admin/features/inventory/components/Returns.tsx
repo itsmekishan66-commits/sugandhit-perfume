@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Undo2, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
@@ -101,7 +101,7 @@ const InventoryReturns = ({ token }: { token: string }) => {
       }>
         <p className="px-6 pt-3 pb-2 text-xs text-ink-soft">Shows sale returns (from cancelled/returned orders) and manual adjustments. All other movements live on the Movements tab.</p>
         {loading ? (
-          <div className="flex items-center justify-center py-12"><Loading /></div>
+          <Loading />
         ) : relevant.length === 0 ? (
           <p className="text-center text-ink-soft/60 py-10">No returns or adjustments yet.</p>
         ) : (

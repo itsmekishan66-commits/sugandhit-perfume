@@ -1,10 +1,11 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { backendUrl } from '@/config/constants';
 import { toast } from 'react-toastify';
 import { notificationSchema, notificationIdSchema } from '@/validate/schemas';
 import PageHeader from '@/components/data-display/PageHeader';
 import ConfirmDialog from '@/components/feedback/ConfirmDialog';
+import Loading from '@/components/feedback/Loading';
 
 interface Notification {
   _id: string;
@@ -36,6 +37,7 @@ const typeColors: Record<string, string> = {
 
 const NotificationsPage = ({ token }: NotificationsProps) => {
   const [list, setList] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
   const [type, setType] = useState<'order' | 'promo' | 'sale' | 'system'>('promo');
   const [audience, setAudience] = useState<'all' | 'user'>('all');
   const [userId, setUserId] = useState('');
@@ -46,6 +48,7 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
   const [deleteTarget, setDeleteTarget] = useState<Notification | null>(null);
 
   const fetchList = async () => {
+    setLoading(true);
     try {
       const response = await fetch(backendUrl + '/api/notification/admin/list', {
         method: 'POST',
@@ -60,6 +63,8 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
     } catch (error) {
       console.log(error);
       toast.error((error as Error).message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -159,6 +164,8 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
   }, [token]);
 
   const inputClass = 'w-full max-w-[500px] px-3 py-2';
+
+  if (loading) return <Loading />;
 
   return (
     <div className="flex flex-col gap-6">

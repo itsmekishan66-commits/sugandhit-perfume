@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
-import ConfirmDialog from '@/components/feedback/ConfirmDialog';
+import ConfirmDialog from '@/components/feedback/ConfirmDialog';
+import Loading from '@/components/feedback/Loading';
 import { api } from '@/services/api';
 
 interface Note {
@@ -1139,9 +1140,7 @@ const Customization = ({ token }: { token: string }) => {
       )}
 
       {loading && !loadError && (
-        <p className="mb-6 text-sm text-ink-soft text-center py-6 border border-dashed border-gold/20 rounded-xl">
-          Loading customization data…
-        </p>
+        <Loading className="w-55 md:w-100" label="Loading customization data" />
       )}
 
       {/* Notes Tab */}

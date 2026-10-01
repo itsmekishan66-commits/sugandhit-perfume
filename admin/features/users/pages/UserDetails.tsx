@@ -145,7 +145,7 @@ const Details = ({ token }: DetailsProps) => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-3">
-        <PageHeader title="User Details" subtitle={detail ? detail.user.name : 'Loading…'} />
+        <PageHeader title="User Details" subtitle={detail?.user.name} />
         <button
           onClick={() => navigate('/users')}
           className="btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer"
@@ -155,7 +155,7 @@ const Details = ({ token }: DetailsProps) => {
       </div>
 
       {loading && !detail ? (
-        <div className="flex items-center justify-center py-16"><Loading /></div>
+        <Loading />
       ) : detail ? (
         <div className="rounded-2xl bg-cream border border-gold/20 shadow-sm">
           <div className="p-6 border-b border-gold/15">
