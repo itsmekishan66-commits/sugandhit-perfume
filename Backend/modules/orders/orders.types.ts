@@ -56,6 +56,17 @@ export interface SerializedCustomOrder {
   date: number;
 }
 
+export interface OrderListFilters {
+  search?: string;
+  status?: string;
+  paymentMethod?: string;
+}
+
+export interface CustomOrderListFilters {
+  search?: string;
+  status?: string;
+}
+
 export interface OrderItem {
   id?: number | string;
   name?: string;

@@ -1,7 +1,9 @@
-import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import db from '../../database/client.js';
 import { notifications, notificationreads } from '../../database/schema/index.js';
 import type { NotificationInput } from './notifications.types.js';
+
+const escapeLike = (value: string) => value.replace(/[\\%_]/g, '\\$&');
 
 export const insertNotification = async (data: NotificationInput) => {
   await db.insert(notifications).values({
@@ -15,8 +17,40 @@ export const insertNotification = async (data: NotificationInput) => {
   });
 };
 
-export const findAllNotifications = async () =>
-  db.select().from(notifications).orderBy(desc(notifications.createdAt));
+export interface NotificationListFilters {
+  search?: string;
+  type?: string;
+}
+
+const buildAdminWhere = (filters: NotificationListFilters = {}) => {
+  const conditions: (ReturnType<typeof sql> | undefined)[] = [];
+  if (filters.search) {
+    const q = `%${escapeLike(filters.search.trim())}%`;
+    conditions.push(
+      or(
+        sql`${notifications.id}::text ilike ${q}`,
+        ilike(notifications.title, q),
+        ilike(notifications.message, q),
+        ilike(notifications.link, q),
+        sql`${notifications.userId}::text ilike ${q}`
+      )
+    );
+  }
+  if (filters.type) conditions.push(eq(notifications.type, filters.type));
+  return conditions.length > 0 ? and(...conditions) : undefined;
+};
+
+export const findAllNotifications = async (opts?: { limit?: number; offset?: number } & NotificationListFilters) => {
+  const where = buildAdminWhere(opts);
+  const query = db.select().from(notifications).where(where ?? sql`1=1`).orderBy(desc(notifications.createdAt));
+  return opts ? query.limit(opts.limit ?? 50).offset(opts.offset ?? 0) : query;
+};
+
+export const countNotifications = async (filters: NotificationListFilters = {}) => {
+  const where = buildAdminWhere(filters);
+  const rows = await db.select({ count: sql<number>`count(*)` }).from(notifications).where(where ?? sql`1=1`);
+  return Number(rows[0]?.count ?? 0);
+};
 
 export const findNotificationsForUser = async (userId: number) =>
   db

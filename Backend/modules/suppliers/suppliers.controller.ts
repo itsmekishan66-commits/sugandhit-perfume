@@ -7,9 +7,10 @@ const actor = (req: Request) => ({ actorId: req.admin?.id, ip: req.ip });
 export const supplierList = async (req: Request, res: Response) => {
   try {
     const q = req.query as Record<string, string | undefined>;
+    const { page, limit } = req.pagination!;
     res.json({
       success: true,
-      ...(await service.listSuppliers({ active: q.active, page: q.page ? Number(q.page) : 1, limit: q.limit ? Number(q.limit) : 50, search: q.search })),
+      ...(await service.listSuppliers({ active: q.active, page, limit, search: q.search })),
     });
   } catch (error) {
     res.json({ success: false, message: (error as Error).message });

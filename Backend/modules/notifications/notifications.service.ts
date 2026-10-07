@@ -1,6 +1,9 @@
 import type { NotificationInput, SerializedNotification } from './notifications.types.js';
 import * as repo from './notifications.repository.js';
+import type { NotificationListFilters } from './notifications.repository.js';
 import { notifications } from '../../database/schema/index.js';
+import { buildPaginated, computePagination } from '../../shared/utils/pagination.js';
+import type { Paginated } from '../../shared/types/common.types.js';
 
 const serializeNotification = (n: typeof notifications.$inferSelect) => ({
   ...n,
@@ -28,10 +31,21 @@ export const unreadCount = async (userId: number): Promise<number> => {
   }).length;
 };
 
-export const adminList = async (): Promise<SerializedNotification[]> => {
-  const rows = await repo.findAllNotifications();
-  return rows.map(serializeNotification);
-};
+export async function adminList(): Promise<SerializedNotification[]>;
+export async function adminList(
+  opts: { page?: number; limit?: number } & NotificationListFilters
+): Promise<Paginated<SerializedNotification>>;
+export async function adminList(
+  opts?: { page?: number; limit?: number } & NotificationListFilters
+): Promise<SerializedNotification[] | Paginated<SerializedNotification>> {
+  if (!opts) {
+    const rows = await repo.findAllNotifications();
+    return rows.map(serializeNotification);
+  }
+  const { page, limit, offset } = computePagination(opts);
+  const rows = await repo.findAllNotifications({ limit, offset, ...opts });
+  return buildPaginated(rows.map(serializeNotification), await repo.countNotifications(opts), page, limit);
+}
 
 export const create = async (data: NotificationInput) => {
   await repo.insertNotification(data);

@@ -6,9 +6,11 @@ import {
   listAllAdmins,
   getUserWithHistory,
   addUserCredit,
+  listAdminRoles,
 } from './users.service.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { ok, fail } from '../../shared/utils/response.js';
+import { hasPaginationParams } from '../../middleware/pagination.middleware.js';
 import { createAuditLog } from '../accounting/accounting.service.js';
 
 export const getProfile = async (req: AuthRequest, res: Response) => {
@@ -52,20 +54,54 @@ export const uploadProfileImage = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const userList = async (_req: Request, res: Response) => {
+export const userList = async (req: Request, res: Response) => {
   try {
-    const users = await listAllUsers();
+    const q = req.query as Record<string, unknown>;
+    const filters = {
+      search: typeof q.search === 'string' && q.search.trim() ? q.search : undefined,
+    };
     const admins = await listAllAdmins();
-    ok(res, { users, admins, totalCustomers: users.length, totalAdmins: admins.length });
+    if (!hasPaginationParams(req)) {
+      const users = await listAllUsers();
+      return ok(res, { users, admins, totalCustomers: users.length, totalAdmins: admins.length });
+    }
+    const result = await listAllUsers({ ...req.pagination, ...filters });
+    ok(res, {
+      users: result.items,
+      admins,
+      totalCustomers: result.total,
+      totalAdmins: admins.length,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+    });
   } catch (error) {
     console.log(error);
     fail(res, (error as Error).message);
   }
 };
 
-export const adminList = async (_req: Request, res: Response) => {
+export const adminList = async (req: Request, res: Response) => {
   try {
-    ok(res, { admins: await listAllAdmins() });
+    const q = req.query as Record<string, unknown>;
+    const filters = {
+      search: typeof q.search === 'string' && q.search.trim() ? q.search : undefined,
+      role: typeof q.role === 'string' && q.role ? q.role : undefined,
+      status: typeof q.status === 'string' && q.status ? q.status : undefined,
+    };
+    if (!hasPaginationParams(req)) {
+      ok(res, { admins: await listAllAdmins() });
+      return;
+    }
+    const result = await listAllAdmins({ ...req.pagination, ...filters });
+    ok(res, {
+      admins: result.items,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+      roles: await listAdminRoles(),
+    });
   } catch (error) {
     console.log(error);
     fail(res, (error as Error).message);

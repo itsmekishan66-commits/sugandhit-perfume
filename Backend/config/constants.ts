@@ -1,7 +1,10 @@
 export const APP_NAME = 'Sugandhit';
 
-export const MAX_PAGE_SIZE = 100;
-export const DEFAULT_PAGE_SIZE = 50;
+// Hard cap applied to ?limit= by the pagination middleware; clients cannot request
+// more than this many records per page. Internal exports pass larger limits
+// straight to services and are unaffected.
+export const MAX_PAGE_SIZE = 250;
+export const DEFAULT_PAGE_SIZE = 60;
 
 export const ORDER_STATUSES = [
   'Order Placed',

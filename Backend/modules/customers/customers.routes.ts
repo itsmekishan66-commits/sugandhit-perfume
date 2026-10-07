@@ -12,6 +12,7 @@ import {
   wishlistRemove,
 } from './customers.controller.js';
 import { loadAdmin, requireAdmin } from '../../middleware/permission.middleware.js';
+import { paginate } from '../../middleware/pagination.middleware.js';
 import authUser from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validation.middleware.js';
 import { PERMISSIONS } from '../../shared/constants/finance.constants.js';
@@ -27,7 +28,7 @@ const customersRouter = express.Router();
 
 customersRouter.use(loadAdmin);
 
-customersRouter.get('/receivables', requireAdmin(PERMISSIONS.receivables_view), receivableList);
+customersRouter.get('/receivables', requireAdmin(PERMISSIONS.receivables_view), paginate, receivableList);
 customersRouter.get('/receivables/aging', requireAdmin(PERMISSIONS.receivables_view), receivableAgingReport);
 customersRouter.get('/receivables/statement/:customerId', requireAdmin(PERMISSIONS.receivables_view), receivableStatement);
 customersRouter.post('/receivables/adjust', requireAdmin(PERMISSIONS.receivables_manage), validate(receivableAdjustSchema), receivableAdjust);

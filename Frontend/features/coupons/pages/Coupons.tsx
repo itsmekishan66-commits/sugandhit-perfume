@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
 import Loading from '@/components/ui/Loading'
+import Pagination from '@/components/ui/Pagination'
 import { Check, Copy, Gift, Tag } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import type { Coupon } from '@/types/common'
@@ -11,6 +12,7 @@ const CouponsPage = () => {
   const { coupons, couponsLoaded } = useApp();
   const navigate = useNavigate();
   const [copied, setCopied] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const formatTill = (ts: number) => new Date(Number(ts)).toLocaleDateString();
 
@@ -24,11 +26,16 @@ const CouponsPage = () => {
       setTimeout(() => setCopied(null), 1500);
     }
   };
-
+  
   const discountLabel = (c: Coupon) => {
     if (c.discountType === 'percent') return `${c.discountValue}% OFF`;
     return `Rs. ${c.discountValue} OFF`;
   };
+
+  const PAGE_SIZE = 20;
+  const totalPages = Math.max(1, Math.ceil(coupons.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = coupons.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   return (
     <div className="pt-2 min-h-[70vh] flex flex-col">
@@ -51,46 +58,49 @@ const CouponsPage = () => {
             <button onClick={() => navigate('/collection')} className="btn-gold text-xs px-6 py-2.5 mt-6">Shop the collection</button>
           </Reveal>
         ) : (
-<div className="grid gap-5 sm:grid-cols-2">
-            {coupons.map((c, i) => (
-              <Reveal key={c._id} delay={i * 60}>
-                <div className="h-full overflow-hidden rounded-3xl border border-gold/20 bg-white/80 card-lux flex flex-col">
-                  {c.image ? (
-                    <div className="h-36 shrink-0" style={{ backgroundImage: `url(${c.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-                  ) : (
-                    <div className="h-36 shrink-0 bg-gradient-to-br from-gold-soft to-gold flex items-center justify-center">
-                      <Gift className="w-12 h-12 text-ink/60" />
-                    </div>
-                  )}
+          <>
+            <div className="grid gap-5 sm:grid-cols-2">
+              {pageRows.map((c, i) => (
+                <Reveal key={c._id} delay={i * 60}>
+                  <div className="h-full overflow-hidden rounded-3xl border border-gold/20 bg-white/80 card-lux flex flex-col">
+                    {c.image ? (
+                      <div className="h-36 shrink-0" style={{ backgroundImage: `url(${c.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                    ) : (
+                      <div className="h-36 shrink-0 bg-linear-to-br from-gold-soft to-gold flex items-center justify-center">
+                        <Gift className="w-12 h-12 text-ink/60" />
+                      </div>
+                    )}
 
-                  <div className="flex flex-1 flex-col gap-3 p-5">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-display text-2xl italic gold-text tracking-luxe">{discountLabel(c)}</span>
-                      <span className="rounded-full bg-espresso text-cream text-xs px-3 py-1">{c.code}</span>
-                    </div>
+                    <div className="flex flex-1 flex-col gap-3 p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-display text-2xl italic gold-text tracking-luxe">{discountLabel(c)}</span>
+                        <span className="rounded-full bg-espresso text-cream text-xs px-3 py-1">{c.code}</span>
+                      </div>
 
-                    <div className="flex-1">
-                      <p className="font-display text-xl font-semibold text-ink leading-snug">{c.title || 'Sugandhit Offer'}</p>
-                      {c.description && <p className="text-sm text-ink-soft mt-1 leading-relaxed">{c.description}</p>}
-                    </div>
+                      <div className="flex-1">
+                        <p className="font-display text-xl font-semibold text-ink leading-snug">{c.title || 'Sugandhit Offer'}</p>
+                        {c.description && <p className="text-sm text-ink-soft mt-1 leading-relaxed">{c.description}</p>}
+                      </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-ink-soft">
-                      <span>Min. spend: Rs. {c.minPurchase}</span>
-                      <span>Valid till: {formatTill(c.validTill)}</span>
-                    </div>
+                      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-ink-soft">
+                        <span>Min. spend: Rs. {c.minPurchase}</span>
+                        <span>Valid till: {formatTill(c.validTill)}</span>
+                      </div>
 
-                    <button
-                      onClick={() => copyCoupon(c.code)}
-                      className="btn-gold text-xs px-5 py-2.5 w-full flex items-center justify-center gap-2"
-                    >
-                      {copied === c.code ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                      {copied === c.code ? 'Copied!' : 'Copy code'}
-                    </button>
+                      <button
+                        onClick={() => copyCoupon(c.code)}
+                        className="btn-gold text-xs px-5 py-2.5 w-full flex items-center justify-center gap-2"
+                      >
+                        {copied === c.code ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        {copied === c.code ? 'Copied!' : 'Copy code'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+                </Reveal>
+              ))}
+            </div>
+            <Pagination total={coupons.length} perPage={PAGE_SIZE} page={safePage} onPage={setPage} label="Offers" />
+          </>
         )}
 
         <div className="mt-8 text-center">

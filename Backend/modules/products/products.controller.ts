@@ -3,12 +3,15 @@ import {
   addProduct,
   uploadImages,
   listProducts,
+  listCategories,
   removeProduct,
   getProductById,
   updateProduct,
 } from './products.service.js';
 import type { ProductVariant } from '../../database/schema/products.js';
 import { ok, fail } from '../../shared/utils/response.js';
+import { hasPaginationParams } from '../../middleware/pagination.middleware.js';
+import { DEFAULT_PAGE_SIZE } from '../../config/constants.js';
 
 export const add = async (req: Request, res: Response) => {
   try {
@@ -56,10 +59,35 @@ export const add = async (req: Request, res: Response) => {
   }
 };
 
-export const list = async (_req: Request, res: Response) => {
+export const list = async (req: Request, res: Response) => {
   try {
-    const products = await listProducts();
-    ok(res, { products });
+    const q = req.query as Record<string, unknown>;
+    const toArray = (value: unknown): string[] | undefined => {
+      if (Array.isArray(value)) return value.map(String).filter(Boolean);
+      if (typeof value === 'string' && value.trim()) return value.split(',').map((v) => v.trim()).filter(Boolean);
+      return undefined;
+    };
+    const filters = {
+      search: typeof q.search === 'string' ? q.search : undefined,
+      category: toArray(q.category),
+      subCategory: toArray(q.subCategory),
+      stock: typeof q.stock === 'string' ? q.stock : undefined,
+      sort: typeof q.sort === 'string' ? q.sort : undefined,
+    };
+    if (!hasPaginationParams(req)) {
+      const products = await listProducts();
+      return ok(res, { products });
+    }
+    const pagination = req.pagination ?? { page: 1, limit: DEFAULT_PAGE_SIZE, offset: 0 };
+    const result = await listProducts({ page: pagination.page, limit: pagination.limit, ...filters });
+    ok(res, {
+      products: result.items,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+      categories: await listCategories(),
+    });
   } catch (error) {
     console.log(error);
     fail(res, (error as Error).message);

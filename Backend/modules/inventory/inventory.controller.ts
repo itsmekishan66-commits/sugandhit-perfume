@@ -18,17 +18,12 @@ import {
 
 const actor = (req: Request) => ({ actorId: req.admin?.id, ip: req.ip });
 
-const paging = (req: Request) => {
-  const page = Math.max(1, Number(req.query.page) || 1);
-  const limit = Math.min(Math.max(1, Number(req.query.limit) || 50), 500);
-  return { page, limit };
-};
-
 export const stockList = async (req: Request, res: Response) => {
   try {
     const search = String(req.query.search ?? '');
     const lowStock = req.query.lowStock === 'true' ? 'true' : undefined;
-    res.json({ success: true, data: await listStock({ ...paging(req), search, lowStock }) });
+    const { page, limit } = req.pagination!;
+    res.json({ success: true, data: await listStock({ page, limit, search, lowStock }) });
   } catch (error) {
     res.json({ success: false, message: (error as Error).message });
   }
@@ -47,7 +42,8 @@ export const stockMovementList = async (req: Request, res: Response) => {
     const productId = req.query.productId ? Number(req.query.productId) : undefined;
     const type = req.query.type ? String(req.query.type) : undefined;
     const search = req.query.search ? String(req.query.search) : undefined;
-    res.json({ success: true, data: await listMovements({ ...paging(req), productId, type, search }) });
+    const { page, limit } = req.pagination!;
+    res.json({ success: true, data: await listMovements({ page, limit, productId, type, search }) });
   } catch (error) {
     res.json({ success: false, message: (error as Error).message });
   }
@@ -94,7 +90,8 @@ export const purchaseOrderList = async (req: Request, res: Response) => {
     const status = req.query.status ? String(req.query.status) : undefined;
     const supplierId = req.query.supplierId ? Number(req.query.supplierId) : undefined;
     const search = req.query.search ? String(req.query.search) : undefined;
-    res.json({ success: true, data: await listPurchaseOrders({ ...paging(req), status, supplierId, search }) });
+    const { page, limit } = req.pagination!;
+    res.json({ success: true, data: await listPurchaseOrders({ page, limit, status, supplierId, search }) });
   } catch (error) {
     res.json({ success: false, message: (error as Error).message });
   }

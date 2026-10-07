@@ -28,6 +28,7 @@ import {
   exportCsv,
 } from './payments.controller.js';
 import { loadAdmin, requireAdmin } from '../../middleware/permission.middleware.js';
+import { paginate } from '../../middleware/pagination.middleware.js';
 import { validate } from '../../middleware/validation.middleware.js';
 import { PERMISSIONS } from '../../shared/constants/finance.constants.js';
 import {
@@ -49,7 +50,7 @@ paymentRouter.use(loadAdmin);
 paymentRouter.get('/', requireAdmin(PERMISSIONS.payments_view), overview);
 paymentRouter.get('/channels', requireAdmin(PERMISSIONS.payments_view), channelReport);
 paymentRouter.get('/status', requireAdmin(PERMISSIONS.payments_view), linkStatus);
-paymentRouter.get('/export', requireAdmin(PERMISSIONS.payments_view), transactions);
+paymentRouter.get('/export', requireAdmin(PERMISSIONS.payments_view), paginate, transactions);
 paymentRouter.post('/export', requireAdmin(PERMISSIONS.payments_export), exportCsv);
 
 paymentRouter.get('/accounts', requireAdmin(PERMISSIONS.payments_view), listAccounts);
@@ -59,7 +60,7 @@ paymentRouter.put('/accounts/:id', requireAdmin(PERMISSIONS.payments_edit), vali
 paymentRouter.post('/accounts/:id/deactivate', requireAdmin(PERMISSIONS.payments_edit), deactivateAccount);
 paymentRouter.get('/accounts/:id/ledger', requireAdmin(PERMISSIONS.payments_view), accountLedger);
 
-paymentRouter.get('/transactions', requireAdmin(PERMISSIONS.payments_view), transactions);
+paymentRouter.get('/transactions', requireAdmin(PERMISSIONS.payments_view), paginate, transactions);
 paymentRouter.get('/transactions/:id', requireAdmin(PERMISSIONS.payments_view), transactionDetail);
 paymentRouter.post('/transactions/manual', requireAdmin(PERMISSIONS.payments_create), validate(manualPaymentSchema), recordManual);
 paymentRouter.post('/transactions/status', requireAdmin(PERMISSIONS.payments_edit), updateStatus);
@@ -67,7 +68,7 @@ paymentRouter.post('/transactions/reconcile', requireAdmin(PERMISSIONS.payments_
 
 paymentRouter.post('/webhook', webhook);
 
-paymentRouter.get('/refunds', requireAdmin(PERMISSIONS.payments_view), refundList);
+paymentRouter.get('/refunds', requireAdmin(PERMISSIONS.payments_view), paginate, refundList);
 paymentRouter.post('/refunds', requireAdmin(PERMISSIONS.payments_refund), validate(refundCreateSchema), refundCreate);
 paymentRouter.post('/refunds/approve', requireAdmin(PERMISSIONS.payments_refund), validate(refundApproveSchema), refundApprove);
 

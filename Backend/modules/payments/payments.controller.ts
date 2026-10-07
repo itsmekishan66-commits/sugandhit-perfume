@@ -151,6 +151,7 @@ export const accountLedger = async (req: Request, res: Response) => {
 export const transactions = async (req: Request, res: Response) => {
   try {
     const q = req.query as Record<string, string | undefined>;
+    const { page, limit } = req.pagination!;
     res.json({
       success: true,
       ...(await listTransactions({
@@ -163,8 +164,8 @@ export const transactions = async (req: Request, res: Response) => {
         customerId: q.customerId ? Number(q.customerId) : undefined,
         orderId: q.orderId ? Number(q.orderId) : undefined,
         reconciliationStatus: q.reconciliationStatus,
-        page: q.page ? Number(q.page) : 1,
-        limit: q.limit ? Number(q.limit) : 50,
+        page,
+        limit,
       })),
     });
   } catch (error) {
@@ -231,14 +232,15 @@ export const reconcileTransaction = async (req: Request, res: Response) => {
 export const refundList = async (req: Request, res: Response) => {
   try {
     const q = req.query as Record<string, string | undefined>;
+    const { page, limit } = req.pagination!;
     res.json({
       success: true,
       ...(await listRefunds({
         from: q.from ? Number(q.from) : undefined,
         to: q.to ? Number(q.to) : undefined,
         status: q.status,
-        page: q.page ? Number(q.page) : 1,
-        limit: q.limit ? Number(q.limit) : 50,
+        page,
+        limit,
       })),
     });
   } catch (error) {

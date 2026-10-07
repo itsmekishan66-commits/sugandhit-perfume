@@ -127,16 +127,16 @@ const Dashboard = ({ token }: DashboardProps) => {
   };
 
   const cards = [
-    { label: 'Products Live', value: stats.products, tint: 'from-gold-soft to-gold', to: '/list' },
-    { label: 'Total Orders', value: stats.orders, tint: 'from-blush to-sand', to: '/orders' },
-    { label: 'Custom Blends', value: stats.custom, tint: 'from-sand to-blush', to: '/custom-orders' },
-    { label: 'In Progress', value: stats.pending, tint: 'from-espresso to-ink', to: '/orders' },
-    { label: 'Total Sales', value: stats.revenue, tint: 'from-gold-soft to-blush', to: '/orders', isCurrency: true },
-    { label: 'Total Expenses', value: stats.expense, tint: 'from-sand to-ink', to: '/accounts', isCurrency: true },
-    { label: 'Total Customers', value: stats.totalCustomers, tint: 'from-blush to-espresso', to: '/accounts' },
+    { label: 'Products Live', value: stats.products, tint: 'from-emerald-200 to-teal-50', to: '/list' },
+    { label: 'Total Orders', value: stats.orders, tint: 'from-blue-200 to-blue-50', to: '/orders', },
+    { label: 'Custom Blends', value: stats.custom, tint: 'from-cyan-200 to-teal-50', to: '/custom-orders', },
+    { label: 'In Progress', value: stats.pending, tint: 'from-amber-200 to-orange-50', to: '/orders', },
+    { label: 'Total Sales', value: stats.revenue, tint: 'from-green-200 to-emerald-50', to: '/orders', isCurrency: true, },
+    { label: 'Total Expenses', value: stats.expense, tint: 'from-rose-200 to-red-50', to: '/accounts', isCurrency: true, },
+    { label: 'Total Customers', value: stats.totalCustomers, tint: 'from-indigo-200 to-violet-50', to: '/accounts', },
   ];
 
-return (
+  return (
     <div>
       <PageHeader title="Sugandhit Studio" subtitle="Overview of your perfume boutique" />
 

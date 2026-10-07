@@ -8,8 +8,11 @@ import {
   listUserCustomOrders,
   listAllCustomOrders,
   updateCustomOrderStatus,
+  listOrderFilterOptions,
+  listCustomOrderFilterOptions,
 } from './orders.service.js';
 import { ok, fail } from '../../shared/utils/response.js';
+import { hasPaginationParams } from '../../middleware/pagination.middleware.js';
 
 export const place = async (req: Request, res: Response) => {
   try {
@@ -30,10 +33,28 @@ export const placeOrderEsewa = async (_req: Request, res: Response) => {
   fail(res, 'eSewa not configured yet');
 };
 
-export const listAllOrdersController = async (_req: Request, res: Response) => {
+export const listAllOrdersController = async (req: Request, res: Response) => {
   try {
-    const orders = await listAllOrders();
-    ok(res, { orders });
+    const body = req.body as Record<string, unknown>;
+    const filters = {
+      search: typeof body.search === 'string' && body.search.trim() ? body.search : undefined,
+      status: typeof body.status === 'string' && body.status ? body.status : undefined,
+      paymentMethod: typeof body.paymentMethod === 'string' && body.paymentMethod ? body.paymentMethod : undefined,
+    };
+    if (!hasPaginationParams(req)) {
+      const orders = await listAllOrders();
+      return ok(res, { orders });
+    }
+    const result = await listAllOrders({ ...req.pagination, ...filters });
+    const options = await listOrderFilterOptions();
+    ok(res, {
+      orders: result.items,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+      ...options,
+    });
   } catch (error) {
     console.log(error);
     fail(res, (error as Error).message);
@@ -112,10 +133,27 @@ export const listUserCustomOrdersController = async (req: Request, res: Response
   }
 };
 
-export const listAllCustomOrdersController = async (_req: Request, res: Response) => {
+export const listAllCustomOrdersController = async (req: Request, res: Response) => {
   try {
-    const orders = await listAllCustomOrders();
-    ok(res, { orders });
+    const body = req.body as Record<string, unknown>;
+    const filters = {
+      search: typeof body.search === 'string' && body.search.trim() ? body.search : undefined,
+      status: typeof body.status === 'string' && body.status ? body.status : undefined,
+    };
+    if (!hasPaginationParams(req)) {
+      const orders = await listAllCustomOrders();
+      return ok(res, { orders });
+    }
+    const result = await listAllCustomOrders({ ...req.pagination, ...filters });
+    const options = await listCustomOrderFilterOptions();
+    ok(res, {
+      orders: result.items,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+      ...options,
+    });
   } catch (error) {
     console.log(error);
     fail(res, (error as Error).message);

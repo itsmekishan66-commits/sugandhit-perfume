@@ -1,8 +1,11 @@
 import { eq, sql } from 'drizzle-orm';
 import { accountsPayable, chartOfAccounts, paymentTransactions } from '../../database/schema/index.js';
 import { toMoney, toNum, sum } from '../../shared/utils/money.js';
+import { buildPaginated, computePagination } from '../../shared/utils/pagination.js';
+import type { Paginated } from '../../shared/types/common.types.js';
 import { ACCOUNT_KEYWORDS, ACCOUNT_TYPE_LABELS, DEFAULT_CHART_OF_ACCOUNTS } from '../../shared/constants/finance.constants.js';
 import {
+  countAuditLogs,
   countExpenseRecords,
   countIncomeRecords,
   countJournalEntries,
@@ -1105,10 +1108,33 @@ export const createAuditLog = async (input: AuditLogInput) => {
   });
 };
 
-export const listAuditLogs = async (entityType?: string, entityId?: string | number) => {
-  const logs = await findAuditLogs(entityType, entityId);
-  return logs.map((l) => ({ ...l, _id: String(l.id) }));
-};
+type SerializedAuditLog = Awaited<ReturnType<typeof findAuditLogs>>[number] & { _id: string };
+
+export async function listAuditLogs(entityType?: string, entityId?: string | number): Promise<SerializedAuditLog[]>;
+export async function listAuditLogs(
+  entityType: string | undefined,
+  entityId: string | number | undefined,
+  opts: { page?: number; limit?: number }
+): Promise<Paginated<SerializedAuditLog>>;
+export async function listAuditLogs(
+  entityType?: string,
+  entityId?: string | number,
+  opts?: { page?: number; limit?: number }
+): Promise<SerializedAuditLog[] | Paginated<SerializedAuditLog>> {
+  if (!opts) {
+    const logs = await findAuditLogs(entityType, entityId);
+    return logs.map((l) => ({ ...l, _id: String(l.id) }));
+  }
+  const { page, limit, offset } = computePagination(opts);
+  const logs = await findAuditLogs(entityType, entityId, { limit, offset });
+  const total = await countAuditLogs(entityType, entityId);
+  return buildPaginated(
+    logs.map((l) => ({ ...l, _id: String(l.id) })),
+    total,
+    page,
+    limit
+  );
+}
 
 export const getAccountingOverview = async (from?: number, to?: number) => {
   const snapshot = await periodSnapshot(from, to);

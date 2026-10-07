@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Heart } from "lucide-react"
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
 import Loading from '@/components/ui/Loading'
+import Pagination from '@/components/ui/Pagination'
 import { useApp } from '@/context/AppContext'
 import { useCart } from '@/context/CartContext'
 import { CURRENCY } from '@/config/constants'
@@ -13,8 +15,13 @@ const Wishlist = () => {
   const wishlist = useCart((s) => s.wishlist);
   const toggleWishlist = useCart((s) => s.toggleWishlist);
   const addToCart = useCart((s) => s.addToCart);
+  const [page, setPage] = useState(1);
 
   const wishlisted = products.filter((item) => wishlist.includes(item._id));
+  const PAGE_SIZE = 20;
+  const totalPages = Math.max(1, Math.ceil(wishlisted.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = wishlisted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   return (
     <div className="pt-2 min-h-[70vh] flex flex-col">
@@ -35,7 +42,7 @@ const Wishlist = () => {
       ) : (
         <div className="flex-1 flex flex-col gap-6 mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {wishlisted.map((item) => (
+            {pageRows.map((item) => (
               <Reveal key={item._id}>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl border border-gold/15 bg-white/70 p-4 card-lux">
                   <Link to={`/product/${item._id}`} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0 w-full">
@@ -71,6 +78,8 @@ const Wishlist = () => {
               </Reveal>
             ))}
           </div>
+
+          <Pagination total={wishlisted.length} perPage={PAGE_SIZE} page={safePage} onPage={setPage} label="Wishlist" />
 
           <div className="mt-auto pt-6">
             <button onClick={() => navigate('/collection')} className="w-full text-sm text-ink-soft hover:text-espresso transition-colors">

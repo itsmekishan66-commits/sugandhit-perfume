@@ -363,16 +363,36 @@ export const findPaymentsForPayable = (payableId: number) =>
 export const insertAuditLog = (values: typeof auditLogs.$inferInsert) =>
   db.insert(auditLogs).values(values);
 
-export const findAuditLogs = (entityType?: string, entityId?: string | number) => {
+export const findAuditLogs = (entityType?: string, entityId?: string | number, opts?: { limit?: number; offset?: number }) => {
   const conditions: ReturnType<typeof sql>[] = [];
   if (entityType) conditions.push(eq(auditLogs.entityType, entityType));
   if (entityId !== undefined) conditions.push(eq(auditLogs.entityId, String(entityId)));
   const where = conditions.length > 0 ? and(...conditions) : undefined;
+  if (opts) {
+    return db.query.auditLogs.findMany({
+      where,
+      orderBy: (t, { desc }) => [desc(t.createdAt)],
+      limit: opts.limit,
+      offset: opts.offset,
+    });
+  }
   return db.query.auditLogs.findMany({
     where,
     orderBy: (t, { desc }) => [desc(t.createdAt)],
     limit: 200,
   });
+};
+
+export const countAuditLogs = async (entityType?: string, entityId?: string | number) => {
+  const conditions: ReturnType<typeof sql>[] = [];
+  if (entityType) conditions.push(eq(auditLogs.entityType, entityType));
+  if (entityId !== undefined) conditions.push(eq(auditLogs.entityId, String(entityId)));
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  const rows = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(auditLogs)
+    .where(where ?? sql`1=1`);
+  return Number(rows[0]?.count ?? 0);
 };
 
 export const findPaymentAccountById = (id: number) =>

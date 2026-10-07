@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import * as service from './notifications.service.js';
+import { hasPaginationParams } from '../../middleware/pagination.middleware.js';
 
 export const listNotifications = async (req: Request, res: Response) => {
   try {
@@ -13,10 +14,26 @@ export const listNotifications = async (req: Request, res: Response) => {
   }
 };
 
-export const adminListNotifications = async (_req: Request, res: Response) => {
+export const adminListNotifications = async (req: Request, res: Response) => {
   try {
-    const notifications = await service.adminList();
-    res.json({ success: true, notifications });
+    const body = req.body as Record<string, unknown>;
+    const filters = {
+      search: typeof body.search === 'string' && body.search.trim() ? body.search : undefined,
+      type: typeof body.type === 'string' && body.type ? body.type : undefined,
+    };
+    if (!hasPaginationParams(req)) {
+      const notifications = await service.adminList();
+      return res.json({ success: true, notifications });
+    }
+    const result = await service.adminList({ ...req.pagination, ...filters });
+    res.json({
+      success: true,
+      notifications: result.items,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+    });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: (error as Error).message });

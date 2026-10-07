@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
 import Loading from '@/components/ui/Loading'
+import Pagination from '@/components/ui/Pagination'
 import { useAuth } from '@/context/AuthContext'
 import { fetchUserOrders } from '../orders.service'
 import type { ApiCustomOrder, ApiOrder } from '@/types/common'
@@ -86,6 +87,8 @@ const Orders = () => {
   const [customOrders, setCustomOrders] = useState<ApiCustomOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<OrderTab>('all');
+  const [blendPage, setBlendPage] = useState(1);
+  const [orderPage, setOrderPage] = useState(1);
 
   useEffect(() => {
     if (!token) return;
@@ -118,6 +121,14 @@ const Orders = () => {
 
   const sortedOrders = [...orders].sort((a, b) => b.date - a.date);
   const sortedCustom = [...customOrders].sort((a, b) => b.date - a.date);
+
+  const PAGE_SIZE = 20;
+  const orderTotalPages = Math.max(1, Math.ceil(sortedOrders.length / PAGE_SIZE));
+  const blendTotalPages = Math.max(1, Math.ceil(sortedCustom.length / PAGE_SIZE));
+  const orderSafePage = Math.min(orderPage, orderTotalPages);
+  const blendSafePage = Math.min(blendPage, blendTotalPages);
+  const orderRows = sortedOrders.slice((orderSafePage - 1) * PAGE_SIZE, orderSafePage * PAGE_SIZE);
+  const blendRows = sortedCustom.slice((blendSafePage - 1) * PAGE_SIZE, blendSafePage * PAGE_SIZE);
 
   const tabs: [OrderTab, string, number][] = [
     ['all', 'All', sortedOrders.length + sortedCustom.length],
@@ -156,7 +167,7 @@ const Orders = () => {
       <Title text1={'My'} text2={'Orders'} />
       <div className="flex gap-3 mb-6 justify-center flex-wrap">
         {tabs.map(([v, l, count]) => (
-          <button key={v} onClick={() => setTab(v)}
+          <button key={v} onClick={() => { setTab(v); setBlendPage(1); setOrderPage(1); }}
             className={`px-5 py-2 rounded-full text-sm uppercase tracking-wide transition-colors ${tab === v ? 'bg-ink text-cream' : 'bg-white/70 border border-gold/20 text-ink-soft hover:border-ink'}`}>
             {l} <span className="opacity-60">({count})</span>
           </button>
@@ -178,12 +189,15 @@ const Orders = () => {
         </div>
       ) : (
         <div className="space-y-4 max-w-4xl mx-auto">
-          {showBlends && sortedCustom.map((order, i) => (
+          {showBlends && blendRows.map((order, i) => (
             <Reveal key={`c-${order._id}`} delay={i * 40}>
               <CustomOrderCard order={order} />
             </Reveal>
           ))}
-          {showOrders && sortedOrders.map((order, i) => (
+          {showBlends && (
+            <Pagination total={sortedCustom.length} perPage={PAGE_SIZE} page={blendSafePage} onPage={setBlendPage} label="Custom blends" />
+          )}
+          {showOrders && orderRows.map((order, i) => (
             <Reveal key={`o-${order._id}`} delay={(showBlends ? sortedCustom.length : 0) * 40 + i * 40}>
               <div className="rounded-2xl border border-gold/15 bg-white/70 p-5 card-lux">
                 <div className="flex items-center justify-between flex-wrap gap-3">
@@ -202,6 +216,9 @@ const Orders = () => {
               </div>
             </Reveal>
           ))}
+          {showOrders && (
+            <Pagination total={sortedOrders.length} perPage={PAGE_SIZE} page={orderSafePage} onPage={setOrderPage} label="Orders" />
+          )}
         </div>
       )}
     </div>

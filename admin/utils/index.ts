@@ -1,4 +1,5 @@
 export { money, num, formatDate, formatDateTime, label } from './format';
+export { matches } from './search';
 export {
   CHANNEL_LABELS,
   TXN_STATUS_LABELS,

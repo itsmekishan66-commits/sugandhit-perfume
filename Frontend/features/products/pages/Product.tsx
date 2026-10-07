@@ -48,9 +48,9 @@ const Product = () => {
               Popular
             </span>
           )}
-          <div className="img-zoom-wrap relative rounded-[1.75rem] bg-gradient-to-br from-white to-sand/50 border border-gold/15 flex items-center justify-center min-h-[28rem]">
+          <div className="img-zoom-wrap relative rounded-[1.75rem] bg-linear-to-br from-white to-sand/50 border border-gold/15 flex items-center justify-center min-h-112">
             {image ? (
-              <img className="w-full h-[28rem] object-cover" src={image} alt={productData.name} />
+              <img className="w-full h-112 object-cover" src={image} alt={productData.name} />
             ) : (
               <div className="flex items-center justify-center">
                 <span className="font-display text-espresso/40 italic text-2xl">Sugandhit Signature</span>

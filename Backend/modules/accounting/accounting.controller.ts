@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { eq } from 'drizzle-orm';
 import db from '../../database/client.js';
 import { journalEntries } from '../../database/schema/index.js';
+import { hasPaginationParams } from '../../middleware/pagination.middleware.js';
 import {
   approveExpense,
   approvePayable,
@@ -110,13 +111,14 @@ export const chartDeactivate = async (req: Request, res: Response) => {
 export const journalList = async (req: Request, res: Response) => {
   try {
     const q = req.query as Record<string, string | undefined>;
+    const { page, limit } = req.pagination!;
     res.json({
       success: true,
       ...(await listJournalEntries({
         from: q.from ? Number(q.from) : undefined,
         to: q.to ? Number(q.to) : undefined,
-        page: q.page ? Number(q.page) : 1,
-        limit: q.limit ? Number(q.limit) : 50,
+        page,
+        limit,
       })),
     });
   } catch (error) {
@@ -313,6 +315,7 @@ export const periodReopen = async (req: Request, res: Response) => {
 export const payableList = async (req: Request, res: Response) => {
   try {
     const q = req.query as Record<string, string | undefined>;
+    const { page, limit } = req.pagination!;
     res.json({
       success: true,
       ...(await listPayables({
@@ -321,8 +324,8 @@ export const payableList = async (req: Request, res: Response) => {
         status: q.status,
         vendorId: q.vendorId ? Number(q.vendorId) : undefined,
         approvalStatus: q.approvalStatus,
-        page: q.page ? Number(q.page) : 1,
-        limit: q.limit ? Number(q.limit) : 50,
+        page,
+        limit,
       })),
     });
   } catch (error) {
@@ -393,14 +396,15 @@ export const incomeCreateController = async (req: Request, res: Response) => {
 export const incomeListController = async (req: Request, res: Response) => {
   try {
     const q = req.query as Record<string, string | undefined>;
+    const { page, limit } = req.pagination!;
     res.json({
       success: true,
       ...(await listIncome({
         from: q.from ? Number(q.from) : undefined,
         to: q.to ? Number(q.to) : undefined,
         accountId: q.accountId ? Number(q.accountId) : undefined,
-        page: q.page ? Number(q.page) : 1,
-        limit: q.limit ? Number(q.limit) : 50,
+        page,
+        limit,
       })),
     });
   } catch (error) {
@@ -432,6 +436,7 @@ export const expenseCreateController = async (req: Request, res: Response) => {
 export const expenseListController = async (req: Request, res: Response) => {
   try {
     const q = req.query as Record<string, string | undefined>;
+    const { page, limit } = req.pagination!;
     res.json({
       success: true,
       ...(await listExpenses({
@@ -440,8 +445,8 @@ export const expenseListController = async (req: Request, res: Response) => {
         accountId: q.accountId ? Number(q.accountId) : undefined,
         paymentStatus: q.paymentStatus,
         approvalStatus: q.approvalStatus,
-        page: q.page ? Number(q.page) : 1,
-        limit: q.limit ? Number(q.limit) : 50,
+        page,
+        limit,
       })),
     });
   } catch (error) {
@@ -534,8 +539,21 @@ export const auditableExport = async (req: Request, res: Response) => {
 export const auditList = async (req: Request, res: Response) => {
   try {
     const q = req.query as Record<string, string | undefined>;
-    const logs = await listAuditLogs(q.entityType, q.entityId ? Number(q.entityId) : undefined);
-    res.json({ success: true, logs, total: logs.length });
+    const entityType = q.entityType;
+    const entityId = q.entityId ? Number(q.entityId) : undefined;
+    if (!hasPaginationParams(req)) {
+      const logs = await listAuditLogs(entityType, entityId);
+      return res.json({ success: true, logs, total: logs.length });
+    }
+    const result = await listAuditLogs(entityType, entityId, req.pagination!);
+    res.json({
+      success: true,
+      logs: result.items,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+    });
   } catch (error) {
     res.json({ success: false, message: (error as Error).message });
   }

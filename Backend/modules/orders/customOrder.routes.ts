@@ -7,6 +7,7 @@ import {
 } from './orders.controller.js';
 import authUser from '../../middleware/auth.middleware.js';
 import { loadAdmin, requireAdmin } from '../../middleware/permission.middleware.js';
+import { paginate } from '../../middleware/pagination.middleware.js';
 import { validate } from '../../middleware/validation.middleware.js';
 import { PERMISSIONS } from '../../shared/constants/finance.constants.js';
 import { customOrderPlaceSchema, orderStatusSchema, userIdSchema } from './orders.validation.js';
@@ -17,7 +18,7 @@ customOrderRouter.use(loadAdmin);
 
 customOrderRouter.post('/place', authUser, validate(customOrderPlaceSchema), placeCustomOrderController);
 customOrderRouter.post('/userorders', authUser, validate(userIdSchema), listUserCustomOrdersController);
-customOrderRouter.post('/list', requireAdmin(PERMISSIONS.inventory_view), listAllCustomOrdersController);
+customOrderRouter.post('/list', requireAdmin(PERMISSIONS.inventory_view), paginate, listAllCustomOrdersController);
 customOrderRouter.post('/status', requireAdmin(PERMISSIONS.inventory_manage), validate(orderStatusSchema), updateCustomOrderStatusController);
 
 export default customOrderRouter;

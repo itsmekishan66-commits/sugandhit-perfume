@@ -1,17 +1,67 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ProductItem from '@/components/product/ProductItem'
 import Reveal from '@/components/ui/Reveal'
 import Loading from '@/components/ui/Loading'
 import { ChevronDown } from "lucide-react";
 import { useApp } from '@/context/AppContext';
+import { useChunkedPaging } from '@/hooks/useChunkedPaging';
+import { fetchProductsPage } from '@/features/products/products.service';
+import { showToast } from '@/components/feedback/toast';
 import { PRODUCT_CATEGORIES, FRAGRANCE_FAMILIES } from '@/features/categories/catalog';
 
+const PAGE_SIZE = 20
+const NEAR_BOTTOM_PX = 360
+
 const Collection = () => {
-  const { products, search, showSearch, productsLoaded } = useApp();
+  const { search, showSearch } = useApp();
   const [showFilter, setShowFilter] = useState(true);
   const [category, setCategory] = useState<string[]>([]);
   const [subCategory, setSubCategory] = useState<string[]>([]);
   const [sortType, setSortType] = useState('relevant');
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  const appliedSearch = showSearch && search.trim() ? search.trim() : '';
+
+  const { rows, total, page, totalPages, setPage, loading, searching, loadingMore } = useChunkedPaging({
+    fetcher: async (page: number, limit: number) =>
+      fetchProductsPage({
+        page,
+        limit,
+        search: appliedSearch,
+        categories: category,
+        subCategories: subCategory,
+        sort: sortType === 'relevant' ? undefined : sortType,
+      }),
+    query: [appliedSearch, category, subCategory, sortType],
+    onError: (error) => showToast((error as Error).message, 'error'),
+    // Keep every loaded row in memory so the list only ever grows as pages load.
+    windowSize: Number.MAX_SAFE_INTEGER,
+  });
+
+  // Infinite scroll: when the user scrolls near the bottom of the grid (or of the
+  // page on small screens), advance to the next 20-row page. The hook prefetches
+  // the next server chunk in the background, so items appear gradually.
+  useEffect(() => {
+    const scroller = gridRef.current;
+    const check = () => {
+      if (loading || searching || loadingMore || page >= totalPages) return;
+      const el = scroller && scroller.scrollHeight > scroller.clientHeight
+        ? scroller
+        : document.scrollingElement;
+      if (!el) return;
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - NEAR_BOTTOM_PX) {
+        setPage(page + 1);
+      }
+    };
+    scroller?.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('scroll', check, { passive: true });
+    return () => {
+      scroller?.removeEventListener('scroll', check);
+      window.removeEventListener('scroll', check);
+    };
+  }, [page, totalPages, loading, searching, loadingMore, setPage]);
+
+  const visibleItems = rows.slice(0, page * PAGE_SIZE);
 
   const toggleCategory = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (category.includes(e.target.value)) {
@@ -28,36 +78,6 @@ const Collection = () => {
       setSubCategory(prev => [...prev, e.target.value]);
     }
   }
-
-  const filterProducts = useMemo(() => {
-    let productsCopy = products.slice();
-
-    if (showSearch && search) {
-      const q = search.toLowerCase();
-      productsCopy = productsCopy.filter(
-        (item) =>
-          item.name.toLowerCase().includes(q) ||
-          (item.subCategory || "").toLowerCase().includes(q) ||
-          (item.category || "").toLowerCase().includes(q)
-      );
-    }
-
-    if (category.length > 0) {
-      productsCopy = productsCopy.filter(item => category.includes(item.category));
-    }
-
-    if (subCategory.length > 0) {
-      productsCopy = productsCopy.filter(item => subCategory.includes(item.subCategory));
-    }
-
-    if (sortType === 'low-high') {
-      productsCopy.sort((a, b) => Number(a.price) - Number(b.price));
-    } else if (sortType === 'high-low') {
-      productsCopy.sort((a, b) => Number(b.price) - Number(a.price));
-    }
-
-    return productsCopy;
-  }, [products, search, showSearch, category, subCategory, sortType]);
 
   const categories = PRODUCT_CATEGORIES;
   const subCategories = FRAGRANCE_FAMILIES;
@@ -112,20 +132,31 @@ const Collection = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 gap-y-10 pt-4 lg:max-h-[calc(100vh-13rem)] lg:overflow-y-auto lg:pr-2 lg:pb-2 no-scrollbar">
-          {filterProducts.map((item, index) => (
-            <Reveal key={item._id} delay={index * 50}>
-              <ProductItem id={item._id} image={item.image} name={item.name} price={Number(item.price)} subCategory={item.subCategory} category={item.category} rating={item.rating} reviews={item.reviews} badge={item.badge} bestseller={item.bestseller} popular={item.popular} />
-            </Reveal>
-          ))}
-        </div>
-        {!productsLoaded ? (
+        {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loading variant="inline" className="w-55 md:w-100" label="Loading collection" />
           </div>
-        ) : filterProducts.length === 0 ? (
-          <p className="text-center text-ink-soft py-20">No perfumes match those filters. Try softening your search ✨</p>
-        ) : null}
+        ) : (
+          <>
+            <div ref={gridRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 gap-y-10 pt-4 lg:max-h-[calc(100vh-13rem)] lg:overflow-y-auto lg:pr-2 lg:pb-2 no-scrollbar">
+              {visibleItems.map((item, index) => (
+                <Reveal key={item._id} delay={(index % PAGE_SIZE) * 50}>
+                  <ProductItem id={item._id} image={item.image} name={item.name} price={Number(item.price)} subCategory={item.subCategory} category={item.category} rating={item.rating} reviews={item.reviews} badge={item.badge} bestseller={item.bestseller} popular={item.popular} />
+                </Reveal>
+              ))}
+            </div>
+
+            {loadingMore && (
+              <div className="flex justify-center py-8">
+                <Loading variant="inline" className="w-48" label="Loading more scents" />
+              </div>
+            )}
+
+            {!searching && total === 0 && (
+              <p className="text-center text-ink-soft py-20">No perfumes match those filters. Try softening your search ✨</p>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

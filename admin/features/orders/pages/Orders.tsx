@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import type { ChangeEvent } from "react";
 import { backendUrl, currency } from "@/config/constants";
 import { toast } from "react-toastify";
 import { orderStatusSchema } from "@/validate/schemas";
 import PageHeader from "@/components/data-display/PageHeader";
 import Loading from "@/components/feedback/Loading";
+import SearchInput from "@/components/ui/SearchInput";
+import FilterSelect from "@/components/ui/FilterSelect";
+import Pagination from "@/components/ui/Pagination";
+import { useChunkedPaging } from "@/hooks/useChunkedPaging";
 
 interface OrderItem {
   name: string;
@@ -38,31 +42,49 @@ interface OrdersProps {
   token: string;
 }
 
+const PAGE_SIZE = 20;
+
 const Orders = ({ token }: OrdersProps) => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [payMethodFilter, setPayMethodFilter] = useState('');
+  const [filterOptions, setFilterOptions] = useState<{ statuses: string[]; paymentMethods: string[] }>({
+    statuses: [],
+    paymentMethods: [],
+  });
 
-  const fetchAllOrders = async () => {
-    if (!token) return;
-
-    setLoading(true);
-    try {
+  const fetcher = useCallback(
+    async (page: number, limit: number) => {
       const response = await fetch(backendUrl + "/api/order/list", {
         method: 'POST',
-        headers: { token }
+        headers: { 'Content-Type': 'application/json', token },
+        body: JSON.stringify({ page, limit, search: search.trim(), status: statusFilter, paymentMethod: payMethodFilter })
       });
       const data = await response.json();
-      if (data.success) {
-        setOrders(data.orders);
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error((error as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (!data.success) throw new Error(data.message || 'Failed to load orders');
+      setFilterOptions((prev) => {
+        const statuses = (data.statuses as string[] | undefined) ?? prev.statuses;
+        const paymentMethods = (data.paymentMethods as string[] | undefined) ?? prev.paymentMethods;
+        const same =
+          statuses.length === prev.statuses.length &&
+          paymentMethods.length === prev.paymentMethods.length &&
+          statuses.every((s, i) => s === prev.statuses[i]) &&
+          paymentMethods.every((p, i) => p === prev.paymentMethods[i]);
+        return same ? prev : { statuses, paymentMethods };
+      });
+      return { items: data.orders || [], total: data.total || 0 };
+    },
+    [token, search, statusFilter, payMethodFilter]
+  );
+
+  const { pageItems, total, page, setPage, loading, refresh } = useChunkedPaging<Order>({
+    fetcher,
+    query: [search.trim(), statusFilter, payMethodFilter],
+    enabled: !!token,
+    onError: (error) => toast.error((error as Error).message),
+  });
+
+  const filtering = !!(search.trim() || statusFilter || payMethodFilter);
 
   const statusHandler = async (event: ChangeEvent<HTMLSelectElement>, orderId: string | number) => {
     const parsed = orderStatusSchema.safeParse({ orderId, status: event.target.value });
@@ -78,7 +100,7 @@ const Orders = ({ token }: OrdersProps) => {
       });
       const data = await response.json();
       if (data.success) {
-        await fetchAllOrders();
+        await refresh();
       } else {
         toast.error(data.message);
       }
@@ -87,28 +109,6 @@ const Orders = ({ token }: OrdersProps) => {
       toast.error((error as Error).message);
     }
   };
-
-  useEffect(() => {
-    if (!token) return;
-    let ignore = false;
-    fetch(backendUrl + "/api/order/list", {
-      method: 'POST',
-      headers: { token }
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (ignore) return;
-        if (data.success) {
-          setOrders(data.orders);
-        } else {
-          toast.error(data.message);
-        }
-      })
-      .catch((error) => toast.error((error as Error).message));
-    return () => {
-      ignore = true;
-    };
-  }, [token]);
 
   if (loading) return <Loading />;
 
@@ -119,14 +119,41 @@ const Orders = ({ token }: OrdersProps) => {
         subtitle="Track and update customer perfume orders"
         trailing={
           <span className="rounded-full border border-gold/20 bg-white/80 px-3 py-1 text-sm text-ink-soft">
-            {orders.length} {orders.length === 1 ? 'order' : 'orders'}
+            {total} {total === 1 ? 'order' : 'orders'}
           </span>
         }
       />
       <div className="bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur">
       <div>
-        {orders.length === 0 && <p className="text-center text-ink-soft/60 py-8">No orders yet.</p>}
-        {orders.map((order) => (
+        {/* Search + filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search by customer, phone, product, order id…"
+            className="w-full sm:w-72"
+          />
+          <FilterSelect
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={filterOptions.statuses.map((s) => ({ value: s, label: s }))}
+            allLabel="All statuses"
+            ariaLabel="Filter by status"
+          />
+          <FilterSelect
+            value={payMethodFilter}
+            onChange={setPayMethodFilter}
+            options={filterOptions.paymentMethods.map((m) => ({ value: m, label: m }))}
+            allLabel="All payment methods"
+            ariaLabel="Filter by payment method"
+          />
+        </div>
+        {total === 0 && (
+          <p className="text-center text-ink-soft/60 py-8">
+            {filtering ? 'No orders match your search.' : 'No orders yet.'}
+          </p>
+        )}
+        {pageItems.map((order) => (
           <div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr_1fr] gap-4 items-start border border-gold/15 p-6 my-3 text-sm text-ink-soft rounded-2xl shadow-sm hover:shadow-md transition-shadow bg-white/70"
             key={order._id}
@@ -177,6 +204,7 @@ const Orders = ({ token }: OrdersProps) => {
             </select>
           </div>
         ))}
+        <Pagination total={total} perPage={PAGE_SIZE} page={page} onPage={setPage} label="Orders" />
       </div>
     </div>
     </>

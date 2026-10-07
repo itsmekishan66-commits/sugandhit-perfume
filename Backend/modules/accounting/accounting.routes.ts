@@ -39,6 +39,7 @@ import {
   auditList,
 } from './accounting.controller.js';
 import { loadAdmin, requireAdmin } from '../../middleware/permission.middleware.js';
+import { paginate } from '../../middleware/pagination.middleware.js';
 import { validate } from '../../middleware/validation.middleware.js';
 import { PERMISSIONS } from '../../shared/constants/finance.constants.js';
 import {
@@ -72,7 +73,7 @@ accountingRouter.post('/chart', requireAdmin(PERMISSIONS.accounts_manage_chart),
 accountingRouter.put('/chart/:id', requireAdmin(PERMISSIONS.accounts_manage_chart), validate(chartAccountUpdateSchema), chartUpdate);
 accountingRouter.post('/chart/:id/deactivate', requireAdmin(PERMISSIONS.accounts_manage_chart), chartDeactivate);
 
-accountingRouter.get('/journals', requireAdmin(PERMISSIONS.accounts_view), journalList);
+accountingRouter.get('/journals', requireAdmin(PERMISSIONS.accounts_view), paginate, journalList);
 accountingRouter.get('/journals/:id', requireAdmin(PERMISSIONS.accounts_view), journalDetail);
 accountingRouter.post('/journals', requireAdmin(PERMISSIONS.accounts_create_journal), validate(journalCreateSchema), journalCreate);
 accountingRouter.post('/journals/post', requireAdmin(PERMISSIONS.accounts_post_journal), validate(journalPostSchema), journalPost);
@@ -90,7 +91,7 @@ accountingRouter.post('/periods', requireAdmin(PERMISSIONS.accounts_manage_perio
 accountingRouter.post('/periods/close', requireAdmin(PERMISSIONS.accounts_manage_periods), validate(periodCloseSchema), periodClose);
 accountingRouter.post('/periods/reopen', requireAdmin(PERMISSIONS.accounts_manage_periods), validate(periodCloseSchema), periodReopen);
 
-accountingRouter.get('/payables', requireAdmin(PERMISSIONS.payables_view), payableList);
+accountingRouter.get('/payables', requireAdmin(PERMISSIONS.payables_view), paginate, payableList);
 accountingRouter.post('/payables', requireAdmin(PERMISSIONS.payables_manage), validate(payableCreateSchema), payableCreate);
 accountingRouter.post('/payables/approve', requireAdmin(PERMISSIONS.payables_manage), validate(payableApproveSchema), payableApprove);
 accountingRouter.post('/payables/pay', requireAdmin(PERMISSIONS.payables_manage), validate(payablePaySchema), payablePay);
@@ -98,11 +99,11 @@ accountingRouter.get('/payables/aging', requireAdmin(PERMISSIONS.payables_view),
 accountingRouter.post('/payables/maintain', requireAdmin(PERMISSIONS.payables_manage), validate(payableMaintenanceSchema), payableMaintain);
 
 accountingRouter.post('/income', requireAdmin(PERMISSIONS.accounts_create_journal), validate(incomeCreateSchema), incomeCreateController);
-accountingRouter.get('/income', requireAdmin(PERMISSIONS.accounts_view), incomeListController);
+accountingRouter.get('/income', requireAdmin(PERMISSIONS.accounts_view), paginate, incomeListController);
 accountingRouter.get('/income/totals', requireAdmin(PERMISSIONS.accounts_view), incomeTotals);
 
 accountingRouter.post('/expenses', requireAdmin(PERMISSIONS.accounts_create_journal), validate(expenseCreateSchema), expenseCreateController);
-accountingRouter.get('/expenses', requireAdmin(PERMISSIONS.accounts_view), expenseListController);
+accountingRouter.get('/expenses', requireAdmin(PERMISSIONS.accounts_view), paginate, expenseListController);
 accountingRouter.get('/expenses/totals', requireAdmin(PERMISSIONS.accounts_view), expenseTotals);
 accountingRouter.post('/expenses/approve', requireAdmin(PERMISSIONS.accounts_post_journal), validate(expenseApproveSchema), expenseApproveController);
 accountingRouter.post('/expenses/pay', requireAdmin(PERMISSIONS.accounts_post_journal), validate(expensePaySchema), expensePayController);
@@ -110,6 +111,6 @@ accountingRouter.put('/expenses/:id', requireAdmin(PERMISSIONS.accounts_create_j
 
 accountingRouter.post('/export', requireAdmin(PERMISSIONS.accounts_export), auditableExport);
 
-accountingRouter.get('/audit-logs', requireAdmin(PERMISSIONS.accounts_view), auditList);
+accountingRouter.get('/audit-logs', requireAdmin(PERMISSIONS.accounts_view), paginate, auditList);
 
 export default accountingRouter;

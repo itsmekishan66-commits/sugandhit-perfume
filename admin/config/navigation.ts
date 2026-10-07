@@ -23,23 +23,8 @@ export const navGroups: NavGroup[] = [
       { label: 'Notifications', to: '/notifications', icon: '🔔' },
       { label: 'Users', to: '/users', icon: '👥' },
       { label: 'Settings', to: '/settings', icon: '⚙️' },
-    ],
-  },
-  {
-    section: 'Payments',
-    links: [
       { label: 'Payments', to: '/payment', icon: '💳', end: true },
-    ],
-  },
-  {
-    section: 'Accounts',
-    links: [
       { label: 'Accounts', to: '/accounts', icon: '🧾', end: true },
-    ],
-  },
-  {
-    section: 'Inventory',
-    links: [
       { label: 'Inventory', to: '/inventory', icon: '📦', end: true },
     ],
   },

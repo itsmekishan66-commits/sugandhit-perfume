@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import type { ChangeEvent } from "react";
 import { backendUrl, currency } from "@/config/constants";
 import { toast } from "react-toastify";
 import { orderStatusSchema } from "@/validate/schemas";
 import PageHeader from "@/components/data-display/PageHeader";
 import Loading from "@/components/feedback/Loading";
+import SearchInput from "@/components/ui/SearchInput";
+import FilterSelect from "@/components/ui/FilterSelect";
+import Pagination from "@/components/ui/Pagination";
+import { useChunkedPaging } from "@/hooks/useChunkedPaging";
 
 interface NotePillsProps {
   title: string;
@@ -56,31 +60,40 @@ interface CustomOrdersProps {
   token: string;
 }
 
+const PAGE_SIZE = 20;
+
 const CustomOrders = ({ token }: CustomOrdersProps) => {
-  const [orders, setOrders] = useState<CustomOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [filterOptions, setFilterOptions] = useState<{ statuses: string[] }>({ statuses: [] });
 
-  const fetchAllOrders = async () => {
-    if (!token) return;
-
-    setLoading(true);
-    try {
+  const fetcher = useCallback(
+    async (page: number, limit: number) => {
       const response = await fetch(backendUrl + "/api/custom-order/list", {
         method: 'POST',
-        headers: { token }
+        headers: { 'Content-Type': 'application/json', token },
+        body: JSON.stringify({ page, limit, search: search.trim(), status: statusFilter })
       });
       const data = await response.json();
-      if (data.success) {
-        setOrders(data.orders);
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error((error as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (!data.success) throw new Error(data.message || 'Failed to load custom orders');
+      setFilterOptions((prev) => {
+        const statuses = (data.statuses as string[] | undefined) ?? prev.statuses;
+        const same = statuses.length === prev.statuses.length && statuses.every((s, i) => s === prev.statuses[i]);
+        return same ? prev : { statuses };
+      });
+      return { items: data.orders || [], total: data.total || 0 };
+    },
+    [token, search, statusFilter]
+  );
+
+  const { pageItems, total, page, setPage, loading, refresh } = useChunkedPaging<CustomOrder>({
+    fetcher,
+    query: [search.trim(), statusFilter],
+    enabled: !!token,
+    onError: (error) => toast.error((error as Error).message),
+  });
+
+  const filtering = !!(search.trim() || statusFilter);
 
   const statusHandler = async (event: ChangeEvent<HTMLSelectElement>, orderId: string | number) => {
     try {
@@ -96,7 +109,7 @@ const CustomOrders = ({ token }: CustomOrdersProps) => {
       });
       const data = await response.json();
       if (data.success) {
-        await fetchAllOrders();
+        await refresh();
       } else {
         toast.error(data.message);
       }
@@ -107,28 +120,6 @@ const CustomOrders = ({ token }: CustomOrdersProps) => {
     }
   };
 
-  useEffect(() => {
-    if (!token) return;
-    let ignore = false;
-    fetch(backendUrl + "/api/custom-order/list", {
-      method: 'POST',
-      headers: { token }
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (ignore) return;
-        if (data.success) {
-          setOrders(data.orders);
-        } else {
-          toast.error(data.message);
-        }
-      })
-      .catch((error) => toast.error((error as Error).message));
-    return () => {
-      ignore = true;
-    };
-  }, [token]);
-
   if (loading) return <Loading />;
 
   return (
@@ -138,14 +129,34 @@ const CustomOrders = ({ token }: CustomOrdersProps) => {
         subtitle="Customized signature scents ordered by customers"
         trailing={
           <span className="rounded-full border border-gold/20 bg-white/80 px-3 py-1 text-sm text-ink-soft">
-            {orders.length} {orders.length === 1 ? 'custom order' : 'custom orders'}
+            {total} {total === 1 ? 'custom order' : 'custom orders'}
           </span>
         }
       />
       <div className="bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur">
       <div>
-        {orders.length === 0 && <p className="text-center text-ink-soft/60 py-8">No custom orders yet.</p>}
-        {orders.map((order) => (
+        {/* Search + filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search by notes, base, customer…"
+            className="w-full sm:w-72"
+          />
+          <FilterSelect
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={filterOptions.statuses.map((s) => ({ value: s, label: s }))}
+            allLabel="All statuses"
+            ariaLabel="Filter by status"
+          />
+        </div>
+        {total === 0 && (
+          <p className="text-center text-ink-soft/60 py-8">
+            {filtering ? 'No custom orders match your search.' : 'No custom orders yet.'}
+          </p>
+        )}
+        {pageItems.map((order) => (
           <div key={order._id} className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-5 items-start border border-gold/15 p-6 my-3 text-sm text-ink-soft rounded-2xl shadow-sm bg-gradient-to-br from-white via-sand/40 to-blush/60">
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -185,6 +196,7 @@ const CustomOrders = ({ token }: CustomOrdersProps) => {
             </div>
           </div>
         ))}
+        <Pagination total={total} perPage={PAGE_SIZE} page={page} onPage={setPage} label="Custom Orders" />
       </div>
     </div>
     </>

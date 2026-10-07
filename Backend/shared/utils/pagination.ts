@@ -7,10 +7,11 @@ export interface PageOptions {
 }
 
 export const computePagination = (options: PageOptions = {}) => {
-  const rawPage = Number(options.page) || 1;
-  const rawLimit = Number(options.limit) || DEFAULT_PAGE_SIZE;
-  const page = Math.max(1, rawPage);
-  const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, rawLimit));
+  const rawPage = Number(options.page);
+  const rawLimit = Number(options.limit);
+  const page = Number.isFinite(rawPage) && rawPage > 1 ? Math.floor(rawPage) : 1;
+  const limit =
+    Number.isFinite(rawLimit) && rawLimit >= 1 ? Math.min(MAX_PAGE_SIZE, Math.floor(rawLimit)) : DEFAULT_PAGE_SIZE;
   const offset = (page - 1) * limit;
   return { page, limit, offset };
 };

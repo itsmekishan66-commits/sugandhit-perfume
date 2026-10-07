@@ -49,3 +49,13 @@ export interface ProductUpdateInput {
   bestseller?: string | boolean;
   image: string[];
 }
+
+export interface ProductListFilters {
+  search?: string;
+  category?: string[];
+  subCategory?: string[];
+  /** 'in' | 'out' */
+  stock?: string;
+  /** 'low-high' | 'high-low' */
+  sort?: string;
+}

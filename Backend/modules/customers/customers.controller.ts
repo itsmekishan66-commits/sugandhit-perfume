@@ -18,13 +18,14 @@ const actor = (req: Request) => ({ actorId: req.admin?.id, ip: req.ip });
 export const receivableList = async (req: Request, res: Response) => {
   try {
     const q = req.query as Record<string, string | undefined>;
+    const { page, limit } = req.pagination!;
     ok(res, await listReceivables({
       from: q.from ? Number(q.from) : undefined,
       to: q.to ? Number(q.to) : undefined,
       status: q.status,
       customerId: q.customerId ? Number(q.customerId) : undefined,
-      page: q.page ? Number(q.page) : 1,
-      limit: q.limit ? Number(q.limit) : 50,
+      page,
+      limit,
     }));
   } catch (error) {
     fail(res, (error as Error).message);

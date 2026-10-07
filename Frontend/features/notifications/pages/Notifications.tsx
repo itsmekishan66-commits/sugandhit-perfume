@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
 import Loading from '@/components/ui/Loading'
+import Pagination from '@/components/ui/Pagination'
 import { Bell, BellRing, Gift, Star, Tag } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { formatDateTime } from '@/utils/dates'
@@ -21,8 +22,14 @@ const NotificationsPage = () => {
   const { notifications, unreadNotifications, markNotificationsRead, notificationsLoaded } = useApp();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<string>('All');
+  const [page, setPage] = useState(1);
 
   const visible = filter === 'All' ? notifications : notifications.filter((n) => n.type === filter);
+
+  const PAGE_SIZE = 20;
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = visible.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   return (
     <div className="pt-2 min-h-[70vh] flex flex-col">
@@ -52,7 +59,7 @@ const NotificationsPage = () => {
             {NotificationFilterTypes.map((t) => (
               <button
                 key={t}
-                onClick={() => setFilter(t)}
+                onClick={() => { setFilter(t); setPage(1); }}
                 className={`rounded-full border px-4 py-1.5 text-xs capitalize transition-colors ${filter === t ? 'border-gold bg-gold/20 text-espresso font-medium' : 'border-gold/20 text-ink-soft hover:border-gold/50'}`}
               >
                 {t}
@@ -71,8 +78,9 @@ const NotificationsPage = () => {
               <button onClick={() => navigate('/collection')} className="btn-gold text-xs px-6 py-2.5 mt-6">Explore Collection</button>
             </div>
           ) : (
+            <>
             <div className="space-y-3">
-              {visible.map((n) => {
+              {pageRows.map((n) => {
                 const meta = notificationMeta[n.type] || notificationMeta.system;
                 return (
                   <div key={n._id} className={`flex items-start gap-3 rounded-2xl border p-4 text-sm transition-colors ${n.read ? 'border-gold/10 bg-white/50 opacity-70' : 'border-gold/30 bg-gold/10'}`}>
@@ -91,6 +99,8 @@ const NotificationsPage = () => {
                 );
               })}
             </div>
+            <Pagination total={visible.length} perPage={PAGE_SIZE} page={safePage} onPage={setPage} label="Notifications" />
+            </>
           )}
         </Reveal>
 

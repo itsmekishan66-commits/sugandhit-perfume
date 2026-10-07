@@ -3,21 +3,21 @@ import Navbar from '@/components/navigation/Navbar'
 import Sidebar from '@/components/navigation/Sidebar'
 import BottomNav from '@/components/navigation/BottomNav'
 import { useAuth } from '@/context/useAuth';
-
-const DashboardLayout = ({ children }: { children: ReactNode }) => {
-  const { logout } = useAuth()
-  return (
-    <>
-      <Navbar onLogout={logout} />
-      <div className='flex w-full'>
-        <Sidebar />
-        <div className='w-full lg:w-[70%] mx-4 lg:mx-10 my-8 pb-28 lg:pb-8 text-ink-soft text-base'>
-          {children}
-        </div>
-      </div>
-      <BottomNav />
-    </>
-  )
-}
-
+
+const DashboardLayout = ({ children }: { children: ReactNode }) => {
+  const { logout } = useAuth()
+  return (
+    <>
+      <Navbar onLogout={logout} />
+      <div className='flex w-full'>
+        <Sidebar />
+        <div className='w-full lg:w-[70%] mx-4 lg:mx-10 my-8 pb-28 lg:pb-8 text-ink-soft text-base'>
+          {children}
+        </div>
+      </div>
+      <BottomNav />
+    </>
+  )
+}
+
 export default DashboardLayout
