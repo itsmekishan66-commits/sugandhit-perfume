@@ -313,7 +313,7 @@ const CustomPerfume = () => {
                 const pick = selected[layer.key];
                 return (
                   <div key={layer.key}>
-                    <p className="text-cream/50 uppercase tracking-wide text-[11px]">{layer.key} \u00b7 {pick.length}/{maxNotes}</p>
+                    <p className="text-cream/50 uppercase tracking-wide text-[11px]">{layer.key} {pick.length}/{maxNotes}</p>
                     <p className="font-display text-lg mt-0.5">
                       {pick.length ? pick.map(n => n.icon + ' ' + n.name).join('  ') : <span className="italic text-cream/40">choose {layer.key} note...</span>}
                     </p>

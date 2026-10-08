@@ -9,6 +9,7 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Modal from '@/components/feedback/Modal';
+import FormErrors from '@/components/feedback/FormErrors';
 import Field from '@/components/ui/Field';
 import PrimaryBtn from '@/components/ui/PrimaryBtn';
 import GhostBtn from '@/components/ui/GhostBtn';
@@ -20,6 +21,7 @@ import { api } from '@/services/api';
 import { money, num, formatDate } from '@/utils/format';
 import { DEBT_STATUS_LABELS } from '@/utils/labels';
 import Loading from '@/components/feedback/Loading';
+import { useFormErrors } from '@/hooks/useFormErrors';
 import { useTabParam } from '@/hooks/useTabParam';
 
 interface Vendor {
@@ -77,6 +79,9 @@ const PaymentPayables = ({ token }: { token: string }) => {
   const [payAccountId, setPayAccountId] = useState('');
   const [payAccounts, setPayAccounts] = useState<{ id: number; name: string }[]>([]);
   const [saving, setSaving] = useState(false);
+  // One instance for the three modals — only one can be open at a time, and every
+  // opener clears stale reasons before the next modal shows.
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -108,10 +113,7 @@ const PaymentPayables = ({ token }: { token: string }) => {
   }, [load]);
 
   const createVendor = async () => {
-    if (!vendorForm.name.trim()) {
-      toast.error('Vendor name is required.');
-      return;
-    }
+    if (!validate([!vendorForm.name.trim() && 'Vendor name is required.'])) return;
     setSaving(true);
     try {
       await api('/api/accounts/vendors', token, { method: 'POST', body: vendorForm });
@@ -127,8 +129,15 @@ const PaymentPayables = ({ token }: { token: string }) => {
   };
 
   const createBill = async () => {
-    if (!billForm.vendorId || num(billForm.originalAmount) <= 0 || !billForm.billDate || !billForm.dueDate) {
-      toast.error('Vendor, amount, bill date and due date are required.');
+    // Collect every failing reason so the banner + toast explain the whole block.
+    if (
+      !validate([
+        !billForm.vendorId && 'Vendor is required.',
+        !(num(billForm.originalAmount) > 0) && 'Amount must be positive.',
+        !billForm.billDate && 'Bill date is required.',
+        !billForm.dueDate && 'Due date is required.',
+      ])
+    ) {
       return;
     }
     setSaving(true);
@@ -159,8 +168,13 @@ const PaymentPayables = ({ token }: { token: string }) => {
   };
 
   const submitPay = async () => {
-    if (!payBill || num(payAmount) <= 0 || !payAccountId) {
-      toast.error('Please select a payment account and enter a positive amount.');
+    if (!payBill) return;
+    if (
+      !validate([
+        !payAccountId && 'Payment account is required.',
+        !(num(payAmount) > 0) && 'Payment amount must be positive.',
+      ])
+    ) {
       return;
     }
     setSaving(true);
@@ -185,8 +199,8 @@ const PaymentPayables = ({ token }: { token: string }) => {
         subtitle="Vendor bills and amounts owed"
         trailing={
           <div className="flex gap-2">
-            <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => setShowVendor(true)}><Plus size={16} /> Vendor</button>
-            <button className="btn-primary bg-espresso px-5 py-2 text-sm cursor-pointer" onClick={() => setShowBill(true)}><Plus size={16} /> Record Bill</button>
+            <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => { clearErrors(); setShowVendor(true); }}><Plus size={16} /> Vendor</button>
+            <button className="btn-primary bg-espresso px-5 py-2 text-sm cursor-pointer" onClick={() => { clearErrors(); setShowBill(true); }}><Plus size={16} /> Record Bill</button>
           </div>
         }
       />
@@ -267,7 +281,7 @@ const PaymentPayables = ({ token }: { token: string }) => {
                           </div>
                         )}
                         {num(p.outstandingAmount) > 0 && (
-                          <button onClick={() => { setPayBill(p); setPayAmount(String(p.outstandingAmount)); setPayAccountId(''); }} className="btn-primary bg-espresso px-4 py-1 text-xs cursor-pointer">Pay {money(p.outstandingAmount)}</button>
+                          <button onClick={() => { clearErrors(); setPayBill(p); setPayAmount(String(p.outstandingAmount)); setPayAccountId(''); }} className="btn-primary bg-espresso px-4 py-1 text-xs cursor-pointer">Pay {money(p.outstandingAmount)}</button>
                         )}
                       </div>
                     </Td>
@@ -302,8 +316,8 @@ const PaymentPayables = ({ token }: { token: string }) => {
       </SectionCard>
 
       <Modal open={showVendor} title="Add Vendor" onClose={() => setShowVendor(false)}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Vendor name">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" onChangeCapture={clearErrors}>
+          <Field label="Vendor name" required>
             <input className={inputCls} value={vendorForm.name} onChange={(e) => setVendorForm({ ...vendorForm, name: e.target.value })} />
           </Field>
           <Field label="Category">
@@ -322,15 +336,18 @@ const PaymentPayables = ({ token }: { token: string }) => {
             <input className={inputCls} value={vendorForm.notes} onChange={(e) => setVendorForm({ ...vendorForm, notes: e.target.value })} />
           </Field>
         </div>
-        <div className="mt-5 flex justify-end gap-3">
-          <GhostBtn onClick={() => setShowVendor(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={createVendor} disabled={saving}>{saving ? 'Saving…' : 'Create Vendor'}</PrimaryBtn>
+        <div className="mt-5 flex flex-col gap-3">
+          <FormErrors errors={errors} />
+          <div className="flex justify-end gap-3">
+            <GhostBtn onClick={() => setShowVendor(false)}>Cancel</GhostBtn>
+            <PrimaryBtn onClick={createVendor} disabled={saving}>{saving ? 'Saving…' : 'Create Vendor'}</PrimaryBtn>
+          </div>
         </div>
       </Modal>
 
       <Modal open={showBill} title="Record Vendor Bill" onClose={() => setShowBill(false)}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Vendor">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" onChangeCapture={clearErrors}>
+          <Field label="Vendor" required>
             <select className={inputCls} value={billForm.vendorId} onChange={(e) => setBillForm({ ...billForm, vendorId: e.target.value })}>
               <option value="">Select vendor…</option>
               {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
@@ -342,41 +359,45 @@ const PaymentPayables = ({ token }: { token: string }) => {
           <Field label="Category">
             <input className={inputCls} value={billForm.category} onChange={(e) => setBillForm({ ...billForm, category: e.target.value })} />
           </Field>
-          <Field label="Amount">
+          <Field label="Amount" required>
             <input type="number" className={inputCls} value={billForm.originalAmount} onChange={(e) => setBillForm({ ...billForm, originalAmount: e.target.value })} />
           </Field>
-          <Field label="Bill date (ms)">
+          <Field label="Bill date (ms)" required>
             <input type="number" className={inputCls} value={billForm.billDate} onChange={(e) => setBillForm({ ...billForm, billDate: e.target.value })} placeholder={String(Date.now())} />
           </Field>
-          <Field label="Due date (ms)">
+          <Field label="Due date (ms)" required>
             <input type="number" className={inputCls} value={billForm.dueDate} onChange={(e) => setBillForm({ ...billForm, dueDate: e.target.value })} placeholder={String(Date.now() + 30 * 86400000)} />
           </Field>
           <Field label="Notes" hint="Dates are provided as epoch milliseconds.">
             <input className={inputCls} value={billForm.notes} onChange={(e) => setBillForm({ ...billForm, notes: e.target.value })} />
           </Field>
         </div>
-        <div className="mt-5 flex justify-end gap-3">
-          <GhostBtn onClick={() => setShowBill(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={createBill} disabled={saving}>{saving ? 'Saving…' : 'Create Bill'}</PrimaryBtn>
+        <div className="mt-5 flex flex-col gap-3">
+          <FormErrors errors={errors} />
+          <div className="flex justify-end gap-3">
+            <GhostBtn onClick={() => setShowBill(false)}>Cancel</GhostBtn>
+            <PrimaryBtn onClick={createBill} disabled={saving}>{saving ? 'Saving…' : 'Create Bill'}</PrimaryBtn>
+          </div>
         </div>
       </Modal>
 
       <Modal open={!!payBill} title={`Pay Bill ${payBill?.billRef ?? ''}`} onClose={() => setPayBill(null)}>
         {payBill && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4" onChangeCapture={clearErrors}>
             <div className="rounded-xl border border-gold/15 bg-white/70 p-3 text-sm">
               <p className="font-medium text-ink">{payBill.vendor?.name} — outstanding <span className="font-semibold text-espresso">{money(payBill.outstandingAmount)}</span></p>
             </div>
-            <Field label="Payment account">
+            <Field label="Payment account" required>
               <select className={inputCls} value={payAccountId} onChange={(e) => setPayAccountId(e.target.value)}>
                 <option value="">Select…</option>
                 {payAccounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </Field>
-            <Field label="Payment amount">
+            <Field label="Payment amount" required>
               <input type="number" className={inputCls} value={payAmount} onChange={(e) => setPayAmount(e.target.value)} />
             </Field>
             <p className="text-xs text-ink-soft">Select the bank/cash account this payment flows out from.</p>
+            <FormErrors errors={errors} />
             <div className="flex justify-end gap-3">
               <GhostBtn onClick={() => setPayBill(null)}>Cancel</GhostBtn>
               <PrimaryBtn onClick={submitPay} disabled={saving}>{saving ? 'Recording…' : 'Record Payment'}</PrimaryBtn>

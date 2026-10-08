@@ -9,6 +9,7 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Modal from '@/components/feedback/Modal';
+import FormErrors from '@/components/feedback/FormErrors';
 import Field from '@/components/ui/Field';
 import PrimaryBtn from '@/components/ui/PrimaryBtn';
 import GhostBtn from '@/components/ui/GhostBtn';
@@ -18,6 +19,7 @@ import { api } from '@/services/api';
 import { money, num, label, formatDate } from '@/utils/format';
 import { PAYMENT_ACCOUNT_TYPE_LABELS, TXN_TYPE_LABELS } from '@/utils/labels';
 import Loading from '@/components/feedback/Loading';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface PaymentAccount {
   _id: string;
@@ -48,6 +50,7 @@ const PaymentAccounts = ({ token }: { token: string }) => {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [ledger, setLedger] = useState<{ account: PaymentAccount; transactions: unknown[] } | null>(null);
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -66,10 +69,7 @@ const PaymentAccounts = ({ token }: { token: string }) => {
   }, [load]);
 
   const create = async () => {
-    if (!form.name.trim()) {
-      toast.error('Account name is required.');
-      return;
-    }
+    if (!validate([!form.name.trim() && 'Account name is required.'])) return;
     setSaving(true);
     try {
       await api('/api/payment/accounts', token, {
@@ -116,7 +116,7 @@ const PaymentAccounts = ({ token }: { token: string }) => {
         title="Payment Accounts"
         subtitle="Cash, bank and digital wallet accounts"
         trailing={
-          <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => setShowForm(true)}>
+          <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => { clearErrors(); setShowForm(true); }}>
             <Plus size={16} /> Add Account
           </button>
         }
@@ -181,8 +181,8 @@ const PaymentAccounts = ({ token }: { token: string }) => {
       </SectionCard>
 
       <Modal open={showForm} title="Add Payment Account" onClose={() => setShowForm(false)}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Account name">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" onChangeCapture={clearErrors}>
+          <Field label="Account name" required>
             <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Nabil Bank - Main" />
           </Field>
           <Field label="Type">
@@ -211,9 +211,12 @@ const PaymentAccounts = ({ token }: { token: string }) => {
             <input className={inputCls} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </Field>
         </div>
-        <div className="mt-5 flex gap-3 justify-end">
-          <GhostBtn onClick={() => setShowForm(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={create} disabled={saving}>{saving ? 'Saving…' : 'Create Account'}</PrimaryBtn>
+        <div className="mt-5 flex flex-col gap-3">
+          <FormErrors errors={errors} />
+          <div className="flex gap-3 justify-end">
+            <GhostBtn onClick={() => setShowForm(false)}>Cancel</GhostBtn>
+            <PrimaryBtn onClick={create} disabled={saving}>{saving ? 'Saving…' : 'Create Account'}</PrimaryBtn>
+          </div>
         </div>
       </Modal>
 

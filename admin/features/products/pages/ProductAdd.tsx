@@ -5,6 +5,9 @@ import { backendUrl } from '@/config/constants';
 import { toast } from 'react-toastify';
 import { productAddSchema } from '@/validate/schemas';
 import PageHeader from '@/components/data-display/PageHeader';
+import FormErrors from '@/components/feedback/FormErrors';
+import RequiredMark from '@/components/ui/RequiredMark';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface AddProps {
   token: string;
@@ -20,6 +23,7 @@ interface VariantDraft {
 const Add = ({ token }: AddProps) => {
   const [mainImage, setMainImage] = useState<File | false>(false);
   const [variants, setVariants] = useState<VariantDraft[]>([]);
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const addVariant = () => {
     setVariants((prev) =>
@@ -44,15 +48,16 @@ const Add = ({ token }: AddProps) => {
     e.preventDefault();
 
     const parsed = productAddSchema.safeParse({ name, description, price, category, subCategory, bestseller: bestseller ? 'true' : 'false' });
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
+    if (
+      !validate([
+        ...(!parsed.success ? parsed.error.issues.map((issue) => issue.message) : []),
+        !mainImage && 'Please upload a main image.',
+      ])
+    ) {
       return;
     }
-
-    if (!mainImage) {
-      toast.error('Please upload a main image.');
-      return;
-    }
+    // validate() above already guarantees both — this line only narrows the types below.
+    if (!parsed.success || !mainImage) return;
 
     try {
       const formData = new FormData()
@@ -103,12 +108,12 @@ const Add = ({ token }: AddProps) => {
   return (
     <>
       <PageHeader title="Add New Perfume" subtitle="Create a new fragrance for your boutique" />
-      <form onSubmit={onSubmitHandler} className='grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start w-full bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur'>
+      <form onSubmit={onSubmitHandler} onChangeCapture={clearErrors} noValidate className='grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start w-full bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur'>
 
       {/* LEFT — Images */}
       <div className='flex flex-col gap-6 lg:sticky lg:top-24'>
         <div className='rounded-2xl border border-gold/15 p-5'>
-          <p className='mb-1 text-sm text-ink-soft'>Main Image <span className='text-espresso'>*</span></p>
+          <p className='mb-1 text-sm text-ink-soft'>Main Image<RequiredMark /></p>
           <p className='mb-3 text-xs text-ink-soft/70'>The main photo — shown as the product thumbnail across the store.</p>
           <label htmlFor="mainImage" className='relative inline-block'>
             <img
@@ -221,7 +226,7 @@ const Add = ({ token }: AddProps) => {
       <div className='flex flex-col gap-4'>
         <div className='rounded-2xl border border-gold/15 p-5 flex flex-col gap-4'>
           <div className='w-full'>
-            <p className='mb-2 text-sm text-ink-soft'>Perfume name</p>
+            <p className='mb-2 text-sm text-ink-soft'>Perfume name<RequiredMark /></p>
             <input
               onChange={(e) => setName(e.target.value)}
               value={name}
@@ -233,7 +238,7 @@ const Add = ({ token }: AddProps) => {
           </div>
 
           <div className='w-full'>
-            <p className='mb-2 text-sm text-ink-soft'>Perfume description</p>
+            <p className='mb-2 text-sm text-ink-soft'>Perfume description<RequiredMark /></p>
             <textarea
               onChange={(e) => setDescription(e.target.value)}
               value={description}
@@ -267,7 +272,7 @@ const Add = ({ token }: AddProps) => {
             </div>
 
             <div>
-              <p className='mb-2 text-sm text-ink-soft'>Price (Rs.)</p>
+              <p className='mb-2 text-sm text-ink-soft'>Price (Rs.)<RequiredMark /></p>
               <input
                 onChange={(e) => setPrice(e.target.value)}
                 value={price}
@@ -283,6 +288,7 @@ const Add = ({ token }: AddProps) => {
             <label className='cursor-pointer text-sm text-ink-soft' htmlFor="bestseller">Add to Bestseller</label>
           </div>
 
+          <FormErrors errors={errors} />
           <button
             type='submit'
             className='btn-primary w-32 py-3 mt-2'>

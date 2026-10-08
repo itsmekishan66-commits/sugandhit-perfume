@@ -9,6 +9,7 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Modal from '@/components/feedback/Modal';
+import FormErrors from '@/components/feedback/FormErrors';
 import Field from '@/components/ui/Field';
 import PrimaryBtn from '@/components/ui/PrimaryBtn';
 import GhostBtn from '@/components/ui/GhostBtn';
@@ -20,6 +21,7 @@ import { api } from '@/services/api';
 import { money, formatDate } from '@/utils/format';
 import Loading from '@/components/feedback/Loading';
 import { useTabParam } from '@/hooks/useTabParam';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface ChartAcc { id: number; code: string; name: string; accountType: string; active: boolean }
 interface PaymentAcc { id: number; name: string; active: boolean }
@@ -52,6 +54,9 @@ const AccountingIncomeExpense = ({ token }: { token: string }) => {
 
   const [incomeForm, setIncomeForm] = useState({ date: String(Date.now()), source: '', accountId: '', amount: '', reference: '', description: '' });
   const [expenseForm, setExpenseForm] = useState({ date: String(Date.now()), vendorName: '', accountId: '', amount: '', taxAmount: '0', description: '' });
+  // One hook serves both modals — only one can ever be open (the overlay hides
+  // the other's opener), and each opener clears stale reasons before showing.
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -82,10 +87,11 @@ const AccountingIncomeExpense = ({ token }: { token: string }) => {
   useEffect(() => { load(); }, [load]);
 
   const submitIncome = async () => {
-    if (!incomeForm.accountId || Number(incomeForm.amount) <= 0 || !incomeForm.date) {
-      toast.error('Account, amount and date are required.');
-      return;
-    }
+    if (!validate([
+      !incomeForm.date && 'Date is required.',
+      !incomeForm.accountId && 'Account is required.',
+      !(Number(incomeForm.amount) > 0) && 'Amount must be positive.',
+    ])) return;
     setSaving(true);
     try {
       await api('/api/accounts/income', token, { method: 'POST', body: { date: Number(incomeForm.date), source: incomeForm.source, accountId: Number(incomeForm.accountId), amount: Number(incomeForm.amount), reference: incomeForm.reference, description: incomeForm.description } });
@@ -101,10 +107,11 @@ const AccountingIncomeExpense = ({ token }: { token: string }) => {
   };
 
   const submitExpense = async () => {
-    if (!expenseForm.accountId || Number(expenseForm.amount) <= 0 || !expenseForm.date) {
-      toast.error('Account, amount and date are required.');
-      return;
-    }
+    if (!validate([
+      !expenseForm.date && 'Date is required.',
+      !expenseForm.accountId && 'Account is required.',
+      !(Number(expenseForm.amount) > 0) && 'Amount must be positive.',
+    ])) return;
     setSaving(true);
     try {
       await api('/api/accounts/expenses', token, { method: 'POST', body: { date: Number(expenseForm.date), vendorName: expenseForm.vendorName, accountId: Number(expenseForm.accountId), amount: Number(expenseForm.amount), taxAmount: Number(expenseForm.taxAmount || 0), description: expenseForm.description } });
@@ -148,8 +155,8 @@ const AccountingIncomeExpense = ({ token }: { token: string }) => {
         subtitle="Record income and expense entries"
         trailing={
           <div className="flex gap-2">
-            <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => setShowIncome(true)}><Plus size={16} /> Record Income</button>
-            <button className="btn-primary bg-espresso px-5 py-2 text-sm cursor-pointer" onClick={() => setShowExpense(true)}><Plus size={16} /> Record Expense</button>
+            <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => { clearErrors(); setShowIncome(true); }}><Plus size={16} /> Record Income</button>
+            <button className="btn-primary bg-espresso px-5 py-2 text-sm cursor-pointer" onClick={() => { clearErrors(); setShowExpense(true); }}><Plus size={16} /> Record Expense</button>
           </div>
         }
       />
@@ -219,42 +226,48 @@ const AccountingIncomeExpense = ({ token }: { token: string }) => {
       </SectionCard>
 
       <Modal open={showIncome} title="Record Income" onClose={() => setShowIncome(false)}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Date (ms)"><input type="number" className={inputCls} value={incomeForm.date} onChange={(e) => setIncomeForm({ ...incomeForm, date: e.target.value })} /></Field>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" onChangeCapture={clearErrors}>
+          <Field label="Date (ms)" required><input type="number" className={inputCls} value={incomeForm.date} onChange={(e) => setIncomeForm({ ...incomeForm, date: e.target.value })} /></Field>
           <Field label="Source"><input className={inputCls} value={incomeForm.source} onChange={(e) => setIncomeForm({ ...incomeForm, source: e.target.value })} placeholder="e.g. Order #123" /></Field>
-          <Field label="Revenue account">
+          <Field label="Revenue account" required>
             <select className={inputCls} value={incomeForm.accountId} onChange={(e) => setIncomeForm({ ...incomeForm, accountId: e.target.value })}>
               <option value="">Select…</option>
               {chartAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
             </select>
           </Field>
-          <Field label="Amount"><input type="number" className={inputCls} value={incomeForm.amount} onChange={(e) => setIncomeForm({ ...incomeForm, amount: e.target.value })} /></Field>
+          <Field label="Amount" required><input type="number" className={inputCls} value={incomeForm.amount} onChange={(e) => setIncomeForm({ ...incomeForm, amount: e.target.value })} /></Field>
           <Field label="Reference"><input className={inputCls} value={incomeForm.reference} onChange={(e) => setIncomeForm({ ...incomeForm, reference: e.target.value })} /></Field>
           <Field label="Description"><input className={inputCls} value={incomeForm.description} onChange={(e) => setIncomeForm({ ...incomeForm, description: e.target.value })} /></Field>
         </div>
-        <div className="mt-5 flex justify-end gap-3">
-          <GhostBtn onClick={() => setShowIncome(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={submitIncome} disabled={saving}>{saving ? 'Saving…' : 'Record Income'}</PrimaryBtn>
+        <div className="mt-5 flex flex-col gap-3">
+          <FormErrors errors={errors} />
+          <div className="flex justify-end gap-3">
+            <GhostBtn onClick={() => setShowIncome(false)}>Cancel</GhostBtn>
+            <PrimaryBtn onClick={submitIncome} disabled={saving}>{saving ? 'Saving…' : 'Record Income'}</PrimaryBtn>
+          </div>
         </div>
       </Modal>
 
       <Modal open={showExpense} title="Record Expense" onClose={() => setShowExpense(false)}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Date (ms)"><input type="number" className={inputCls} value={expenseForm.date} onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })} /></Field>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" onChangeCapture={clearErrors}>
+          <Field label="Date (ms)" required><input type="number" className={inputCls} value={expenseForm.date} onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })} /></Field>
           <Field label="Vendor name"><input className={inputCls} value={expenseForm.vendorName} onChange={(e) => setExpenseForm({ ...expenseForm, vendorName: e.target.value })} /></Field>
-          <Field label="Expense account">
+          <Field label="Expense account" required>
             <select className={inputCls} value={expenseForm.accountId} onChange={(e) => setExpenseForm({ ...expenseForm, accountId: e.target.value })}>
               <option value="">Select…</option>
               {chartAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
             </select>
           </Field>
-          <Field label="Amount"><input type="number" className={inputCls} value={expenseForm.amount} onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })} /></Field>
+          <Field label="Amount" required><input type="number" className={inputCls} value={expenseForm.amount} onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })} /></Field>
           <Field label="Tax amount"><input type="number" className={inputCls} value={expenseForm.taxAmount} onChange={(e) => setExpenseForm({ ...expenseForm, taxAmount: e.target.value })} /></Field>
           <Field label="Description"><input className={inputCls} value={expenseForm.description} onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })} /></Field>
         </div>
-        <div className="mt-5 flex justify-end gap-3">
-          <GhostBtn onClick={() => setShowExpense(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={submitExpense} disabled={saving}>{saving ? 'Saving…' : 'Record Expense'}</PrimaryBtn>
+        <div className="mt-5 flex flex-col gap-3">
+          <FormErrors errors={errors} />
+          <div className="flex justify-end gap-3">
+            <GhostBtn onClick={() => setShowExpense(false)}>Cancel</GhostBtn>
+            <PrimaryBtn onClick={submitExpense} disabled={saving}>{saving ? 'Saving…' : 'Record Expense'}</PrimaryBtn>
+          </div>
         </div>
       </Modal>
     </div>

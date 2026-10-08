@@ -8,6 +8,7 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Modal from '@/components/feedback/Modal';
+import FormErrors from '@/components/feedback/FormErrors';
 import Field from '@/components/ui/Field';
 import PrimaryBtn from '@/components/ui/PrimaryBtn';
 import GhostBtn from '@/components/ui/GhostBtn';
@@ -18,6 +19,7 @@ import { api } from '@/services/api';
 import { formatDateTime } from '@/utils/format';
 import { MOVEMENT_TYPE_LABELS } from '@/utils/labels';
 import Loading from '@/components/feedback/Loading';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface StockItem { _id: string; id: number; name: string; stock: number; price: number; reorderLevel: number | null }
 interface Movement {
@@ -40,6 +42,7 @@ const InventoryReturns = ({ token }: { token: string }) => {
   const [showAdjust, setShowAdjust] = useState(false);
   const [form, setForm] = useState({ productId: '', change: '', reason: '' });
   const [working, setWorking] = useState(false);
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,7 +67,14 @@ const InventoryReturns = ({ token }: { token: string }) => {
 
   const saveAdjust = async () => {
     const change = Math.floor(Number(form.change));
-    if (!form.productId || !change) { toast.error('Select a product and a non-zero quantity change.'); return; }
+    if (
+      !validate([
+        !form.productId && 'Product is required.',
+        !change && 'Quantity change must be a non-zero number.',
+      ])
+    ) {
+      return;
+    }
     setWorking(true);
     try {
       await api('/api/inventory/stock/adjust', token, {
@@ -94,7 +104,7 @@ const InventoryReturns = ({ token }: { token: string }) => {
         title="Returns & Adjustments"
         subtitle="Return stock (returns, damaged units) and record manual stock adjustments"
         trailing={
-          <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => setShowAdjust(true)}>
+          <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => { clearErrors(); setShowAdjust(true); }}>
             <Undo2 size={16} /> Add / Return Stock
           </button>
         }
@@ -130,22 +140,23 @@ const InventoryReturns = ({ token }: { token: string }) => {
       </SectionCard>
 
       <Modal open={showAdjust} title="Add / Return Stock" onClose={() => setShowAdjust(false)}>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4" onChangeCapture={clearErrors}>
           <p className="text-sm text-ink-soft">Positive adds units back to stock (e.g. returns, damaged-units-found). Negative removes units (e.g. damaged/lost units or corrections).</p>
-          <Field label="Product">
+          <Field label="Product" required>
             <select className={inputCls} value={form.productId} onChange={(e) => setForm({ ...form, productId: e.target.value })}>
               <option value="">Select product…</option>
               {products.map((p) => <option key={p.id} value={p.id}>{p.name} (stock {p.stock})</option>)}
             </select>
           </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="Quantity change">
+            <Field label="Quantity change" required>
               <input type="number" className={inputCls} value={form.change} onChange={(e) => setForm({ ...form, change: e.target.value })} placeholder="e.g. 3 or -2" />
             </Field>
             <Field label="Reason">
               <input className={inputCls} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="e.g. Customer return" />
             </Field>
           </div>
+          <FormErrors errors={errors} />
           <div className="flex justify-end gap-3">
             <GhostBtn onClick={() => setShowAdjust(false)}>Cancel</GhostBtn>
             <PrimaryBtn onClick={saveAdjust} disabled={working}>{working ? 'Saving…' : 'Save'}</PrimaryBtn>

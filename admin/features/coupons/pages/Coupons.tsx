@@ -5,10 +5,13 @@ import { toast } from 'react-toastify';
 import { couponSchema, couponToggleSchema, couponIdSchema } from '@/validate/schemas';
 import PageHeader from '@/components/data-display/PageHeader';
 import ConfirmDialog from '@/components/feedback/ConfirmDialog';
+import FormErrors from '@/components/feedback/FormErrors';
 import Loading from '@/components/feedback/Loading';
 import SearchInput from '@/components/ui/SearchInput';
 import FilterSelect from '@/components/ui/FilterSelect';
 import Pagination from '@/components/ui/Pagination';
+import RequiredMark from '@/components/ui/RequiredMark';
+import { useFormErrors } from '@/hooks/useFormErrors';
 import { matches } from '@/utils';
 
 interface Coupon {
@@ -45,6 +48,7 @@ const Coupons = ({ token }: CouponsProps) => {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [activeFilter, setActiveFilter] = useState('');
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const filtered = useMemo(
     () =>
@@ -90,6 +94,7 @@ const Coupons = ({ token }: CouponsProps) => {
   };
 
   const resetForm = () => {
+    clearErrors();
     setImage(false);
     setCode('');
     setTitle('');
@@ -114,8 +119,7 @@ const Coupons = ({ token }: CouponsProps) => {
       validTill: validUntil ? new Date(`${validUntil}T23:59:59`).getTime() : undefined,
     });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
-      return;
+      return validate(parsed.error.issues.map((issue) => issue.message));
     }
     setSaving(true);
     try {
@@ -214,7 +218,7 @@ const Coupons = ({ token }: CouponsProps) => {
     <div className="flex flex-col gap-6">
       <PageHeader title="Coupons" subtitle="Create and manage discount codes" />
       {/* Create coupon */}
-      <form onSubmit={onSubmitHandler} className="bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur">
+      <form onSubmit={onSubmitHandler} onChangeCapture={clearErrors} noValidate className="bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur">
         <h2 className="font-display text-2xl font-semibold text-ink mb-4">Create Coupon</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -230,12 +234,12 @@ const Coupons = ({ token }: CouponsProps) => {
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-ink-soft">Coupon code</p>
+            <p className="mb-2 text-sm text-ink-soft">Coupon code<RequiredMark /></p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setCode(e.target.value)} value={code} className={inputClass} type="text" placeholder="e.g. FESTIVE20" required />
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-ink-soft">Title</p>
+            <p className="mb-2 text-sm text-ink-soft">Title<RequiredMark /></p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} value={title} className={inputClass} type="text" placeholder="Festival Offer" required />
           </div>
 
@@ -253,7 +257,7 @@ const Coupons = ({ token }: CouponsProps) => {
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-ink-soft">Discount value</p>
+            <p className="mb-2 text-sm text-ink-soft">Discount value<RequiredMark /></p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setDiscountValue(e.target.value)} value={discountValue} className={inputClass} type="number" placeholder={discountType === 'percent' ? '20' : '500'} required />
           </div>
 
@@ -268,13 +272,16 @@ const Coupons = ({ token }: CouponsProps) => {
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-ink-soft">Valid until</p>
+            <p className="mb-2 text-sm text-ink-soft">Valid until<RequiredMark /></p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setValidUntil(e.target.value)} value={validUntil} className={inputClass} type="date" required />
           </div>
         </div>
-        <button type="submit" disabled={saving} className="btn-primary w-32 py-3 mt-6 disabled:opacity-50">
-          {saving ? 'Saving…' : 'CREATE'}
-        </button>
+        <div className="mt-6 flex flex-col items-start gap-3">
+          <FormErrors errors={errors} />
+          <button type="submit" disabled={saving} className="btn-primary w-32 py-3 disabled:opacity-50">
+            {saving ? 'Saving…' : 'CREATE'}
+          </button>
+        </div>
       </form>
 
       {/* Coupons list */}

@@ -9,6 +9,7 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Modal from '@/components/feedback/Modal';
+import FormErrors from '@/components/feedback/FormErrors';
 import Field from '@/components/ui/Field';
 import PrimaryBtn from '@/components/ui/PrimaryBtn';
 import GhostBtn from '@/components/ui/GhostBtn';
@@ -18,6 +19,7 @@ import inputCls from '@/components/ui/input';
 import Pagination from '@/components/ui/Pagination';
 import RowActions from '@/components/data-display/RowActions';
 import Loading from '@/components/feedback/Loading';
+import { useFormErrors } from '@/hooks/useFormErrors';
 import { api } from '@/services/api';
 import { money, num } from '@/utils/format';
 
@@ -49,6 +51,7 @@ const InventoryStock = ({ token }: { token: string }) => {
   const [editForm, setEditForm] = useState({ name: '', sku: '', price: '', cost: '', reorderLevel: '' });
   const [deleteTarget, setDeleteTarget] = useState<StockItem | null>(null);
   const [working, setWorking] = useState(false);
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -72,12 +75,14 @@ const InventoryStock = ({ token }: { token: string }) => {
   useEffect(() => { load(); }, [load]);
 
   const openEdit = (it: StockItem) => {
+    clearErrors();
     setEditTarget(it);
     setEditForm({ name: it.name, sku: it.sku ?? '', price: String(it.price), cost: String(it.cost), reorderLevel: String(it.reorderLevel ?? 0) });
   };
 
   const saveEdit = async () => {
-    if (!editTarget || !editForm.name.trim()) { toast.error('Product name is required.'); return; }
+    if (!editTarget) return;
+    if (!validate([!editForm.name.trim() && 'Product name is required.'])) return;
     setWorking(true);
     try {
       await api('/api/inventory/stock/product', token, {
@@ -172,8 +177,8 @@ const InventoryStock = ({ token }: { token: string }) => {
       </SectionCard>
 
       <Modal open={!!editTarget} title={`Edit Product — ${editTarget?.name ?? ''}`} onClose={() => setEditTarget(null)}>
-        <div className="flex flex-col gap-4">
-          <Field label="Product name">
+        <div className="flex flex-col gap-4" onChangeCapture={clearErrors}>
+          <Field label="Product name" required>
             <input className={inputCls} value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
           </Field>
           <Field label="SKU">
@@ -190,6 +195,7 @@ const InventoryStock = ({ token }: { token: string }) => {
           <Field label="Minimum stock level" hint="Low-stock warning threshold.">
             <input type="number" className={inputCls} value={editForm.reorderLevel} onChange={(e) => setEditForm({ ...editForm, reorderLevel: e.target.value })} />
           </Field>
+          <FormErrors errors={errors} />
           <div className="flex justify-end gap-3">
             <GhostBtn onClick={() => setEditTarget(null)}>Cancel</GhostBtn>
             <PrimaryBtn onClick={saveEdit} disabled={working}>{working ? 'Saving…' : 'Save Product'}</PrimaryBtn>

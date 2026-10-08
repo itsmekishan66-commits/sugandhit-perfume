@@ -18,7 +18,7 @@ export const saveNotesLayer = async (layer: string, rows: NoteInput[]) => {
         name: r.name,
         layer: safeLayer,
         icon: r.icon || '🌿',
-        color: r.color || '#C586A5',
+        color: r.color || '#ffffff',
         description: r.description ?? '',
         price: toNum(r.price),
         active: true,

@@ -5,7 +5,10 @@ import { backendUrl, currency } from '@/config/constants';
 import { toast } from 'react-toastify';
 import { userIdSchema, addCreditSchema } from '@/validate/schemas';
 import PageHeader from '@/components/data-display/PageHeader';
+import FormErrors from '@/components/feedback/FormErrors';
 import Loading from '@/components/feedback/Loading';
+import RequiredMark from '@/components/ui/RequiredMark';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface Customer {
   id: number;
@@ -70,6 +73,7 @@ const Details = ({ token }: DetailsProps) => {
   const [showCreditForm, setShowCreditForm] = useState(false);
   const [creditAmount, setCreditAmount] = useState('');
   const [addingCredit, setAddingCredit] = useState(false);
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const fetchDetail = async (userId: number) => {
     const parsed = userIdSchema.safeParse({ userId });
@@ -108,8 +112,7 @@ const Details = ({ token }: DetailsProps) => {
     if (!detail) return;
     const parsed = addCreditSchema.safeParse({ userId: detail.user.id, amount: creditAmount });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
-      return;
+      return validate(parsed.error.issues.map((issue) => issue.message));
     }
     setAddingCredit(true);
     try {
@@ -200,9 +203,9 @@ const Details = ({ token }: DetailsProps) => {
                   <Wallet size={16} /> Add Credit Balance
                 </button>
               ) : (
-                <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3 w-full">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-end gap-3 w-full" onChangeCapture={clearErrors}>
                   <div className="flex-1 min-w-0">
-                    <p className="mb-1 text-xs text-ink-soft">Credit amount ({currency})</p>
+                    <p className="mb-1 text-xs text-ink-soft">Credit amount ({currency})<RequiredMark /></p>
                     <input
                       type="number"
                       value={creditAmount}
@@ -212,6 +215,11 @@ const Details = ({ token }: DetailsProps) => {
                       autoFocus
                     />
                   </div>
+                  {errors.length > 0 && (
+                    <div className="w-full">
+                      <FormErrors errors={errors} />
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <button onClick={submitCredit} disabled={addingCredit} className="btn-primary px-5 py-2.5 text-sm disabled:opacity-50 cursor-pointer">
                       <Plus size={16} /> {addingCredit ? 'Adding…' : 'Add Credit'}

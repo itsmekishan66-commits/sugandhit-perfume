@@ -8,6 +8,7 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Modal from '@/components/feedback/Modal';
+import FormErrors from '@/components/feedback/FormErrors';
 import Field from '@/components/ui/Field';
 import PrimaryBtn from '@/components/ui/PrimaryBtn';
 import GhostBtn from '@/components/ui/GhostBtn';
@@ -17,6 +18,7 @@ import { api } from '@/services/api';
 import { formatDate, formatDateTime } from '@/utils/format';
 import { PERIOD_STATUS_LABELS } from '@/utils/labels';
 import Loading from '@/components/feedback/Loading';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface Period { id: number; _id: string; name: string; startDate: number; endDate: number; status: string; closedAt?: number | null; closedBy?: number | null }
 
@@ -27,6 +29,7 @@ const AccountingPeriods = ({ token }: { token: string }) => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', startDate: String(Date.now() - 30 * 86400000), endDate: String(Date.now()) });
   const [saving, setSaving] = useState(false);
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,10 +47,11 @@ const AccountingPeriods = ({ token }: { token: string }) => {
   useEffect(() => { load(); }, [load]);
 
   const create = async () => {
-    if (!form.name.trim() || !form.startDate || !form.endDate) {
-      toast.error('Name, start and end dates are required.');
-      return;
-    }
+    if (!validate([
+      !form.name.trim() && 'Name is required.',
+      !form.startDate && 'Start date is required.',
+      !form.endDate && 'End date is required.',
+    ])) return;
     setSaving(true);
     try {
       await api('/api/accounts/periods', token, { method: 'POST', body: { name: form.name.trim(), startDate: Number(form.startDate), endDate: Number(form.endDate) } });
@@ -89,7 +93,7 @@ const AccountingPeriods = ({ token }: { token: string }) => {
       <PageHeader
         title="Accounting Periods"
         subtitle="Open and close reporting periods"
-        trailing={<button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => setShowForm(true)}><Plus size={16} /> New Period</button>}
+        trailing={<button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => { clearErrors(); setShowForm(true); }}><Plus size={16} /> New Period</button>}
       />
 
       {current && (
@@ -133,14 +137,17 @@ const AccountingPeriods = ({ token }: { token: string }) => {
       </SectionCard>
 
       <Modal open={showForm} title="Create Accounting Period" onClose={() => setShowForm(false)}>
-        <div className="grid grid-cols-1 gap-4">
-          <Field label="Name"><input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. FY 2026 Q3" /></Field>
-          <Field label="Start date (ms)"><input type="number" className={inputCls} value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></Field>
-          <Field label="End date (ms)"><input type="number" className={inputCls} value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></Field>
+        <div className="grid grid-cols-1 gap-4" onChangeCapture={clearErrors}>
+          <Field label="Name" required><input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. FY 2026 Q3" /></Field>
+          <Field label="Start date (ms)" required><input type="number" className={inputCls} value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></Field>
+          <Field label="End date (ms)" required><input type="number" className={inputCls} value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></Field>
         </div>
-        <div className="mt-5 flex justify-end gap-3">
-          <GhostBtn onClick={() => setShowForm(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={create} disabled={saving}>{saving ? 'Saving…' : 'Create Period'}</PrimaryBtn>
+        <div className="mt-5 flex flex-col gap-3">
+          <FormErrors errors={errors} />
+          <div className="flex justify-end gap-3">
+            <GhostBtn onClick={() => setShowForm(false)}>Cancel</GhostBtn>
+            <PrimaryBtn onClick={create} disabled={saving}>{saving ? 'Saving…' : 'Create Period'}</PrimaryBtn>
+          </div>
         </div>
       </Modal>
     </div>

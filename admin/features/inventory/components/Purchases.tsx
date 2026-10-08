@@ -8,7 +8,9 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Modal from '@/components/feedback/Modal';
+import FormErrors from '@/components/feedback/FormErrors';
 import Field from '@/components/ui/Field';
+import RequiredMark from '@/components/ui/RequiredMark';
 import PrimaryBtn from '@/components/ui/PrimaryBtn';
 import GhostBtn from '@/components/ui/GhostBtn';
 import Pill from '@/components/data-display/Pill';
@@ -18,6 +20,7 @@ import Pagination from '@/components/ui/Pagination';
 import RowActions from '@/components/data-display/RowActions';
 import Loading from '@/components/feedback/Loading';
 import ProductPicker from '@/components/forms/ProductPicker';
+import { useFormErrors } from '@/hooks/useFormErrors';
 import { api } from '@/services/api';
 import { money, formatDate } from '@/utils/format';
 import { PO_STATUS_LABELS } from '@/utils/labels';
@@ -57,6 +60,7 @@ const InventoryPurchases = ({ token }: { token: string }) => {
   const [editLines, setEditLines] = useState<LineForm[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<PurchaseOrder | null>(null);
   const [receiveTarget, setReceiveTarget] = useState<PurchaseOrder | null>(null);
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -92,8 +96,15 @@ const InventoryPurchases = ({ token }: { token: string }) => {
   };
 
   const create = async () => {
-    if (!form.supplierId || lines.some((l) => !l.productId || Number(l.quantity) <= 0)) {
-      toast.error('Supplier and at least one line with a product and quantity are required.');
+    if (
+      !validate([
+        !form.supplierId && 'Supplier is required.',
+        ...lines.flatMap((l, i) => [
+          !l.productId && `Line ${i + 1}: select a product.`,
+          !(Number(l.quantity) > 0) && `Line ${i + 1}: quantity must be at least 1.`,
+        ]),
+      ])
+    ) {
       return;
     }
     setWorking(true);
@@ -175,8 +186,15 @@ const InventoryPurchases = ({ token }: { token: string }) => {
 
   const saveEdit = async () => {
     if (!editTarget) return;
-    if (!editForm.supplierId || editLines.some((l) => !l.productId || Number(l.quantity) <= 0)) {
-      toast.error('Supplier and at least one line with a product and quantity are required.');
+    if (
+      !validate([
+        !editForm.supplierId && 'Supplier is required.',
+        ...editLines.flatMap((l, i) => [
+          !l.productId && `Line ${i + 1}: select a product.`,
+          !(Number(l.quantity) > 0) && `Line ${i + 1}: quantity must be at least 1.`,
+        ]),
+      ])
+    ) {
       return;
     }
     setWorking(true);
@@ -211,6 +229,7 @@ const InventoryPurchases = ({ token }: { token: string }) => {
   };
 
   const openEdit = async (po: PurchaseOrder) => {
+    clearErrors();
     try {
       const res = await api<{ success: boolean; data: PurchaseOrder }>(`/api/inventory/purchases/${po.id}`, token);
       const full = res.data;
@@ -293,7 +312,7 @@ const InventoryPurchases = ({ token }: { token: string }) => {
         title="Purchases"
         subtitle="Purchase orders and stock receiving from suppliers"
         trailing={
-          <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => setShowCreate(true)}>
+          <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => { clearErrors(); setShowCreate(true); }}>
             <Plus size={16} /> New Purchase Order
           </button>
         }
@@ -350,9 +369,9 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
       </SectionCard>
 
       <Modal open={showCreate} title="New Purchase Order" onClose={() => setShowCreate(false)} wide>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4" onChangeCapture={clearErrors}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Supplier">
+            <Field label="Supplier" required>
               <select className={inputCls} value={form.supplierId} onChange={(e) => setForm({ ...form, supplierId: e.target.value })}>
                 <option value="">Select supplier…</option>
                 {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
@@ -388,14 +407,14 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
               {lines.map((l, idx) => (
                 <div key={idx} className="grid grid-cols-1 sm:grid-cols-[1.6fr_0.6fr_0.6fr_0.8fr_auto] gap-2 items-end">
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-ink-soft">Product</span>
+                    <span className="text-xs text-ink-soft">Product<RequiredMark /></span>
                     <select className={inputCls} value={l.productId} onChange={(e) => setLineProduct(idx, e.target.value)}>
                       <option value="">Select…</option>
                       {products.map((p) => <option key={p.id} value={p.id}>{p.name} (stock {p.stock ?? 0})</option>)}
                     </select>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-ink-soft">Qty</span>
+                    <span className="text-xs text-ink-soft">Qty<RequiredMark /></span>
                     <input type="number" className={inputCls} value={l.quantity} onChange={(e) => updateLine(idx, 'quantity', e.target.value)} />
                   </div>
                   <div className="flex flex-col gap-1">
@@ -423,6 +442,7 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
             <p className="mt-2 text-xs text-ink-soft">Min stock level, when set, is applied to the product on receipt.</p>
           </div>
 
+          <FormErrors errors={errors} />
           <div className="flex justify-end gap-3">
             <GhostBtn onClick={() => setShowCreate(false)}>Cancel</GhostBtn>
             <PrimaryBtn onClick={create} disabled={working}>{working ? 'Creating…' : 'Create Purchase Order'}</PrimaryBtn>
@@ -475,14 +495,14 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
 
       <Modal open={!!editTarget} title={`Edit Purchase Order — ${editTarget?.poNumber ?? ''}`} onClose={() => setEditTarget(null)} wide>
         {editTarget && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4" onChangeCapture={clearErrors}>
             {editTarget.status === 'received' && (
               <div className="rounded-xl border border-gold/20 bg-gold/10 p-3 text-xs text-ink-soft">
                 This order was already received. Changes here update the order and its lines only — stock, the vendor bill and the posted journal entry are <span className="font-medium text-ink">not</span> affected.
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Supplier">
+              <Field label="Supplier" required>
                 <select className={inputCls} value={editForm.supplierId} onChange={(e) => setEditForm({ ...editForm, supplierId: e.target.value })}>
                   <option value="">Select supplier…</option>
                   {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
@@ -518,14 +538,14 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
                 {editLines.map((l, idx) => (
                   <div key={idx} className="grid grid-cols-1 sm:grid-cols-[1.6fr_0.6fr_0.6fr_0.8fr_auto] gap-2 items-end">
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs text-ink-soft">Product</span>
+                      <span className="text-xs text-ink-soft">Product<RequiredMark /></span>
                       <select className={inputCls} value={l.productId} onChange={(e) => editUpdateLine(idx, 'productId', e.target.value)}>
                         <option value="">Select…</option>
                         {products.map((p) => <option key={p.id} value={p.id}>{p.name} (stock {p.stock ?? 0})</option>)}
                       </select>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs text-ink-soft">Qty</span>
+                      <span className="text-xs text-ink-soft">Qty<RequiredMark /></span>
                       <input type="number" className={inputCls} value={l.quantity} onChange={(e) => editUpdateLine(idx, 'quantity', e.target.value)} />
                     </div>
                     <div className="flex flex-col gap-1">
@@ -552,6 +572,7 @@ onEdit={(po.status !== 'cancelled') ? () => void openEdit(po) : undefined}
               </button>
             </div>
 
+            <FormErrors errors={errors} />
             <div className="flex justify-end gap-3">
               <GhostBtn onClick={() => setEditTarget(null)}>Cancel</GhostBtn>
               <PrimaryBtn onClick={saveEdit} disabled={working}>{working ? 'Saving…' : 'Save Changes'}</PrimaryBtn>

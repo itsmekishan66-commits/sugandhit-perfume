@@ -8,6 +8,7 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Modal from '@/components/feedback/Modal';
+import FormErrors from '@/components/feedback/FormErrors';
 import Field from '@/components/ui/Field';
 import PrimaryBtn from '@/components/ui/PrimaryBtn';
 import GhostBtn from '@/components/ui/GhostBtn';
@@ -17,6 +18,7 @@ import { api } from '@/services/api';
 import { money } from '@/utils/format';
 import { ACCOUNT_TYPE_LABELS } from '@/utils/labels';
 import Loading from '@/components/feedback/Loading';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface Account {
   _id: string;
@@ -43,6 +45,7 @@ const AccountingChart = ({ token }: { token: string }) => {
   const [editAcc, setEditAcc] = useState<Account | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -59,10 +62,7 @@ const AccountingChart = ({ token }: { token: string }) => {
   useEffect(() => { load(); }, [load]);
 
   const submit = async () => {
-    if (!form.code.trim() || !form.name.trim()) {
-      toast.error('Code and name are required.');
-      return;
-    }
+    if (!validate([!form.code.trim() && 'Code is required.', !form.name.trim() && 'Name is required.'])) return;
     setSaving(true);
     try {
       if (editAcc) {
@@ -94,12 +94,14 @@ const AccountingChart = ({ token }: { token: string }) => {
   };
 
   const openEdit = (acc: Account) => {
+    clearErrors(); // don't carry reasons from a previous attempt into this row
     setEditAcc(acc);
     setForm({ code: acc.code, name: acc.name, accountType: acc.accountType, normalBalance: acc.normalBalance, description: acc.description ?? '' });
     setShowForm(true);
   };
 
   const openNew = () => {
+    clearErrors();
     setEditAcc(null);
     setForm(emptyForm);
     setShowForm(true);
@@ -146,11 +148,11 @@ const AccountingChart = ({ token }: { token: string }) => {
       </SectionCard>
 
       <Modal open={showForm} title={editAcc ? `Edit ${editAcc.name}` : 'Add Chart Account'} onClose={() => { setShowForm(false); setEditAcc(null); }}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Code">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" onChangeCapture={clearErrors}>
+          <Field label="Code" required>
             <input className={inputCls} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="e.g. 1010" />
           </Field>
-          <Field label="Name">
+          <Field label="Name" required>
             <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </Field>
           <Field label="Type">
@@ -168,9 +170,12 @@ const AccountingChart = ({ token }: { token: string }) => {
             <input className={inputCls} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </Field>
         </div>
-        <div className="mt-5 flex justify-end gap-3">
-          <GhostBtn onClick={() => { setShowForm(false); setEditAcc(null); }}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={submit} disabled={saving}>{saving ? 'Saving…' : editAcc ? 'Update Account' : 'Create Account'}</PrimaryBtn>
+        <div className="mt-5 flex flex-col gap-3">
+          <FormErrors errors={errors} />
+          <div className="flex justify-end gap-3">
+            <GhostBtn onClick={() => { setShowForm(false); setEditAcc(null); }}>Cancel</GhostBtn>
+            <PrimaryBtn onClick={submit} disabled={saving}>{saving ? 'Saving…' : editAcc ? 'Update Account' : 'Create Account'}</PrimaryBtn>
+          </div>
         </div>
       </Modal>
     </div>

@@ -9,15 +9,18 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Modal from '@/components/feedback/Modal';
+import FormErrors from '@/components/feedback/FormErrors';
 import Field from '@/components/ui/Field';
 import PrimaryBtn from '@/components/ui/PrimaryBtn';
 import GhostBtn from '@/components/ui/GhostBtn';
 import Pill from '@/components/data-display/Pill';
+import RequiredMark from '@/components/ui/RequiredMark';
 import inputCls from '@/components/ui/input';
 import { api } from '@/services/api';
 import { money, formatDate } from '@/utils/format';
 import { RECON_ITEM_STATUS_LABELS } from '@/utils/labels';
 import Loading from '@/components/feedback/Loading';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface PaymentAccountBrief { id: number; name: string; accountType: string; active: boolean }
 
@@ -61,6 +64,9 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
   const [working, setWorking] = useState(false);
   const [itemForm, setItemForm] = useState({ externalRef: '', externalAmount: '' });
   const [matchSel, setMatchSel] = useState<Record<number, string>>({});
+  // One instance shared by the create modal and the "add statement line" box —
+  // only one can be active at a time and every opener clears stale reasons.
+  const { errors, validate, clearErrors } = useFormErrors();
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -84,8 +90,14 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
   }, [load]);
 
   const create = async () => {
-    if (!createForm.paymentAccountId || !createForm.periodStart || !createForm.periodEnd) {
-      toast.error('Account, period start and period end are required.');
+    // Collect every failing reason so the banner + toast explain the whole block.
+    if (
+      !validate([
+        !createForm.paymentAccountId && 'Payment account is required.',
+        !createForm.periodStart && 'Period start is required.',
+        !createForm.periodEnd && 'Period end is required.',
+      ])
+    ) {
       return;
     }
     setWorking(true);
@@ -115,6 +127,7 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
   const openDetail = async (r: Reconciliation) => {
     setDetail(null);
     setCandidates([]);
+    clearErrors();
     try {
       const [recRes, txnRes] = await Promise.all([
         api<{ success: boolean; data: Reconciliation }>(`/api/payment/reconciliations/${r.id}`, token),
@@ -149,10 +162,7 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
 
   const addItem = async () => {
     if (!detail) return;
-    if (!itemForm.externalRef.trim()) {
-      toast.error('External reference is required.');
-      return;
-    }
+    if (!validate([!itemForm.externalRef.trim() && 'External reference is required.'])) return;
     setWorking(true);
     try {
       await api('/api/payment/reconciliations/items', token, {
@@ -213,7 +223,7 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
         title="Reconciliation"
         subtitle="Match internal transactions with external statements"
         trailing={
-          <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => setShowCreate(true)}>
+          <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => { clearErrors(); setShowCreate(true); }}>
             <Plus size={16} /> Start Reconciliation
           </button>
         }
@@ -254,19 +264,19 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
       </SectionCard>
 
       <Modal open={showCreate} title="Start Reconciliation" onClose={() => setShowCreate(false)}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Payment account">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" onChangeCapture={clearErrors}>
+          <Field label="Payment account" required>
             <select className={inputCls} value={createForm.paymentAccountId} onChange={(e) => setCreateForm({ ...createForm, paymentAccountId: e.target.value })}>
               <option value="">Select account…</option>
               {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
           </Field>
 
-          <Field label="Period start (ms)">
+          <Field label="Period start (ms)" required>
             <input type="number" className={inputCls} value={createForm.periodStart} onChange={(e) => setCreateForm({ ...createForm, periodStart: e.target.value })} placeholder={String(Date.now() - 30 * 86400000)} />
           </Field>
 
-          <Field label="Period end (ms)">
+          <Field label="Period end (ms)" required>
             <input type="number" className={inputCls} value={createForm.periodEnd} onChange={(e) => setCreateForm({ ...createForm, periodEnd: e.target.value })} placeholder={String(Date.now())} />
           </Field>
 
@@ -283,9 +293,12 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
           </Field>
         </div>
 
-        <div className="mt-5 flex justify-end gap-3">
-          <GhostBtn onClick={() => setShowCreate(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={create} disabled={working}>{working ? 'Creating…' : 'Create'}</PrimaryBtn>
+        <div className="mt-5 flex flex-col gap-3">
+          <FormErrors errors={errors} />
+          <div className="flex justify-end gap-3">
+            <GhostBtn onClick={() => setShowCreate(false)}>Cancel</GhostBtn>
+            <PrimaryBtn onClick={create} disabled={working}>{working ? 'Creating…' : 'Create'}</PrimaryBtn>
+          </div>
         </div>
       </Modal>
 
@@ -328,18 +341,21 @@ const PaymentReconciliation = ({ token }: { token: string }) => {
             </TableShell>
 
             {detail.status === 'in_progress' && (
-              <div className="rounded-xl border border-gold/15 bg-white/70 p-3">
+              <div className="rounded-xl border border-gold/15 bg-white/70 p-3" onChangeCapture={clearErrors}>
                 <p className="text-sm font-medium text-ink mb-2">Add missing statement line</p>
-                <div className="flex flex-wrap gap-2 items-end">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs text-ink-soft">External ref</span>
-                    <input className={inputCls} placeholder="e.g. TXN-8871" value={itemForm.externalRef} onChange={(e) => setItemForm({ ...itemForm, externalRef: e.target.value })} />
+                <div className="flex flex-col gap-2">
+                  <FormErrors errors={errors} />
+                  <div className="flex flex-wrap gap-2 items-end">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs text-ink-soft">External ref<RequiredMark /></span>
+                      <input className={inputCls} placeholder="e.g. TXN-8871" value={itemForm.externalRef} onChange={(e) => setItemForm({ ...itemForm, externalRef: e.target.value })} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs text-ink-soft">Amount</span>
+                      <input type="number" className={inputCls} placeholder="0.00" value={itemForm.externalAmount} onChange={(e) => setItemForm({ ...itemForm, externalAmount: e.target.value })} />
+                    </div>
+                    <button onClick={addItem} disabled={working} className="btn-gold px-4 py-2 text-sm cursor-pointer disabled:opacity-40">Add line</button>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs text-ink-soft">Amount</span>
-                    <input type="number" className={inputCls} placeholder="0.00" value={itemForm.externalAmount} onChange={(e) => setItemForm({ ...itemForm, externalAmount: e.target.value })} />
-                  </div>
-                  <button onClick={addItem} disabled={working} className="btn-gold px-4 py-2 text-sm cursor-pointer disabled:opacity-40">Add line</button>
                 </div>
               </div>
             )}

@@ -5,11 +5,14 @@ import { toast } from 'react-toastify';
 import { notificationSchema, notificationIdSchema } from '@/validate/schemas';
 import PageHeader from '@/components/data-display/PageHeader';
 import ConfirmDialog from '@/components/feedback/ConfirmDialog';
+import FormErrors from '@/components/feedback/FormErrors';
 import Loading from '@/components/feedback/Loading';
 import SearchInput from '@/components/ui/SearchInput';
 import FilterSelect from '@/components/ui/FilterSelect';
 import Pagination from '@/components/ui/Pagination';
+import RequiredMark from '@/components/ui/RequiredMark';
 import { useChunkedPaging } from '@/hooks/useChunkedPaging';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface Notification {
   _id: string;
@@ -52,6 +55,7 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
   const [deleteTarget, setDeleteTarget] = useState<Notification | null>(null);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const fetcher = useCallback(
     async (page: number, limit: number) => {
@@ -95,8 +99,7 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
       userId: audience === 'user' ? userId : undefined,
     });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
-      return;
+      return validate(parsed.error.issues.map((issue) => issue.message));
     }
     setSending(true);
     try {
@@ -154,7 +157,7 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
     <div className="flex flex-col gap-6">
       <PageHeader title="Notifications" subtitle="Send and manage customer notifications" />
       {/* Send notification */}
-      <form onSubmit={onSubmitHandler} className="bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur">
+      <form onSubmit={onSubmitHandler} onChangeCapture={clearErrors} noValidate className="bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur">
         <h2 className="font-display text-2xl font-semibold text-ink mb-4">Send Notification</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -177,18 +180,18 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
 
           {audience === 'user' && (
             <div>
-              <p className="mb-2 text-sm text-ink-soft">User ID</p>
+              <p className="mb-2 text-sm text-ink-soft">User ID<RequiredMark /></p>
               <input onChange={(e: ChangeEvent<HTMLInputElement>) => setUserId(e.target.value)} value={userId} className={inputClass} type="number" placeholder="User id" required />
             </div>
           )}
 
           <div>
-            <p className="mb-2 text-sm text-ink-soft">Title</p>
+            <p className="mb-2 text-sm text-ink-soft">Title<RequiredMark /></p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} value={title} className={inputClass} type="text" placeholder="Your order is confirmed" required />
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-ink-soft">Message</p>
+            <p className="mb-2 text-sm text-ink-soft">Message<RequiredMark /></p>
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setMessage(e.target.value)} value={message} className={inputClass} type="text" placeholder="We've received your order and started blending." required />
           </div>
 
@@ -197,9 +200,12 @@ const NotificationsPage = ({ token }: NotificationsProps) => {
             <input onChange={(e: ChangeEvent<HTMLInputElement>) => setLink(e.target.value)} value={link} className={inputClass} type="text" placeholder="/orders or /collection" />
           </div>
         </div>
-        <button type="submit" disabled={sending} className="btn-primary w-32 py-3 mt-6 disabled:opacity-50">
-          {sending ? 'Sending…' : 'SEND'}
-        </button>
+        <div className="mt-6 flex flex-col items-start gap-3">
+          <FormErrors errors={errors} />
+          <button type="submit" disabled={sending} className="btn-primary w-32 py-3 disabled:opacity-50">
+            {sending ? 'Sending…' : 'SEND'}
+          </button>
+        </div>
       </form>
 
       {/* Notifications list */}

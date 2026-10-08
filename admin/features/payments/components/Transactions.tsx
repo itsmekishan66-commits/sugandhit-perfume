@@ -8,6 +8,7 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Modal from '@/components/feedback/Modal';
+import FormErrors from '@/components/feedback/FormErrors';
 import Field from '@/components/ui/Field';
 import PrimaryBtn from '@/components/ui/PrimaryBtn';
 import GhostBtn from '@/components/ui/GhostBtn';
@@ -18,6 +19,7 @@ import { api } from '@/services/api';
 import { money, num, label, formatDateTime } from '@/utils/format';
 import { CHANNEL_LABELS, TXN_TYPE_LABELS, TXN_STATUS_LABELS } from '@/utils/labels';
 import Loading from '@/components/feedback/Loading';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface Transaction {
   id: number;
@@ -61,6 +63,9 @@ const PaymentTransactions = ({ token }: { token: string }) => {
 
   const [manual, setManual] = useState({ customerName: '', channel: 'cash', paymentMethod: '', amount: '', processingFee: '0', taxAmount: '0', transactionType: 'payment', providerTransactionId: '' });
   const [refund, setRefund] = useState({ amount: '', reason: '', type: 'full_refund', chargeback: false });
+  // One instance for the manual-payment and refund modals — only one can be open
+  // at a time, and each opener clears stale reasons before the modal shows.
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -94,10 +99,7 @@ const PaymentTransactions = ({ token }: { token: string }) => {
   };
 
   const submitManual = async () => {
-    if (!num(manual.amount) || num(manual.amount) <= 0) {
-      toast.error('Amount must be positive.');
-      return;
-    }
+    if (!validate([!(num(manual.amount) > 0) && 'Amount must be positive.'])) return;
     setWorking(true);
     try {
       await api('/api/payment/transactions/manual', token, {
@@ -126,12 +128,13 @@ const PaymentTransactions = ({ token }: { token: string }) => {
 
   const submitRefund = async () => {
     if (!detail) return;
-    if (!num(refund.amount) || num(refund.amount) <= 0) {
-      toast.error('Refund amount must be positive.');
-      return;
-    }
-    if (!refund.reason.trim()) {
-      toast.error('Reason is required.');
+    // Collect every failing reason so the banner + toast explain the whole block.
+    if (
+      !validate([
+        !(num(refund.amount) > 0) && 'Refund amount must be positive.',
+        !refund.reason.trim() && 'Reason is required.',
+      ])
+    ) {
       return;
     }
     setWorking(true);
@@ -187,7 +190,7 @@ const PaymentTransactions = ({ token }: { token: string }) => {
         title="Transactions"
         subtitle={`${total} transactions`}
         trailing={
-          <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => setShowManual(true)}>
+          <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => { clearErrors(); setShowManual(true); }}>
             <Plus size={16} /> Record Payment
           </button>
         }
@@ -272,7 +275,7 @@ const PaymentTransactions = ({ token }: { token: string }) => {
             )}
 
             <div className="flex flex-wrap gap-3 pt-1">
-              <PrimaryBtn onClick={() => { setRefund({ amount: String(detail.amount > 0 ? Math.min(detail.amount, Math.abs(detail.netAmount) || detail.amount) : detail.amount), reason: '', type: 'full_refund', chargeback: false }); setShowRefund(true); }}>
+              <PrimaryBtn onClick={() => { clearErrors(); setRefund({ amount: String(detail.amount > 0 ? Math.min(detail.amount, Math.abs(detail.netAmount) || detail.amount) : detail.amount), reason: '', type: 'full_refund', chargeback: false }); setShowRefund(true); }}>
                 <Undo2 size={16} /> Request Refund
               </PrimaryBtn>
               {detail.reconciliationStatus !== 'reconciled' && (
@@ -291,7 +294,7 @@ const PaymentTransactions = ({ token }: { token: string }) => {
       </Modal>
 
       <Modal open={showManual} title="Record Manual Payment" onClose={() => setShowManual(false)}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" onChangeCapture={clearErrors}>
           <Field label="Customer name">
             <input className={inputCls} value={manual.customerName} onChange={(e) => setManual({ ...manual, customerName: e.target.value })} />
           </Field>
@@ -308,7 +311,7 @@ const PaymentTransactions = ({ token }: { token: string }) => {
           <Field label="Payment method (optional)">
             <input className={inputCls} value={manual.paymentMethod} onChange={(e) => setManual({ ...manual, paymentMethod: e.target.value })} placeholder="e.g. COD, QR" />
           </Field>
-          <Field label="Amount">
+          <Field label="Amount" required>
             <input type="number" className={inputCls} value={manual.amount} onChange={(e) => setManual({ ...manual, amount: e.target.value })} />
           </Field>
           <Field label="Processing fee">
@@ -321,28 +324,34 @@ const PaymentTransactions = ({ token }: { token: string }) => {
             <input className={inputCls} value={manual.providerTransactionId} onChange={(e) => setManual({ ...manual, providerTransactionId: e.target.value })} />
           </Field>
         </div>
-        <div className="mt-5 flex justify-end gap-3">
-          <GhostBtn onClick={() => setShowManual(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={submitManual} disabled={working}>{working ? 'Saving…' : 'Record Payment'}</PrimaryBtn>
+        <div className="mt-5 flex flex-col gap-3">
+          <FormErrors errors={errors} />
+          <div className="flex justify-end gap-3">
+            <GhostBtn onClick={() => setShowManual(false)}>Cancel</GhostBtn>
+            <PrimaryBtn onClick={submitManual} disabled={working}>{working ? 'Saving…' : 'Record Payment'}</PrimaryBtn>
+          </div>
         </div>
       </Modal>
 
       <Modal open={showRefund} title={`Request Refund on ${detail?.transactionId ?? ''}`} onClose={() => setShowRefund(false)}>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4" onChangeCapture={clearErrors}>
           <label className="flex items-center gap-2 text-sm text-ink-soft">
             <input type="checkbox" checked={refund.chargeback} onChange={(e) => setRefund({ ...refund, chargeback: e.target.checked })} className="accent-gold" />
             File as chargeback (dispute)
           </label>
-          <Field label="Refund amount">
+          <Field label="Refund amount" required>
             <input type="number" className={inputCls} value={refund.amount} onChange={(e) => setRefund({ ...refund, amount: e.target.value })} />
           </Field>
-          <Field label="Reason">
+          <Field label="Reason" required>
             <input className={inputCls} value={refund.reason} onChange={(e) => setRefund({ ...refund, reason: e.target.value })} placeholder="e.g. Customer cancelled order" />
           </Field>
         </div>
-        <div className="mt-5 flex justify-end gap-3">
-          <GhostBtn onClick={() => setShowRefund(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={submitRefund} disabled={working}>{working ? 'Submitting…' : refund.chargeback ? 'File Chargeback' : 'Request Refund'}</PrimaryBtn>
+        <div className="mt-5 flex flex-col gap-3">
+          <FormErrors errors={errors} />
+          <div className="flex justify-end gap-3">
+            <GhostBtn onClick={() => setShowRefund(false)}>Cancel</GhostBtn>
+            <PrimaryBtn onClick={submitRefund} disabled={working}>{working ? 'Submitting…' : refund.chargeback ? 'File Chargeback' : 'Request Refund'}</PrimaryBtn>
+          </div>
         </div>
       </Modal>
     </div>

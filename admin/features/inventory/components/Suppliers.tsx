@@ -8,6 +8,7 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Modal from '@/components/feedback/Modal';
+import FormErrors from '@/components/feedback/FormErrors';
 import Field from '@/components/ui/Field';
 import PrimaryBtn from '@/components/ui/PrimaryBtn';
 import GhostBtn from '@/components/ui/GhostBtn';
@@ -16,6 +17,7 @@ import inputCls from '@/components/ui/input';
 import Pagination from '@/components/ui/Pagination';
 import RowActions from '@/components/data-display/RowActions';
 import Loading from '@/components/feedback/Loading';
+import { useFormErrors } from '@/hooks/useFormErrors';
 import { api } from '@/services/api';
 
 interface Vendor { _id: string; id: number; name: string; email: string; phone: string; address: string; category: string; notes: string }
@@ -34,6 +36,7 @@ const InventorySuppliers = ({ token }: { token: string }) => {
   const [editTarget, setEditTarget] = useState<Vendor | null>(null);
   const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', address: '', category: '', notes: '' });
   const [deleteTarget, setDeleteTarget] = useState<Vendor | null>(null);
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -53,7 +56,7 @@ const InventorySuppliers = ({ token }: { token: string }) => {
   useEffect(() => { load(); }, [load]);
 
   const add = async () => {
-    if (!form.name.trim()) { toast.error('Supplier name is required.'); return; }
+    if (!validate([!form.name.trim() && 'Supplier name is required.'])) return;
     setWorking(true);
     try {
       await api('/api/accounts/vendors', token, { method: 'POST', body: form });
@@ -69,12 +72,14 @@ const InventorySuppliers = ({ token }: { token: string }) => {
   };
 
   const openEdit = (v: Vendor) => {
+    clearErrors();
     setEditTarget(v);
     setEditForm({ name: v.name, email: v.email, phone: v.phone, address: v.address, category: v.category, notes: v.notes });
   };
 
   const saveEdit = async () => {
-    if (!editTarget || !editForm.name.trim()) { toast.error('Supplier name is required.'); return; }
+    if (!editTarget) return;
+    if (!validate([!editForm.name.trim() && 'Supplier name is required.'])) return;
     setWorking(true);
     try {
       await api(`/api/accounts/vendors/${editTarget.id}`, token, { method: 'PUT', body: editForm });
@@ -112,7 +117,7 @@ const InventorySuppliers = ({ token }: { token: string }) => {
         title="Suppliers"
         subtitle="Vendors you purchase stock from"
         trailing={
-          <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => setShowAdd(true)}>
+          <button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => { clearErrors(); setShowAdd(true); }}>
             <Plus size={16} /> Add Supplier
           </button>
         }
@@ -148,8 +153,8 @@ const InventorySuppliers = ({ token }: { token: string }) => {
       </SectionCard>
 
       <Modal open={showAdd} title="Add Supplier" onClose={() => setShowAdd(false)}>
-        <div className="flex flex-col gap-4">
-          <Field label="Full name">
+        <div className="flex flex-col gap-4" onChangeCapture={clearErrors}>
+          <Field label="Full name" required>
             <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Sunrise Fragrance Traders" />
           </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -171,6 +176,7 @@ const InventorySuppliers = ({ token }: { token: string }) => {
               <input className={inputCls} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </Field>
           </div>
+          <FormErrors errors={errors} />
           <div className="flex justify-end gap-3">
             <GhostBtn onClick={() => setShowAdd(false)}>Cancel</GhostBtn>
             <PrimaryBtn onClick={add} disabled={working}>{working ? 'Saving…' : 'Add Supplier'}</PrimaryBtn>
@@ -180,8 +186,8 @@ const InventorySuppliers = ({ token }: { token: string }) => {
 
       <Modal open={!!editTarget} title="Edit Supplier" onClose={() => setEditTarget(null)}>
         {editTarget && (
-          <div className="flex flex-col gap-4">
-            <Field label="Full name">
+          <div className="flex flex-col gap-4" onChangeCapture={clearErrors}>
+            <Field label="Full name" required>
               <input className={inputCls} value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
             </Field>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -203,6 +209,7 @@ const InventorySuppliers = ({ token }: { token: string }) => {
                 <input className={inputCls} value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} />
               </Field>
             </div>
+            <FormErrors errors={errors} />
             <div className="flex justify-end gap-3">
               <GhostBtn onClick={() => setEditTarget(null)}>Cancel</GhostBtn>
               <PrimaryBtn onClick={saveEdit} disabled={working}>{working ? 'Saving…' : 'Save Supplier'}</PrimaryBtn>

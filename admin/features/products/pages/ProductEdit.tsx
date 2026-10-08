@@ -6,7 +6,10 @@ import { backendUrl } from '@/config/constants';
 import { toast } from 'react-toastify';
 import { productAddSchema } from '@/validate/schemas';
 import PageHeader from '@/components/data-display/PageHeader';
+import FormErrors from '@/components/feedback/FormErrors';
 import Loading from '@/components/feedback/Loading';
+import RequiredMark from '@/components/ui/RequiredMark';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface EditProps {
   token: string;
@@ -26,6 +29,7 @@ const Edit = ({ token }: EditProps) => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -101,8 +105,7 @@ const Edit = ({ token }: EditProps) => {
 
     const parsed = productAddSchema.safeParse({ name, description, price, category, subCategory, bestseller: bestseller ? 'true' : 'false' });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0].message);
-      return;
+      return validate(parsed.error.issues.map((issue) => issue.message));
     }
 
     setSaving(true);
@@ -171,7 +174,7 @@ const Edit = ({ token }: EditProps) => {
   return (
     <>
       <PageHeader title="Edit Perfume" subtitle="Update the fragrance details" />
-      <form onSubmit={onSubmitHandler} className='grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start w-full bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur'>
+      <form onSubmit={onSubmitHandler} onChangeCapture={clearErrors} noValidate className='grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start w-full bg-white/70 rounded-2xl p-8 border border-gold/15 shadow-sm backdrop-blur'>
 
         {/* LEFT — Images */}
         <div className='flex flex-col gap-6 lg:sticky lg:top-24'>
@@ -264,7 +267,7 @@ const Edit = ({ token }: EditProps) => {
         <div className='flex flex-col gap-4'>
           <div className='rounded-2xl border border-gold/15 p-5 flex flex-col gap-4'>
             <div className='w-full'>
-              <p className='mb-2 text-sm text-ink-soft'>Perfume name</p>
+              <p className='mb-2 text-sm text-ink-soft'>Perfume name<RequiredMark /></p>
               <input
                 onChange={(e) => setName(e.target.value)}
                 value={name}
@@ -276,7 +279,7 @@ const Edit = ({ token }: EditProps) => {
             </div>
 
             <div className='w-full'>
-              <p className='mb-2 text-sm text-ink-soft'>Perfume description</p>
+              <p className='mb-2 text-sm text-ink-soft'>Perfume description<RequiredMark /></p>
               <textarea
                 onChange={(e) => setDescription(e.target.value)}
                 value={description}
@@ -309,7 +312,7 @@ const Edit = ({ token }: EditProps) => {
               </div>
 
               <div>
-                <p className='mb-2 text-sm text-ink-soft'>Price (Rs.)</p>
+                <p className='mb-2 text-sm text-ink-soft'>Price (Rs.)<RequiredMark /></p>
                 <input
                   onChange={(e) => setPrice(e.target.value)}
                   value={price}
@@ -325,6 +328,7 @@ const Edit = ({ token }: EditProps) => {
               <label className='cursor-pointer text-sm text-ink-soft' htmlFor="bestseller">Add to Bestseller</label>
             </div>
 
+            <FormErrors errors={errors} />
             <div className='flex gap-3 mt-2'>
               <button type='submit' disabled={saving} className='btn-primary w-32 py-3 disabled:opacity-50'>
                 {saving ? 'Saving…' : 'SAVE'}

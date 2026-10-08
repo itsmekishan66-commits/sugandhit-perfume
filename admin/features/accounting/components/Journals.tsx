@@ -8,16 +8,19 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Modal from '@/components/feedback/Modal';
+import FormErrors from '@/components/feedback/FormErrors';
 import Field from '@/components/ui/Field';
 import PrimaryBtn from '@/components/ui/PrimaryBtn';
 import GhostBtn from '@/components/ui/GhostBtn';
 import Pill from '@/components/data-display/Pill';
+import RequiredMark from '@/components/ui/RequiredMark';
 import inputCls from '@/components/ui/input';
 import Pagination from '@/components/ui/Pagination';
 import { api } from '@/services/api';
 import { money, formatDate } from '@/utils/format';
 import { JOURNAL_STATUS_LABELS } from '@/utils/labels';
 import Loading from '@/components/feedback/Loading';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface ChartAcc { id: number; code: string; name: string; active: boolean }
 
@@ -39,6 +42,7 @@ const AccountingJournals = ({ token }: { token: string }) => {
   const [formDesc, setFormDesc] = useState('');
   const [lines, setLines] = useState<JournalLine[]>([{ accountId: 0, debit: 0, credit: 0, description: '' }, { accountId: 0, debit: 0, credit: 0, description: '' }]);
   const [working, setWorking] = useState(false);
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -74,10 +78,15 @@ const AccountingJournals = ({ token }: { token: string }) => {
   const totalCredit = lines.reduce((s, l) => s + (l.credit || 0), 0);
 
   const submit = async () => {
-    if (!formDate || lines.length < 2) { toast.error('At least 2 lines required.'); return; }
-    const invalid = lines.find((l) => !l.accountId || (l.debit <= 0 && l.credit <= 0));
-    if (invalid) { toast.error('Each line must have a non-zero debit or credit and an account selected.'); return; }
-    if (Math.abs(totalDebit - totalCredit) > 0.01) { toast.error(`Debits (${totalDebit}) must equal credits (${totalCredit}).`); return; }
+    // Collect every failing reason (date, line count, each broken line, balance)
+    // so the banner + toast explain the whole block at once.
+    if (!validate([
+      !formDate && 'Entry date is required.',
+      lines.length < 2 && 'At least 2 lines required.',
+      ...lines.map((l, i) => (!l.accountId ? `Line ${i + 1}: account is required.` : false)),
+      ...lines.map((l, i) => (l.debit <= 0 && l.credit <= 0 ? `Line ${i + 1}: enter a non-zero debit or credit.` : false)),
+      Math.abs(totalDebit - totalCredit) > 0.01 && `Debits (${totalDebit}) must equal credits (${totalCredit}).`,
+    ])) return;
     setWorking(true);
     try {
       await api('/api/accounts/journals', token, { method: 'POST', body: { entryDate: Number(formDate), description: formDesc, lines } });
@@ -134,7 +143,7 @@ const AccountingJournals = ({ token }: { token: string }) => {
       <PageHeader
         title="Journal Entries"
         subtitle={`${total} entries`}
-        trailing={<button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => { setLines([{ accountId: 0, debit: 0, credit: 0, description: '' }, { accountId: 0, debit: 0, credit: 0, description: '' }]); setShowForm(true); }}><Plus size={16} /> New Entry</button>}
+        trailing={<button className="btn-gold px-5 py-2 text-sm cursor-pointer" onClick={() => { clearErrors(); setLines([{ accountId: 0, debit: 0, credit: 0, description: '' }, { accountId: 0, debit: 0, credit: 0, description: '' }]); setShowForm(true); }}><Plus size={16} /> New Entry</button>}
       />
 
       <SectionCard title="Journal Entries" action={
@@ -214,44 +223,49 @@ const AccountingJournals = ({ token }: { token: string }) => {
       </Modal>
 
       <Modal open={showForm} title="Create Journal Entry" onClose={() => setShowForm(false)} wide>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-          <Field label="Entry date (ms)"><input type="number" className={inputCls} value={formDate} onChange={(e) => setFormDate(e.target.value)} /></Field>
-          <Field label="Description"><input className={inputCls} value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="Entry purpose" /></Field>
-        </div>
-
-        <div className="rounded-xl border border-gold/15 bg-cream/60 p-4 mb-4">
-          <div className="flex items-center justify-between mb-2 text-sm">
-            <p className="font-medium text-ink">Journal Lines</p>
-            <GhostBtn onClick={addLine}>Add line</GhostBtn>
+        <div onChangeCapture={clearErrors}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+            <Field label="Entry date (ms)" required><input type="number" className={inputCls} value={formDate} onChange={(e) => setFormDate(e.target.value)} /></Field>
+            <Field label="Description"><input className={inputCls} value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="Entry purpose" /></Field>
           </div>
-          <TableShell head={<><Th>Account</Th><Th right>Debit</Th><Th right>Credit</Th><Th>Description</Th><Th right></Th></>}>
-            {lines.map((l, idx) => (
-              <Row key={idx}>
-                <Td>
-                  <select className={`${inputCls} text-sm`} value={l.accountId} onChange={(e) => updateLine(idx, { accountId: Number(e.target.value) })}>
-                    <option value={0}>Select…</option>
-                    {chartAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
-                  </select>
-                </Td>
-                <Td right><input type="number" className={`${inputCls} w-32 text-sm text-right`} value={l.debit || ''} onChange={(e) => updateLine(idx, { debit: Number(e.target.value) })} placeholder="0" /></Td>
-                <Td right><input type="number" className={`${inputCls} w-32 text-sm text-right`} value={l.credit || ''} onChange={(e) => updateLine(idx, { credit: Number(e.target.value) })} placeholder="0" /></Td>
-                <Td><input className={`${inputCls} text-sm`} value={l.description} onChange={(e) => updateLine(idx, { description: e.target.value })} placeholder="optional" /></Td>
-                <Td right>
-                  <button onClick={() => removeLine(idx)} disabled={lines.length <= 2} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gold/25 bg-white/70 text-ink-soft hover:text-espresso cursor-pointer disabled:opacity-30"><Minus size={16} /></button>
-                </Td>
-              </Row>
-            ))}
-          </TableShell>
-          <div className="mt-3 flex justify-end text-sm text-ink-soft gap-4">
-            <span>Total Debit: <span className="font-semibold text-ink">{money(totalDebit)}</span></span>
-            <span>Total Credit: <span className="font-semibold text-ink">{money(totalCredit)}</span></span>
-            <span className={Math.abs(totalDebit - totalCredit) > 0.01 ? 'text-espresso font-semibold' : 'text-espresso/70'}>{Math.abs(totalDebit - totalCredit) > 0.01 ? `Difference: ${money(Math.abs(totalDebit - totalCredit))}` : 'Balanced ✓'}</span>
-          </div>
-        </div>
 
-        <div className="flex justify-end gap-3">
-          <GhostBtn onClick={() => setShowForm(false)}>Cancel</GhostBtn>
-          <PrimaryBtn onClick={submit} disabled={working}>{working ? 'Saving…' : 'Create Entry'}</PrimaryBtn>
+          <div className="rounded-xl border border-gold/15 bg-cream/60 p-4 mb-4">
+            <div className="flex items-center justify-between mb-2 text-sm">
+              <p className="font-medium text-ink">Journal Lines</p>
+              <GhostBtn onClick={addLine}>Add line</GhostBtn>
+            </div>
+            <TableShell head={<><Th>Account<RequiredMark /></Th><Th right>Debit<RequiredMark /></Th><Th right>Credit<RequiredMark /></Th><Th>Description</Th><Th right></Th></>}>
+              {lines.map((l, idx) => (
+                <Row key={idx}>
+                  <Td>
+                    <select className={`${inputCls} text-sm`} value={l.accountId} onChange={(e) => updateLine(idx, { accountId: Number(e.target.value) })}>
+                      <option value={0}>Select…</option>
+                      {chartAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
+                    </select>
+                  </Td>
+                  <Td right><input type="number" className={`${inputCls} w-32 text-sm text-right`} value={l.debit || ''} onChange={(e) => updateLine(idx, { debit: Number(e.target.value) })} placeholder="0" /></Td>
+                  <Td right><input type="number" className={`${inputCls} w-32 text-sm text-right`} value={l.credit || ''} onChange={(e) => updateLine(idx, { credit: Number(e.target.value) })} placeholder="0" /></Td>
+                  <Td><input className={`${inputCls} text-sm`} value={l.description} onChange={(e) => updateLine(idx, { description: e.target.value })} placeholder="optional" /></Td>
+                  <Td right>
+                    <button onClick={() => removeLine(idx)} disabled={lines.length <= 2} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gold/25 bg-white/70 text-ink-soft hover:text-espresso cursor-pointer disabled:opacity-30"><Minus size={16} /></button>
+                  </Td>
+                </Row>
+              ))}
+            </TableShell>
+            <div className="mt-3 flex justify-end text-sm text-ink-soft gap-4">
+              <span>Total Debit: <span className="font-semibold text-ink">{money(totalDebit)}</span></span>
+              <span>Total Credit: <span className="font-semibold text-ink">{money(totalCredit)}</span></span>
+              <span className={Math.abs(totalDebit - totalCredit) > 0.01 ? 'text-espresso font-semibold' : 'text-espresso/70'}>{Math.abs(totalDebit - totalCredit) > 0.01 ? `Difference: ${money(Math.abs(totalDebit - totalCredit))}` : 'Balanced ✓'}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <FormErrors errors={errors} />
+            <div className="flex justify-end gap-3">
+              <GhostBtn onClick={() => setShowForm(false)}>Cancel</GhostBtn>
+              <PrimaryBtn onClick={submit} disabled={working}>{working ? 'Saving…' : 'Create Entry'}</PrimaryBtn>
+            </div>
+          </div>
         </div>
       </Modal>
     </div>

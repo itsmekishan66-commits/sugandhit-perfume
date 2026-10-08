@@ -8,6 +8,7 @@ import Th from '@/components/data-display/Th';
 import Td from '@/components/data-display/Td';
 import Row from '@/components/data-display/Row';
 import Modal from '@/components/feedback/Modal';
+import FormErrors from '@/components/feedback/FormErrors';
 import Field from '@/components/ui/Field';
 import PrimaryBtn from '@/components/ui/PrimaryBtn';
 import GhostBtn from '@/components/ui/GhostBtn';
@@ -18,6 +19,7 @@ import { api } from '@/services/api';
 import { money, num, formatDate } from '@/utils/format';
 import { DEBT_STATUS_LABELS } from '@/utils/labels';
 import Loading from '@/components/feedback/Loading';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface Receivable {
   _id: string;
@@ -57,6 +59,8 @@ const PaymentReceivables = ({ token }: { token: string }) => {
   const [working, setWorking] = useState(false);
   const [statement, setStatement] = useState<{ customer: { id: number; name: string } | null; balance: number; receivables: Receivable[] } | null>(null);
   const [statementLoading, setStatementLoading] = useState(false);
+  // Single form in this component (the adjust/write-off modal); the opener clears stale reasons.
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -101,10 +105,7 @@ const PaymentReceivables = ({ token }: { token: string }) => {
 
   const submitAdjust = async () => {
     if (!adjust) return;
-    if (adjustMode === 'adjust' && num(adjustAmount) <= 0) {
-      toast.error('Adjustment amount must be positive.');
-      return;
-    }
+    if (!validate([adjustMode === 'adjust' && !(num(adjustAmount) > 0) && 'Adjustment amount must be positive.'])) return;
     setWorking(true);
     try {
       await api('/api/accounts/receivables/adjust', token, {
@@ -199,7 +200,7 @@ const PaymentReceivables = ({ token }: { token: string }) => {
                 <Td right>
                   <div className="inline-flex flex-col items-end gap-1.5">
                     <button onClick={() => openStatement(r)} className="px-3 py-1 text-xs text-ink-soft border border-gold/20 rounded-full hover:text-espresso cursor-pointer">Statement</button>
-                    <button onClick={() => { setAdjust(r); setAdjustMode('adjust'); setAdjustAmount(String(r.outstandingAmount)); setAdjustReason(''); }} className="btn-gold px-4 py-1 text-sm cursor-pointer">
+                    <button onClick={() => { clearErrors(); setAdjust(r); setAdjustMode('adjust'); setAdjustAmount(String(r.outstandingAmount)); setAdjustReason(''); }} className="btn-gold px-4 py-1 text-sm cursor-pointer">
                       Adjust / Write off
                     </button>
                   </div>
@@ -213,7 +214,7 @@ const PaymentReceivables = ({ token }: { token: string }) => {
 
       <Modal open={!!adjust} title={adjustMode === 'write_off' ? 'Write Off Receivable' : 'Adjust Receivable'} onClose={() => setAdjust(null)}>
         {adjust && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4" onChangeCapture={clearErrors}>
             <div className="rounded-xl border border-gold/15 bg-white/70 p-3 text-sm">
               <p className="font-medium text-ink">{adjust.customer?.name || 'Customer'} — outstanding <span className="font-semibold text-espresso">{money(adjust.outstandingAmount)}</span></p>
             </div>
@@ -222,13 +223,14 @@ const PaymentReceivables = ({ token }: { token: string }) => {
               <button onClick={() => setAdjustMode('write_off')} className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer ${adjustMode === 'write_off' ? 'bg-sand text-espresso border border-gold/30' : 'text-ink-soft border border-gold/20'}`}>Write off</button>
             </div>
             {adjustMode === 'adjust' && (
-              <Field label="Adjustment amount">
+              <Field label="Adjustment amount" required>
                 <input type="number" className={inputCls} value={adjustAmount} onChange={(e) => setAdjustAmount(e.target.value)} placeholder={String(adjust.outstandingAmount)} />
               </Field>
             )}
             <Field label="Reason">
               <input className={inputCls} value={adjustReason} onChange={(e) => setAdjustReason(e.target.value)} placeholder="Why is this adjusted / written off?" />
             </Field>
+            <FormErrors errors={errors} />
             <div className="flex justify-end gap-3">
               <GhostBtn onClick={() => setAdjust(null)}>Cancel</GhostBtn>
               <PrimaryBtn onClick={submitAdjust} disabled={working}>{working ? 'Saving…' : adjustMode === 'write_off' ? 'Write Off' : 'Apply Adjustment'}</PrimaryBtn>

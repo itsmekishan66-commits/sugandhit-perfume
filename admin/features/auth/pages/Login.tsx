@@ -1,16 +1,25 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { toast } from 'react-toastify'
+import { adminLoginSchema } from '@/validate/schemas';
 import { useAuth } from '@/context/useAuth';
+import FormErrors from '@/components/feedback/FormErrors';
+import RequiredMark from '@/components/ui/RequiredMark';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 const Login = () => {
   const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
+  const { errors, validate, clearErrors } = useFormErrors()
 
   const onSubmitHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const parsed = adminLoginSchema.safeParse({ email, password });
+    if (!parsed.success) {
+      return validate(parsed.error.issues.map((issue) => issue.message));
+    }
     setBusy(true);
     try {
       await login(email, password);
@@ -29,9 +38,9 @@ const Login = () => {
         <p className='text-xs tracking-luxe uppercase text-ink-soft mt-2'>Admin Panel · Perfume Studio</p>
       </div>
 
-      <form onSubmit={onSubmitHandler}>
+      <form onSubmit={onSubmitHandler} onChangeCapture={clearErrors} noValidate>
         <div className='mb-4'>
-          <p className='text-sm font-medium text-ink-soft mb-2'>Email Address</p>
+          <p className='text-sm font-medium text-ink-soft mb-2'>Email Address<RequiredMark /></p>
           <input
             onChange={(e) => setEmail(e.target.value)}
             value={email}
@@ -42,7 +51,7 @@ const Login = () => {
           />
         </div>
         <div className='mb-6'>
-          <p className='text-sm font-medium text-ink-soft mb-2'>Password</p>
+          <p className='text-sm font-medium text-ink-soft mb-2'>Password<RequiredMark /></p>
           <input
             onChange={(e) => setPassword(e.target.value)}
             value={password}
@@ -53,9 +62,12 @@ const Login = () => {
           />
         </div>
 
-        <button className='btn-primary mt-2 w-full disabled:opacity-50' type='submit' disabled={busy}>
-          {busy ? 'Logging in…' : 'Login'}
-        </button>
+        <div className='mt-2 flex flex-col items-start gap-3'>
+          <FormErrors errors={errors} />
+          <button className='btn-primary w-full disabled:opacity-50' type='submit' disabled={busy}>
+            {busy ? 'Logging in…' : 'Login'}
+          </button>
+        </div>
       </form>
     </div>
   )

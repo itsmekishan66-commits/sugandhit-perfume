@@ -16,6 +16,9 @@ const LAYER_API: Record<LayerKey, string> = {
   baseNotes:'base',
 };
 
+/** Default note color — white when no color has been added yet. */
+export const DEFAULT_NOTE_COLOR = '#ffffff';
+
 export async function fetchPalette(
   token: string
 ): Promise<{ palette: PalettePayload }> {
@@ -61,6 +64,16 @@ export async function apiSyncBottleTypes(
   return api<{ bottleTypes: ServerBottleType[] }>('/api/customization/bottletypes', token, {
     method:'PUT',
     body: { bottleTypes },
+  });
+}
+
+/** Uploads a bottle-type image file and resolves to its public URL. */
+export async function apiUploadBottleImage(token: string, file: File): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append('image', file);
+  return api<{ url: string }>('/api/customization/bottletypes/image', token, {
+    method: 'POST',
+    body: formData,
   });
 }
 

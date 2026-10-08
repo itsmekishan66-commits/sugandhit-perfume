@@ -87,3 +87,23 @@ export interface PalettePayload {
   bottleTypes: ServerBottleType[];
   settings: ServerSettings | null;
 }
+
+/** Note sections (the Notes tab holds one block per layer). */
+export type NoteSection = 'topNotes' | 'heartNotes' | 'baseNotes';
+
+/** A saved customization row identified by its section — used by the view/edit modals. */
+export type ItemTarget =
+  | { section: NoteSection; item: Note }
+  | { section: 'bases'; item: PaletteBase }
+  | { section: 'sizes'; item: SizeOption }
+  | { section: 'bottleTypes'; item: BottleTypeOption };
+
+/**
+ * A form-modal target: the saved row to edit, or null when adding a new one.
+ * The form modal reads this for both the pencil and the "+ Add" buttons.
+ */
+export type ItemFormTarget =
+  | { section: NoteSection; item: Note | null }
+  | { section: 'bases'; item: PaletteBase | null }
+  | { section: 'sizes'; item: SizeOption | null }
+  | { section: 'bottleTypes'; item: BottleTypeOption | null };

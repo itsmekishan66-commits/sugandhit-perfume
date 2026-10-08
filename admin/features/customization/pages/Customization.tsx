@@ -2,14 +2,21 @@ import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
 import ConfirmDialog from '@/components/feedback/ConfirmDialog';
+import FormErrors from '@/components/feedback/FormErrors';
 import Loading from '@/components/feedback/Loading';
 import { api } from '@/services/api';
 import RowActions from '@/components/data-display/RowActions';
 import ImagePreview from '@/components/data-display/ImagePreview';
 import SearchInput from '@/components/ui/SearchInput';
 import Pagination from '@/components/ui/Pagination';
+import RequiredMark from '@/components/ui/RequiredMark';
 import { matches } from '@/utils';
 import { useTabParam } from '@/hooks/useTabParam';
+import { useFormErrors } from '@/hooks/useFormErrors';
+import ViewItemModal from '@/features/customization/components/ViewItemModal';
+import ItemFormModal from '@/features/customization/components/ItemFormModal';
+import type { ItemFormTarget, ItemTarget } from '@/features/customization/customization.types';
+import { DEFAULT_NOTE_COLOR } from '@/features/customization/customization.service';
 
 interface Note {
   id: string;
@@ -59,43 +66,23 @@ interface CustomizationData {
 type LayerKey = 'topNotes' | 'heartNotes' | 'baseNotes';
 type TabKey = 'notes' | 'bases' | 'sizes' | 'bottletypes' | 'settings';
 type SectionKey = LayerKey | 'bases' | 'sizes' | 'bottleTypes' | 'settings';
+/** Content blocks (each with its own saved-items search + pagination). */
+type BlockKey = LayerKey | 'bases' | 'sizes' | 'bottleTypes';
 
 const TAB_KEYS: TabKey[] = ['notes', 'bases', 'sizes', 'bottletypes', 'settings'];
 
 interface Message {
   kind: 'error' | 'info' | 'success';
   text: string;
-  /** Sticky messages stay until the user edits a field, cancels, or saves. */
-  sticky?: boolean;
-}
-
-interface Drafts {
-  topNotes: Note[];
-  heartNotes: Note[];
-  baseNotes: Note[];
-  bases: PaletteBase[];
-  sizes: SizeOption[];
-  bottleTypes: BottleTypeOption[];
 }
 
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
-
-const genId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 /** Keeps prices as real numbers so blank/NaN input never corrupts the saved data. */
 const toNumber = (value: unknown): number => {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
 };
-
-/** Compares two row lists by their user-visible content only (ignores ids). */
-const sameContent = <T,>(a: T[], b: T[], content: (row: T) => unknown): boolean =>
-  JSON.stringify(a.map(content)) === JSON.stringify(b.map(content));
-
-const noteContent = (n: Note) => ({ name: n.name, icon: n.icon, color: n.color, price: toNumber(n.price) });
-const baseContent = (b: PaletteBase) => ({ name: b.name, code: b.code, description: b.description, extraPrice: toNumber(b.extraPrice) });
-const sizeContent = (s: SizeOption) => ({ label: s.label, ml: s.ml, price: toNumber(s.price), desc: s.desc });
-const bottleTypeContent = (b: BottleTypeOption) => ({ name: b.name, code: b.code, description: b.description, image: b.image, extraPrice: toNumber(b.extraPrice) });
 
 /**
  * Empty starting state. The backend is the single source of truth for this page — nothing
@@ -116,15 +103,6 @@ const LAYER_META: Record<LayerKey, { title: string; sub: string }> = {
   topNotes: { title: 'Top Notes', sub: 'The first impression — bright & fleeting' },
   heartNotes: { title: 'Heart Notes', sub: 'The soul — blooms in the middle' },
   baseNotes: { title: 'Base Notes', sub: 'The memory — lingers on skin' },
-};
-
-const EMPTY_DRAFTS: Drafts = {
-  topNotes: [],
-  heartNotes: [],
-  baseNotes: [],
-  bases: [],
-  sizes: [],
-  bottleTypes: [],
 };
 
 /** Maps the admin's layer keys to the API layer slugs. */
@@ -149,8 +127,9 @@ interface PalettePayload {
   settings: ServerSettings | null;
 }
 
-const noteFromServer = (n: ServerNote): Note => ({ id: String(n.id), name: n.name, icon: n.icon, color: n.color, price: toNumber(n.price), description: n.description });
-const noteToServer = (n: Note) => ({ name: n.name, icon: n.icon, color: n.color, price: toNumber(n.price), description: n.description ?? '' });
+/** Notes saved without a color fall back to white everywhere the field is read or written. */
+const noteFromServer = (n: ServerNote): Note => ({ id: String(n.id), name: n.name, icon: n.icon, color: n.color || DEFAULT_NOTE_COLOR, price: toNumber(n.price), description: n.description });
+const noteToServer = (n: Note) => ({ name: n.name, icon: n.icon, color: n.color.trim() || DEFAULT_NOTE_COLOR, price: toNumber(n.price), description: n.description ?? '' });
 const baseFromServer = (b: ServerBase): PaletteBase => ({ id: String(b.id), name: b.name, code: b.code, description: b.description, extraPrice: toNumber(b.extraPrice) });
 const baseToServer = (b: PaletteBase) => ({ name: b.name, code: b.code, description: b.description, extraPrice: toNumber(b.extraPrice) });
 const sizeFromServer = (s: ServerSize): SizeOption => ({ id: String(s.id), label: s.label, ml: s.ml, price: toNumber(s.price), desc: s.desc });
@@ -169,19 +148,14 @@ const Customization = ({ token }: { token: string }) => {
   /** Last settings the server confirmed, so "nothing changed" can be judged without local storage. */
   const [savedSettings, setSavedSettings] = useState<ServerSettings | null>(null);
 
-  const [drafts, setDrafts] = useState<Drafts>(clone(EMPTY_DRAFTS));
-  const [editing, setEditing] = useState<Record<keyof Drafts, string | null>>({
-    topNotes: null,
-    heartNotes: null,
-    baseNotes: null,
-    bases: null,
-    sizes: null,
-    bottleTypes: null,
-  });
   const [deleteTarget, setDeleteTarget] = useState<{ layer: LayerKey; id: string; name: string } | { section: 'bases' | 'sizes' | 'bottleTypes'; id: string; name: string } | null>(null);
+  /** Saved row opened in the View modal — the eye action from the /list rows. */
+  const [viewTarget, setViewTarget] = useState<ItemTarget | null>(null);
+  /** Section open in the form modal — the pencil (edit) and the "+ Add" buttons both use it. */
+  const [formTarget, setFormTarget] = useState<ItemFormTarget | null>(null);
 
   /** Free-text search over each block's saved items. */
-  const [savedSearch, setSavedSearch] = useState<Record<keyof Drafts, string>>({
+  const [savedSearch, setSavedSearch] = useState<Record<BlockKey, string>>({
     topNotes: '',
     heartNotes: '',
     baseNotes: '',
@@ -192,14 +166,6 @@ const Customization = ({ token }: { token: string }) => {
 
   /** Current page per block for its saved-items list (bounds are clamped on render). */
   const [savedPages, setSavedPages] = useState<Record<string, number>>({});
-
-  /**
-   * Bottle-type image source lock per row id: choosing a file disables the URL field,
-   * typing a URL disables the upload button (mutually exclusive inputs).
-   */
-  const [bottleImgMode, setBottleImgMode] = useState<Record<string, 'upload' | 'url'>>({});
-  /** Row id currently uploading, so the button shows "Uploading…" and can't double-fire. */
-  const [uploadingBottleId, setUploadingBottleId] = useState<string | null>(null);
 
   /* Load the live palette (notes + bases + sizes + settings) from the backend on mount. */
   useEffect(() => {
@@ -228,27 +194,23 @@ const Customization = ({ token }: { token: string }) => {
   }, [token, reloadKey]);
 
   useEffect(() => {
-    if (!message || message.sticky) return;
+    if (!message) return;
     const t = setTimeout(() => setMessage(null), 3500);
     return () => clearTimeout(t);
   }, [message]);
 
-  const notify = (section: SectionKey, kind: Message['kind'], text: string, msg?: string, sticky = false) => {
-    setMessage({ section, kind, text, sticky });
+  /** Settings-tab submit validation: lists every reason above Save + toasts them. */
+  const { errors, validate, clearErrors } = useFormErrors();
+
+  const notify = (section: SectionKey, kind: Message['kind'], text: string, msg?: string) => {
+    setMessage({ section, kind, text });
     if (kind === 'error') toast.error(msg ?? text);
     else if (kind === 'info') toast.info(msg ?? text);
     else toast.success(msg ?? text);
   };
 
-  /** Drops a sticky "nothing changed" notice as soon as the user touches a field. */
-  const clearStickyMessage = (section: SectionKey) => {
-    setMessage(prev => (prev && prev.section === section && prev.sticky ? null : prev));
-  };
-
   const sectionMessage = (section: SectionKey): Message | null =>
-    message && message.section === section
-      ? { kind: message.kind, text: message.text, sticky: message.sticky }
-      : null;
+    message && message.section === section ? { kind: message.kind, text: message.text } : null;
 
   /** Replaces a single tab/section in state with the rows the server just confirmed. */
   const applySection = (key: SectionKey, rows: Note[] | PaletteBase[] | SizeOption[] | BottleTypeOption[]) => {
@@ -318,6 +280,42 @@ const Customization = ({ token }: { token: string }) => {
     }
   };
 
+  /**
+   * Applies a row from the form modal — a new row (id not in the section yet)
+   * is appended, an existing one is merged in place — then re-syncs the section.
+   */
+  const applyForm = (updated: ItemTarget) => {
+    setFormTarget(null);
+    // Positive single-literal checks first; the multi-literal note variant is
+    // the remainder (TS won't narrow it away through an || chain).
+    if (updated.section === 'bases') {
+      const exists = data.bases.some(b => b.id === updated.item.id);
+      const next = exists ? data.bases.map(b => (b.id === updated.item.id ? updated.item : b)) : [...data.bases, updated.item];
+      setData(prev => ({ ...prev, bases: next }));
+      notify('bases', 'success', exists ? 'Perfume base updated.' : 'Perfume base added.');
+      void syncBases(next);
+    } else if (updated.section === 'sizes') {
+      const exists = data.sizes.some(s => s.id === updated.item.id);
+      const next = exists ? data.sizes.map(s => (s.id === updated.item.id ? updated.item : s)) : [...data.sizes, updated.item];
+      setData(prev => ({ ...prev, sizes: next }));
+      notify('sizes', 'success', exists ? 'Bottle size updated.' : 'Bottle size added.');
+      void syncSizes(next);
+    } else if (updated.section === 'bottleTypes') {
+      const exists = data.bottleTypes.some(b => b.id === updated.item.id);
+      const next = exists ? data.bottleTypes.map(b => (b.id === updated.item.id ? updated.item : b)) : [...data.bottleTypes, updated.item];
+      setData(prev => ({ ...prev, bottleTypes: next }));
+      notify('bottleTypes', 'success', exists ? 'Bottle type updated.' : 'Bottle type added.');
+      void syncBottleTypes(next);
+    } else {
+      const layer = updated.section;
+      const exists = data[layer].some(n => n.id === updated.item.id);
+      const next = exists ? data[layer].map(n => (n.id === updated.item.id ? updated.item : n)) : [...data[layer], updated.item];
+      setData(prev => ({ ...prev, [layer]: next }));
+      notify(layer, 'success', exists ? 'Note updated.' : 'Note added.');
+      void syncNotes(layer, next);
+    }
+  };
+
   /** Maps a palette payload onto the admin's local shape (used on mount & reset). */
   const applyPalette = (p: PalettePayload) => {
     const next: CustomizationData = {
@@ -334,91 +332,11 @@ const Customization = ({ token }: { token: string }) => {
     setSavedSettings(p.settings ? { maxNotesPerLayer: next.maxNotesPerLayer, deliveryFee: next.deliveryFee } : null);
   };
 
-  /* ---------- generic draft helpers ---------- */
-
-  const addDraft = <K extends keyof Drafts>(key: K, item: Drafts[K][number]) => {
-    clearStickyMessage(key);
-    setDrafts(prev => ({ ...prev, [key]: [...prev[key], item] }));
-  };
-
-  const updateDraftRow = <K extends keyof Drafts>(key: K, index: number, field: keyof Drafts[K][number], value: string | number) => {
-    clearStickyMessage(key);
-    setDrafts(prev => {
-      const rows = [...prev[key]];
-      const original = rows[index];
-      rows[index] = { ...original, [field]: value };
-      return { ...prev, [key]: rows };
-    });
-  };
-
-  const removeDraftRow = <K extends keyof Drafts>(key: K, index: number) => {
-    clearStickyMessage(key);
-    setDrafts(prev => {
-      const kept = (prev[key] as unknown as unknown[]).filter((_, i) => i !== index);
-      // Removing the last row closes the editor, so drop the stale editing id too.
-      if (kept.length === 0) setEditing(p => ({ ...p, [key]: null }));
-      return { ...prev, [key]: kept };
-    });
-  };
-
-  /** Closes the draft editor without saving (discards pending rows). */
-  const cancelDrafts = <K extends keyof Drafts>(key: K) => {
-    setDrafts(prev => ({ ...prev, [key]: [] }));
-    setEditing(prev => ({ ...prev, [key]: null }));
-    if (key === 'bottleTypes') setBottleImgMode({});
-    setMessage(null);
-  };
-
   /* ---------- Notes ---------- */
-
-  const addNoteDraft = (layer: LayerKey) =>
-    addDraft(layer, { id: genId(), name: '', icon: '🌸', color: '#000000', price: 0 });
-
-  const saveNotes = (layer: LayerKey) => {
-    const meta = LAYER_META[layer];
-    const rows = drafts[layer];
-    if (rows.length === 0) {
-      notify(layer, 'info', 'Nothing changed to save.', 'Nothing changed to save');
-      return;
-    }
-    const blankIdx = rows.findIndex(n => !n.name.trim());
-    if (blankIdx !== -1) {
-      notify(layer, 'error', `${meta.title}: note #${blankIdx + 1} name is required.`, 'Field required');
-      return;
-    }
-    const editId = editing[layer];
-    const editIdx = editId ? rows.findIndex(n => n.id === editId) : -1;
-    const nextNotes =
-      editId && editIdx !== -1
-        ? data[layer].map(n => (n.id === editId ? { ...n, ...rows[editIdx] } : n))
-        : [...data[layer].filter(n => n.id !== editId), ...rows];
-    if (sameContent(nextNotes, data[layer], noteContent)) {
-      // Keep the editor open so the user can tweak the row or press Cancel.
-      const text = editId ? 'Nothing changed to update.' : 'Nothing changed to save.';
-      notify(layer, 'info', text, text, true);
-      return;
-    }
-    const next = { ...data, [layer]: nextNotes };
-    setData(next);
-    setDrafts(prev => ({ ...prev, [layer]: [] }));
-    setEditing(prev => ({ ...prev, [layer]: null }));
-    notify(layer, 'success', `${meta.title} saved.`);
-    void syncNotes(layer, nextNotes);
-  };
-
-  const editNote = (layer: LayerKey, id: string) => {
-    const item = data[layer].find(n => n.id === id);
-    if (!item) return;
-    setEditing(prev => ({ ...prev, [layer]: id }));
-    setDrafts(prev => ({ ...prev, [layer]: [clone(item)] }));
-    setMessage(null);
-  };
 
   const deleteNote = (layer: LayerKey, id: string) => {
     const next = { ...data, [layer]: data[layer].filter(n => n.id !== id) };
     setData(next);
-    setEditing(prev => (prev[layer] === id ? { ...prev, [layer]: null } : prev));
-    if (editing[layer] === id) setDrafts(prev => ({ ...prev, [layer]: [] }));
     notify(layer, 'success', 'Note deleted.');
     void syncNotes(layer, next[layer]);
   };
@@ -431,58 +349,9 @@ const Customization = ({ token }: { token: string }) => {
 
   /* ---------- Bases ---------- */
 
-  const addBaseDraft = () =>
-    addDraft('bases', { id: genId(), name: '', code: '', description: '', extraPrice: 0 });
-
-  const saveBases = () => {
-    const rows = drafts.bases;
-    if (rows.length === 0) {
-      notify('bases', 'info', 'Nothing changed to save.', 'Nothing changed to save');
-      return;
-    }
-    const blankNameIdx = rows.findIndex(b => !b.name.trim());
-    if (blankNameIdx !== -1) {
-      notify('bases', 'error', `Perfume Base #${blankNameIdx + 1} name is required.`, 'Field required');
-      return;
-    }
-    const blankCodeIdx = rows.findIndex(b => !b.code.trim());
-    if (blankCodeIdx !== -1) {
-      notify('bases', 'error', `Perfume Base #${blankCodeIdx + 1} code is required.`, 'Field required');
-      return;
-    }
-    const editId = editing.bases;
-    const editIdx = editId ? rows.findIndex(b => b.id === editId) : -1;
-    const nextBases =
-      editId && editIdx !== -1
-        ? data.bases.map(b => (b.id === editId ? { ...b, ...rows[editIdx] } : b))
-        : [...data.bases.filter(b => b.id !== editId), ...rows];
-    if (sameContent(nextBases, data.bases, baseContent)) {
-      // Keep the editor open so the user can tweak the row or press Cancel.
-      const text = editId ? 'Nothing changed to update.' : 'Nothing changed to save.';
-      notify('bases', 'info', text, text, true);
-      return;
-    }
-    const next = { ...data, bases: nextBases };
-    setData(next);
-    setDrafts(prev => ({ ...prev, bases: [] }));
-    setEditing(prev => ({ ...prev, bases: null }));
-    notify('bases', 'success', 'Perfume bases saved.');
-    void syncBases(nextBases);
-  };
-
-  const editBase = (id: string) => {
-    const item = data.bases.find(b => b.id === id);
-    if (!item) return;
-    setEditing(prev => ({ ...prev, bases: id }));
-    setDrafts(prev => ({ ...prev, bases: [clone(item)] }));
-    setMessage(null);
-  };
-
   const deleteBase = (id: string) => {
     const next = { ...data, bases: data.bases.filter(b => b.id !== id) };
     setData(next);
-    setEditing(prev => (prev.bases === id ? { ...prev, bases: null } : prev));
-    if (editing.bases === id) setDrafts(prev => ({ ...prev, bases: [] }));
     notify('bases', 'success', 'Base deleted.');
     void syncBases(next.bases);
   };
@@ -495,59 +364,9 @@ const Customization = ({ token }: { token: string }) => {
 
   /* ---------- Sizes ---------- */
 
-  const addSizeDraft = () =>
-    addDraft('sizes', { id: genId(), label: '', ml: '', price: 0, desc: '' });
-
-  const saveSizes = () => {
-    const rows = drafts.sizes;
-    if (rows.length === 0) {
-      notify('sizes', 'info', 'Nothing changed to save.', 'Nothing changed to save');
-      return;
-    }
-    const blankLabelIdx = rows.findIndex(s => !s.label.trim());
-    if (blankLabelIdx !== -1) {
-      notify('sizes', 'error', `Bottle Size #${blankLabelIdx + 1} label is required.`, 'Field required');
-      return;
-    }
-    const blankMlIdx = rows.findIndex(s => !s.ml.trim());
-    if (blankMlIdx !== -1) {
-      notify('sizes', 'error', `Bottle Size #${blankMlIdx + 1} ml value is required.`, 'Field required');
-      return;
-    }
-    const editId = editing.sizes;
-    // When editing, patch the saved row in place so the list order never shifts.
-    const editIdx = editId ? rows.findIndex(r => r.id === editId) : -1;
-    const nextSizes =
-      editId && editIdx !== -1
-        ? data.sizes.map(s => (s.id === editId ? { ...s, ...rows[editIdx] } : s))
-        : [...data.sizes, ...rows];
-    if (sameContent(nextSizes, data.sizes, sizeContent)) {
-      // Keep the editor open so the user can tweak the row or press Cancel.
-      const text = editId ? 'Nothing changed to update.' : 'Nothing changed to save.';
-      notify('sizes', 'info', text, text, true);
-      return;
-    }
-    const next = { ...data, sizes: nextSizes };
-    setData(next);
-    setDrafts(prev => ({ ...prev, sizes: [] }));
-    setEditing(prev => ({ ...prev, sizes: null }));
-    notify('sizes', 'success', 'Bottle sizes saved.');
-    void syncSizes(nextSizes);
-  };
-
-  const editSize = (id: string) => {
-    const item = data.sizes.find(s => s.id === id);
-    if (!item) return;
-    setEditing(prev => ({ ...prev, sizes: id }));
-    setDrafts(prev => ({ ...prev, sizes: [clone(item)] }));
-    setMessage(null);
-  };
-
   const deleteSize = (id: string) => {
     const next = { ...data, sizes: data.sizes.filter(s => s.id !== id) };
     setData(next);
-    setEditing(prev => (prev.sizes === id ? { ...prev, sizes: null } : prev));
-    if (editing.sizes === id) setDrafts(prev => ({ ...prev, sizes: [] }));
     notify('sizes', 'success', 'Size deleted.');
     void syncSizes(next.sizes);
   };
@@ -560,67 +379,9 @@ const Customization = ({ token }: { token: string }) => {
 
   /* ---------- Bottle Types ---------- */
 
-  const addBottleTypeDraft = () =>
-    addDraft('bottleTypes', { id: genId(), name: '', code: '', description: '', image: '', extraPrice: 0 });
-
-  const saveBottleTypes = () => {
-    const rows = drafts.bottleTypes;
-    if (rows.length === 0) {
-      notify('bottleTypes', 'info', 'Nothing changed to save.', 'Nothing changed to save');
-      return;
-    }
-    const blankNameIdx = rows.findIndex(b => !b.name.trim());
-    if (blankNameIdx !== -1) {
-      notify('bottleTypes', 'error', `Bottle Type #${blankNameIdx + 1} name is required.`, 'Field required');
-      return;
-    }
-    const blankCodeIdx = rows.findIndex(b => !b.code.trim());
-    if (blankCodeIdx !== -1) {
-      notify('bottleTypes', 'error', `Bottle Type #${blankCodeIdx + 1} code is required.`, 'Field required');
-      return;
-    }
-    const badImageIdx = rows.findIndex(b => b.image.trim() && !/^https?:\/\//i.test(b.image.trim()));
-    if (badImageIdx !== -1) {
-      notify('bottleTypes', 'error', `Bottle Type #${badImageIdx + 1} image must be a valid http(s) URL.`, 'Invalid image URL');
-      return;
-    }
-    const editId = editing.bottleTypes;
-    const editIdx = editId ? rows.findIndex(b => b.id === editId) : -1;
-    const nextBottleTypes =
-      editId && editIdx !== -1
-        ? data.bottleTypes.map(b => (b.id === editId ? { ...b, ...rows[editIdx] } : b))
-        : [...data.bottleTypes.filter(b => b.id !== editId), ...rows];
-    if (sameContent(nextBottleTypes, data.bottleTypes, bottleTypeContent)) {
-      // Keep the editor open so the user can tweak the row or press Cancel.
-      const text = editId ? 'Nothing changed to update.' : 'Nothing changed to save.';
-      notify('bottleTypes', 'info', text, text, true);
-      return;
-    }
-    const next = { ...data, bottleTypes: nextBottleTypes };
-    setData(next);
-    setDrafts(prev => ({ ...prev, bottleTypes: [] }));
-    setEditing(prev => ({ ...prev, bottleTypes: null }));
-    setBottleImgMode({});
-    setUploadingBottleId(null);
-    notify('bottleTypes', 'success', 'Bottle types saved.');
-    void syncBottleTypes(nextBottleTypes);
-  };
-
-  const editBottleType = (id: string) => {
-    const item = data.bottleTypes.find(b => b.id === id);
-    if (!item) return;
-    setEditing(prev => ({ ...prev, bottleTypes: id }));
-    setDrafts(prev => ({ ...prev, bottleTypes: [clone(item)] }));
-    setBottleImgMode({});
-    setMessage(null);
-  };
-
   const deleteBottleType = (id: string) => {
     const next = { ...data, bottleTypes: data.bottleTypes.filter(b => b.id !== id) };
     setData(next);
-    setEditing(prev => (prev.bottleTypes === id ? { ...prev, bottleTypes: null } : prev));
-    if (editing.bottleTypes === id) setDrafts(prev => ({ ...prev, bottleTypes: [] }));
-    setBottleImgMode({});
     notify('bottleTypes', 'success', 'Bottle type deleted.');
     void syncBottleTypes(next.bottleTypes);
   };
@@ -631,52 +392,14 @@ const Customization = ({ token }: { token: string }) => {
     setDeleteTarget(null);
   };
 
-  /** Uploads a picked file for one bottle-type row and stores the returned URL in the row. */
-  const handleBottleImageUpload = async (index: number, file: File | undefined, input: HTMLInputElement) => {
-    input.value = ''; // allow re-selecting the same file
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      notify('bottleTypes', 'error', 'Please choose an image file.');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      notify('bottleTypes', 'error', 'Image must be 5 MB or smaller.');
-      return;
-    }
-    const row = drafts.bottleTypes[index];
-    if (!row) return;
-    setUploadingBottleId(row.id);
-    const formData = new FormData();
-    formData.append('image', file);
-    try {
-      const res = await api<{ url: string }>('/api/customization/bottletypes/image', token, { method: 'POST', body: formData });
-      setBottleImgMode(prev => ({ ...prev, [row.id]: 'upload' }));
-      updateDraftRow('bottleTypes', index, 'image', res.url);
-      notify('bottleTypes', 'success', 'Image uploaded.');
-    } catch (error) {
-      notify('bottleTypes', 'error', 'Could not upload image.', (error as Error).message);
-    } finally {
-      setUploadingBottleId(null);
-    }
-  };
-
-  /** Clears the row image and unlocks both inputs (upload + URL are usable again). */
-  const clearBottleImage = (index: number) => {
-    const row = drafts.bottleTypes[index];
-    if (!row) return;
-    setBottleImgMode(prev => {
-      const next = { ...prev };
-      delete next[row.id];
-      return next;
-    });
-    updateDraftRow('bottleTypes', index, 'image', '');
-  };
-
   /* ---------- Settings ---------- */
 
   const saveSettings = () => {
-    if (!data.maxNotesPerLayer || data.maxNotesPerLayer < 1) {
-      notify('settings', 'error', 'Max Notes Per Layer is required (min 1).', 'Field required');
+    if (
+      !validate([
+        (!data.maxNotesPerLayer || data.maxNotesPerLayer < 1) && 'Max Notes Per Layer is required (min 1).',
+      ])
+    ) {
       return;
     }
     if (savedSettings && savedSettings.maxNotesPerLayer === data.maxNotesPerLayer && savedSettings.deliveryFee === data.deliveryFee) {
@@ -689,8 +412,6 @@ const Customization = ({ token }: { token: string }) => {
 
   /** Re-reads the palette from the server; "defaults" always means the server's current rows. */
   const resetAll = async () => {
-    setDrafts(clone(EMPTY_DRAFTS));
-    setEditing({ topNotes: null, heartNotes: null, baseNotes: null, bases: null, sizes: null, bottleTypes: null });
     setMessage(null);
     setLoading(true);
     try {
@@ -719,8 +440,6 @@ const Customization = ({ token }: { token: string }) => {
   const tabBtnCls = (active: boolean) =>
     `px-4 py-2 rounded-lg text-sm transition-colors ${active ? 'bg-gold text-cream' : 'bg-gold/10 text-ink hover:bg-gold/20'}`;
   const addBtnCls = 'px-4 py-2 bg-gold text-cream rounded-lg text-sm font-medium hover:bg-gold/90 transition-colors';
-  const smallOutlineBtn = 'px-3 py-1.5 text-sm border border-gold/30 rounded-lg hover:bg-sand transition-colors';
-  const uploadBtnCls = 'inline-flex items-center gap-1.5 shrink-0 px-3 py-2.5 text-sm border border-gold/30 rounded-xl bg-sand/60 hover:bg-sand/80 transition-colors cursor-pointer';
 
   const renderSavedList = (children: React.ReactNode) => (
     <div className="mt-5">
@@ -755,9 +474,7 @@ const Customization = ({ token }: { token: string }) => {
 
   const renderNoteBlock = (layer: LayerKey) => {
     const meta = LAYER_META[layer];
-    const rows = drafts[layer];
     const saved = data[layer];
-    const isEditing = editing[layer] !== null;
     const visible = saved.filter((note) => matches(savedSearch[layer], note.name, note.icon, note.description));
     const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
     const safePage = Math.min(savedPages[layer] || 1, totalPages);
@@ -770,59 +487,10 @@ const Customization = ({ token }: { token: string }) => {
             <h3 className="font-display text-xl font-semibold">{meta.title}</h3>
             <p className="text-sm text-ink-soft italic">{meta.sub}</p>
           </div>
-          <button onClick={() => addNoteDraft(layer)} className={addBtnCls}>
+          <button onClick={() => setFormTarget({ section: layer, item: null })} className={addBtnCls}>
             + Add Note
           </button>
         </div>
-
-        {/* Draft editor */}
-        {rows.length > 0 && (
-          <>
-            <div className="space-y-3 mb-4">
-              {rows.map((note, i) => (
-                <div key={note.id} className="flex gap-3 items-end justify-between p-4 border border-gold/30 rounded-xl bg-sand/40">
-                  <div className="flex gap-3 flex-1 flex-wrap">
-                    <div className="w-20">
-                      <label className={labelCls}>Icon</label>
-                      <input className={fieldCls} value={note.icon} onChange={(e) => updateDraftRow(layer, i, 'icon', e.target.value)} placeholder="🌸" />
-                    </div>
-                    <div className="flex-2 min-w-35">
-                      <label className={labelCls}>Name</label>
-                      <input className={fieldCls} value={note.name} onChange={(e) => updateDraftRow(layer, i, 'name', e.target.value)} placeholder="Rose" />
-                    </div>
-                    <div className="flex-1 min-w-38">
-                      <label className={labelCls}>Color (hex)</label>
-                      <div className="flex gap-2">
-                        <input type="color" className="w-10 h-10 rounded-xl border border-gold/20 cursor-pointer" value={note.color} onChange={(e) => updateDraftRow(layer, i, 'color', e.target.value)} />
-                        <input className={fieldCls} value={note.color} onChange={(e) => updateDraftRow(layer, i, 'color', e.target.value)} placeholder="#000" />
-                      </div>
-                    </div>
-                    <div className="w-28">
-                      <label className={labelCls}>Price (Rs.)</label>
-                      <input type="number" min="0" className={fieldCls} value={note.price === 0 ? '' : note.price} onChange={(e) => updateDraftRow(layer, i, 'price', toNumber(e.target.value))} placeholder="0" />
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => removeDraftRow(layer, i)} className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm transition-colors" title="Remove row">
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {/* Save button — bottom right */}
-            <div className="flex flex-col items-end gap-2">
-              {renderSectionMessage(layer)}
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={() => cancelDrafts(layer)} className={smallOutlineBtn}>
-                  Cancel
-                </button>
-                <button onClick={() => saveNotes(layer)} className="btn-primary px-6 py-2.5 text-sm">
-                  {isEditing ? 'Update Notes' : 'Save Notes'}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
 
         {/* Saved list */}
         {renderSavedList(
@@ -843,14 +511,16 @@ const Customization = ({ token }: { token: string }) => {
                 {pageVisible.map(note => (
                   <div key={note.id} className="flex items-center justify-between gap-3 border border-gold/15 rounded-xl px-4 py-2.5 bg-cream/40">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className="inline-block w-3 h-3 rounded-full shrink-0" style={{ background: note.color }} />
+                      {/* Hairline border keeps a white swatch visible against the light card. */}
+                      <span className="inline-block w-3 h-3 rounded-full shrink-0 border border-gold/30" style={{ background: note.color }} />
                       <span className="text-lg">{note.icon}</span>
                       <span className="font-medium">{note.name}</span>
                       <span className="text-sm text-ink-soft">Rs. {note.price}</span>
                     </div>
                     <div className="flex gap-2 shrink-0">
                       <RowActions
-                        onEdit={() => editNote(layer, note.id)}
+                        onView={() => setViewTarget({ section: layer, item: note })}
+                        onEdit={() => setFormTarget({ section: layer, item: note })}
                         onDelete={() => setDeleteTarget({ layer, id: note.id, name: note.name })}
                       />
                     </div>
@@ -869,9 +539,7 @@ const Customization = ({ token }: { token: string }) => {
   /* ---------- render: bases block ---------- */
 
   const renderBaseBlock = () => {
-    const rows = drafts.bases;
     const saved = data.bases;
-    const isEditing = editing.bases !== null;
     const visible = saved.filter((base) => matches(savedSearch.bases, base.name, base.code, base.description));
     const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
     const safePage = Math.min(savedPages.bases || 1, totalPages);
@@ -884,54 +552,10 @@ const Customization = ({ token }: { token: string }) => {
             <h3 className="font-display text-xl font-semibold">Perfume Bases</h3>
             <p className="text-sm text-ink-soft italic">Different perfume concentrations and options</p>
           </div>
-          <button onClick={addBaseDraft} className={addBtnCls}>
+          <button onClick={() => setFormTarget({ section: 'bases', item: null })} className={addBtnCls}>
             + Add Base
           </button>
         </div>
-
-        {rows.length > 0 && (
-          <>
-            <div className="space-y-3 mb-4">
-              {rows.map((base, i) => (
-                <div key={base.id} className="flex gap-3 items-end justify-between p-4 border border-gold/30 rounded-xl bg-sand/40">
-                  <div className="flex gap-3 flex-1 flex-wrap">
-                    <div className="flex-1 min-w-35">
-                      <label className={labelCls}>Name</label>
-                      <input className={fieldCls} value={base.name} onChange={(e) => updateDraftRow('bases', i, 'name', e.target.value)} placeholder="Eau de Toilette" />
-                    </div>
-                    <div className="flex-1 min-w-30">
-                      <label className={labelCls}>Code</label>
-                      <input className={fieldCls} value={base.code} onChange={(e) => updateDraftRow('bases', i, 'code', e.target.value)} placeholder="EDT" />
-                    </div>
-                    <div className="flex-2 min-w-50">
-                      <label className={labelCls}>Description</label>
-                      <input className={fieldCls} value={base.description} onChange={(e) => updateDraftRow('bases', i, 'description', e.target.value)} placeholder="Light and fresh" />
-                    </div>
-                    <div className="w-28">
-                      <label className={labelCls}>Extra Price (Rs.)</label>
-                      <input type="number" min="0" className={fieldCls} value={base.extraPrice} onChange={(e) => updateDraftRow('bases', i, 'extraPrice', toNumber(e.target.value))} placeholder="0" />
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => removeDraftRow('bases', i)} className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm transition-colors" title="Remove row">
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex flex-col items-end gap-2">
-              {renderSectionMessage('bases')}
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={() => cancelDrafts('bases')} className={smallOutlineBtn}>
-                  Cancel
-                </button>
-                <button onClick={saveBases} className="btn-primary px-6 py-2.5 text-sm">
-                  {isEditing ? 'Update Base' : 'Save Bases'}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
 
         {renderSavedList(
           <>
@@ -958,7 +582,8 @@ const Customization = ({ token }: { token: string }) => {
                     </div>
                     <div className="flex gap-2 shrink-0">
                       <RowActions
-                        onEdit={() => editBase(base.id)}
+                        onView={() => setViewTarget({ section: 'bases', item: base })}
+                        onEdit={() => setFormTarget({ section: 'bases', item: base })}
                         onDelete={() => setDeleteTarget({ section: 'bases', id: base.id, name: base.name })}
                       />
                     </div>
@@ -977,9 +602,7 @@ const Customization = ({ token }: { token: string }) => {
   /* ---------- render: sizes block ---------- */
 
   const renderSizeBlock = () => {
-    const rows = drafts.sizes;
     const saved = data.sizes;
-    const isEditing = editing.sizes !== null;
     const visible = saved.filter((size) => matches(savedSearch.sizes, size.label, size.ml, size.desc));
     const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
     const safePage = Math.min(savedPages.sizes || 1, totalPages);
@@ -992,54 +615,10 @@ const Customization = ({ token }: { token: string }) => {
             <h3 className="font-display text-xl font-semibold">Bottle Sizes</h3>
             <p className="text-sm text-ink-soft italic">Available bottle size options</p>
           </div>
-          <button onClick={addSizeDraft} className={addBtnCls}>
+          <button onClick={() => setFormTarget({ section: 'sizes', item: null })} className={addBtnCls}>
             + Add Size
           </button>
         </div>
-
-        {rows.length > 0 && (
-          <>
-            <div className="space-y-3 mb-4">
-              {rows.map((size, i) => (
-                <div key={size.id} className="flex gap-3 items-end justify-between p-4 border border-gold/30 rounded-xl bg-sand/40">
-                  <div className="flex gap-3 flex-1 flex-wrap">
-                    <div className="w-24">
-                      <label className={labelCls}>Label</label>
-                      <input className={fieldCls} value={size.label} onChange={(e) => updateDraftRow('sizes', i, 'label', e.target.value)} placeholder="30 ml" />
-                    </div>
-                    <div className="w-24">
-                      <label className={labelCls}>ML Value</label>
-                      <input className={fieldCls} value={size.ml} onChange={(e) => updateDraftRow('sizes', i, 'ml', e.target.value)} placeholder="30ml" />
-                    </div>
-                    <div className="w-28">
-                      <label className={labelCls}>Price (Rs.)</label>
-                      <input type="number" min="0" className={fieldCls} value={size.price} onChange={(e) => updateDraftRow('sizes', i, 'price', toNumber(e.target.value))} placeholder="399" />
-                    </div>
-                    <div className="flex-2 min-w-50">
-                      <label className={labelCls}>Description</label>
-                      <input className={fieldCls} value={size.desc} onChange={(e) => updateDraftRow('sizes', i, 'desc', e.target.value)} placeholder="Samples & travel" />
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => removeDraftRow('sizes', i)} className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm transition-colors" title="Remove row">
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex flex-col items-end gap-2">
-              {renderSectionMessage('sizes')}
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={() => cancelDrafts('sizes')} className={smallOutlineBtn}>
-                  Cancel
-                </button>
-                <button onClick={saveSizes} className="btn-primary px-6 py-2.5 text-sm">
-                  {isEditing ? 'Update Size' : 'Save Sizes'}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
 
         {renderSavedList(
           <>
@@ -1066,7 +645,8 @@ const Customization = ({ token }: { token: string }) => {
                     </div>
                     <div className="flex gap-2 shrink-0">
                       <RowActions
-                        onEdit={() => editSize(size.id)}
+                        onView={() => setViewTarget({ section: 'sizes', item: size })}
+                        onEdit={() => setFormTarget({ section: 'sizes', item: size })}
                         onDelete={() => setDeleteTarget({ section: 'sizes', id: size.id, name: size.label })}
                       />
                     </div>
@@ -1085,9 +665,7 @@ const Customization = ({ token }: { token: string }) => {
   /* ---------- render: bottle types block ---------- */
 
   const renderBottleTypeBlock = () => {
-    const rows = drafts.bottleTypes;
     const saved = data.bottleTypes;
-    const isEditing = editing.bottleTypes !== null;
     const visible = saved.filter((type) => matches(savedSearch.bottleTypes, type.name, type.code, type.description));
     const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
     const safePage = Math.min(savedPages.bottleTypes || 1, totalPages);
@@ -1100,117 +678,10 @@ const Customization = ({ token }: { token: string }) => {
             <h3 className="font-display text-xl font-semibold">Bottle Types</h3>
             <p className="text-sm text-ink-soft italic">The glass your blend is poured into — shown with an image on /customize</p>
           </div>
-          <button onClick={addBottleTypeDraft} className={addBtnCls}>
+          <button onClick={() => setFormTarget({ section: 'bottleTypes', item: null })} className={addBtnCls}>
             + Add Bottle Type
           </button>
         </div>
-
-        {rows.length > 0 && (
-          <>
-            <div className="space-y-3 mb-4">
-              {rows.map((type, i) => {
-                const imgMode = bottleImgMode[type.id];
-                return (
-                <div key={type.id} className="flex gap-3 items-end justify-between p-4 border border-gold/30 rounded-xl bg-sand/40">
-                  <div className="flex gap-3 flex-1 flex-wrap items-end">
-                    <div className="w-24 shrink-0">
-                      <label className={labelCls}>Image</label>
-                      {type.image ? (
-                        <ImagePreview
-                          src={type.image}
-                          alt={type.name || 'Bottle type'}
-                          className="w-24 h-24 object-cover rounded-xl border border-gold/20 bg-cream/50"
-                          errorClassName="w-24 h-24 rounded-xl border border-dashed border-red-300 bg-red-50/60 text-red-500 flex flex-col items-center justify-center gap-1 text-center px-1 text-[10px] leading-tight"
-                          errorLabel="Invalid image link"
-                        />
-                      ) : (
-                        <div className="w-24 h-24 rounded-xl border border-dashed border-gold/30 bg-cream/40" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-35">
-                      <label className={labelCls}>Name</label>
-                      <input className={fieldCls} value={type.name} onChange={(e) => updateDraftRow('bottleTypes', i, 'name', e.target.value)} placeholder="Classic Clear Glass" />
-                    </div>
-                    <div className="flex-1 min-w-30">
-                      <label className={labelCls}>Code</label>
-                      <input className={fieldCls} value={type.code} onChange={(e) => updateDraftRow('bottleTypes', i, 'code', e.target.value)} placeholder="classic" />
-                    </div>
-                    <div className="w-28 shrink-0">
-                      <label className={labelCls}>Extra Price (Rs.)</label>
-                      <input type="number" min="0" className={fieldCls} value={type.extraPrice} onChange={(e) => updateDraftRow('bottleTypes', i, 'extraPrice', toNumber(e.target.value))} placeholder="0" />
-                    </div>
-                    <div className="flex-2 min-w-50">
-                      <label className={labelCls}>Description</label>
-                      <input className={fieldCls} value={type.description} onChange={(e) => updateDraftRow('bottleTypes', i, 'description', e.target.value)} placeholder="Timeless clear glass" />
-                    </div>
-                    <div className="flex-2 min-w-60">
-                      <label className={labelCls}>Image — upload or URL</label>
-                      <div className="flex gap-2 items-stretch">
-                        <label
-                          className={imgMode === 'url' ? `${uploadBtnCls} opacity-40 cursor-not-allowed` : uploadBtnCls}
-                          title={imgMode === 'url' ? 'Clear the URL below to enable upload' : 'Upload an image file'}
-                        >
-                          {uploadingBottleId === type.id ? 'Uploading…' : 'Upload image'}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={imgMode === 'url' || uploadingBottleId === type.id}
-                            onChange={(e) => { handleBottleImageUpload(i, e.target.files?.[0] ?? undefined, e.currentTarget); }}
-                          />
-                        </label>
-                        <div className="flex-1 min-w-40 relative">
-                          <input
-                            className={`${fieldCls} ${imgMode === 'upload' ? 'opacity-50 cursor-not-allowed pr-9' : ''}`}
-                            value={type.image}
-                            disabled={imgMode === 'upload'}
-                            placeholder={imgMode === 'upload' ? 'Uploaded image — click ✕ to use a URL' : 'https://… or upload'}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              updateDraftRow('bottleTypes', i, 'image', value);
-                              setBottleImgMode(prev => {
-                                const next = { ...prev };
-                                if (value.trim()) next[type.id] = 'url';
-                                else delete next[type.id];
-                                return next;
-                              });
-                            }}
-                          />
-                          {imgMode === 'upload' && (
-                            <button
-                              type="button"
-                              onClick={() => clearBottleImage(i)}
-                              className="absolute right-2 top-1/2 -translate-y-1/2 text-red-600 hover:bg-red-50 rounded-md px-1.5 py-0.5 text-sm"
-                              title="Clear image and re-enable both options"
-                            >
-                              ✕
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => removeDraftRow('bottleTypes', i)} className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm transition-colors" title="Remove row">
-                    ✕
-                  </button>
-                </div>
-                );
-              })}
-            </div>
-
-            <div className="flex flex-col items-end gap-2">
-              {renderSectionMessage('bottleTypes')}
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={() => cancelDrafts('bottleTypes')} className={smallOutlineBtn}>
-                  Cancel
-                </button>
-                <button onClick={saveBottleTypes} className="btn-primary px-6 py-2.5 text-sm">
-                  {isEditing ? 'Update Bottle Type' : 'Save Bottle Types'}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
 
         {renderSavedList(
           <>
@@ -1240,7 +711,8 @@ const Customization = ({ token }: { token: string }) => {
                     </div>
                     <div className="flex gap-2 shrink-0">
                       <RowActions
-                        onEdit={() => editBottleType(type.id)}
+                        onView={() => setViewTarget({ section: 'bottleTypes', item: type })}
+                        onEdit={() => setFormTarget({ section: 'bottleTypes', item: type })}
                         onDelete={() => setDeleteTarget({ section: 'bottleTypes', id: type.id, name: type.name })}
                       />
                     </div>
@@ -1259,11 +731,11 @@ const Customization = ({ token }: { token: string }) => {
   /* ---------- render: settings ---------- */
 
   const renderSettings = () => (
-    <div className="rounded-2xl border border-gold/15 bg-white/70 p-6">
+    <div className="rounded-2xl border border-gold/15 bg-white/70 p-6" onChangeCapture={clearErrors}>
       <h3 className="font-display text-xl font-semibold mb-4">General Settings</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className={labelCls}>Max Notes Per Layer</label>
+          <label className={labelCls}>Max Notes Per Layer<RequiredMark /></label>
           <input
             type="number"
             min="1"
@@ -1286,6 +758,7 @@ const Customization = ({ token }: { token: string }) => {
       </div>
       <div className="flex flex-col items-end gap-2 mt-6">
         {renderSectionMessage('settings')}
+        <FormErrors errors={errors} />
         <button onClick={saveSettings} className="btn-primary px-6 py-2.5 text-sm">
           Save Settings
         </button>
@@ -1361,6 +834,14 @@ const Customization = ({ token }: { token: string }) => {
 
       {/* Settings Tab */}
       {!loading && activeTab === 'settings' && renderSettings()}
+
+      {/* View details — the eye action, same idea as the /list rows */}
+      <ViewItemModal target={viewTarget} onClose={() => setViewTarget(null)} />
+
+      {/* Add/Edit — one popup form shared by the "+ Add" buttons and the pencil action */}
+      {formTarget && (
+        <ItemFormModal token={token} target={formTarget} onClose={() => setFormTarget(null)} onSave={applyForm} />
+      )}
 
       {/* Delete confirmation */}
       <ConfirmDialog
