@@ -300,20 +300,20 @@ const InventoryPurchases = ({ token }: { token: string }) => {
       />
 
       <SectionCard title={`Purchase Orders (${total})`}>
-        <div className="px-6 py-3 border-b border-gold/10 flex flex-wrap items-center justify-between gap-1">
-            <div className="relative min-w-0">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft/50" />
-              <input className={`${inputCls} w-5 pl-9`} placeholder="Search PO, supplier, notes…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
-            </div>
-          <div className="flex items-center gap-8">
-            <select className={`${inputCls} w-44 select-soft`} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
+        <div className="px-6 py-3 border-b border-gold/10 flex flex-wrap items-center gap-3">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft/50" />
+            <input className={`${inputCls} w-56 pl-9`} placeholder="Search PO, supplier, notes…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+          </div>
+          <div className="w-44">
+            <select className={`${inputCls} select-soft`} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
               <option value="">All statuses</option>
               <option value="ordered">Ordered</option>
               <option value="received">Received</option>
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
-          <span className="text-xs text-ink-soft">Receiving stock also creates a vendor bill and posts Inventory Dr / AP Cr.</span>
+          <span className="text-xs text-ink-soft ml-auto">Receiving stock also creates a vendor bill and posts Inventory Dr / AP Cr.</span>
         </div>
         {loading ? (
           <Loading />

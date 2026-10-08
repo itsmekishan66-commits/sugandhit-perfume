@@ -8,8 +8,13 @@ export const api = async <T = Record<string, unknown>>(
   const headers: Record<string, string> = { token };
   const init: RequestInit = { method: options.method ?? 'GET', headers };
   if (options.body !== undefined) {
-    headers['Content-Type'] = 'application/json';
-    init.body = JSON.stringify(options.body);
+    if (options.body instanceof FormData) {
+      // Let the browser set the multipart boundary — no manual Content-Type.
+      init.body = options.body;
+    } else {
+      headers['Content-Type'] = 'application/json';
+      init.body = JSON.stringify(options.body);
+    }
   }
   const res = await fetch(backendUrl + path, init);
   const data = (await res.json().catch(() => ({ success: false, message: 'Invalid server response' }))) as T & {

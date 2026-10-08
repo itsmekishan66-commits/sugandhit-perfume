@@ -51,3 +51,18 @@ export const saveSettings = async (req: Request, res: Response) => {
     fail(res, (error as Error).message);
   }
 };
+
+/** Stores a single bottle-type image and returns its public URL. */
+export const uploadBottleTypeImage = async (req: Request, res: Response) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return fail(res, 'Please choose an image.');
+    }
+    const url = `${req.protocol}://${req.get('host')}/uploads/bottletypes/${file.filename}`;
+    ok(res, { url }, 'Image uploaded');
+  } catch (error) {
+    console.log(error);
+    fail(res, (error as Error).message);
+  }
+};

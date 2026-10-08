@@ -35,5 +35,30 @@ const uploadAvatarImage = multer({
   },
 });
 
+const bottleTypeDir = 'uploads/bottletypes';
+
+const bottleTypeStorage = multer.diskStorage({
+  destination: function (_req, _file, callback) {
+    fs.mkdirSync(path.resolve(bottleTypeDir), { recursive: true });
+    callback(null, bottleTypeDir);
+  },
+  filename: function (_req, file, callback) {
+    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+    callback(null, 'bottle-' + Date.now() + ext);
+  },
+});
+
+const uploadBottleImage = multer({
+  storage: bottleTypeStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: function (_req, file, callback) {
+    if (file.mimetype.startsWith('image/')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Please upload an image file.'));
+    }
+  },
+});
+
 export default upload;
-export { uploadAvatarImage };
+export { uploadAvatarImage, uploadBottleImage };

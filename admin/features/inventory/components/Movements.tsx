@@ -58,15 +58,16 @@ const InventoryMovements = ({ token }: { token: string }) => {
 
       <SectionCard title={`Movements (${total})`}>
         <div className="px-6 py-3 border-b border-gold/10 flex flex-wrap items-center gap-3">
-          <label className="text-sm text-ink-soft">Type</label>
-          <select className={`${inputCls} w-48 select-soft`} value={type} onChange={(e) => { setType(e.target.value); setPage(1); }}>
-            <option value="">All types</option>
-            <option value="opening">Opening Stock</option>
-            <option value="adjustment">Adjustment</option>
-            <option value="purchase_receipt">Purchase Receipt</option>
-            <option value="sale">Sale</option>
-            <option value="sale_cancel">Sale Cancel / Return</option>
-          </select>
+          <div className="w-46">
+            <select className={`${inputCls} select-soft`} value={type} onChange={(e) => { setType(e.target.value); setPage(1); }}>
+              <option value="">All types</option>
+              <option value="opening">Opening Stock</option>
+              <option value="adjustment">Adjustment</option>
+              <option value="purchase_receipt">Purchase Receipt</option>
+              <option value="sale">Sale</option>
+              <option value="sale_cancel">Sale Cancel / Return</option>
+            </select>
+          </div>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft/50" />
             <input className={`${inputCls} w-56 pl-9`} placeholder="Search product, ref, note…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />

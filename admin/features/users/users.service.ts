@@ -68,3 +68,17 @@ export async function apiAddUserCredit(
   });
   return response.json();
 }
+
+export interface DeleteUserPayload {
+  success: boolean;
+  message?: string;
+}
+
+export async function apiDeleteUser(token: string, userId: number): Promise<DeleteUserPayload> {
+  const response = await fetch(backendUrl + '/api/accounts/user/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', token },
+    body: JSON.stringify({ userId }),
+  });
+  return response.json();
+}

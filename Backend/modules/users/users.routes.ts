@@ -7,6 +7,7 @@ import {
   adminList,
   userDetail,
   userCredit,
+  userDelete,
 } from './users.controller.js';
 import authUser from '../../middleware/auth.middleware.js';
 import { loadAdmin, requireAdmin } from '../../middleware/permission.middleware.js';
@@ -27,5 +28,6 @@ usersRouter.get('/users', requireAdmin(PERMISSIONS.accounts_view), paginate, use
 usersRouter.get('/admins', requireAdmin(PERMISSIONS.accounts_view), paginate, adminList);
 usersRouter.post('/user/details', requireAdmin(PERMISSIONS.accounts_view), validate(userIdSchema), userDetail);
 usersRouter.post('/user/credit', requireAdmin(PERMISSIONS.payments_create), validate(addCreditSchema), userCredit);
+usersRouter.post('/user/delete', requireAdmin(PERMISSIONS.users_manage), validate(userIdSchema), userDelete);
 
 export default usersRouter;

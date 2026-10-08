@@ -1,14 +1,17 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye } from 'lucide-react';
 import { backendUrl, currency } from '@/config/constants';
 import { toast } from 'react-toastify';
 import PageHeader from '@/components/data-display/PageHeader';
+import RowActions from '@/components/data-display/RowActions';
+import ConfirmDialog from '@/components/feedback/ConfirmDialog';
 import Loading from '@/components/feedback/Loading';
 import SearchInput from '@/components/ui/SearchInput';
 import FilterSelect from '@/components/ui/FilterSelect';
 import Pagination from '@/components/ui/Pagination';
 import { useChunkedPaging } from '@/hooks/useChunkedPaging';
+import { useTabParam } from '@/hooks/useTabParam';
+import { apiDeleteUser } from '../users.service';
 
 interface Customer {
   id: number;
@@ -36,6 +39,8 @@ interface UsersProps {
 
 type Tab = 'customers' | 'admins';
 
+const TAB_KEYS: Tab[] = ['customers', 'admins'];
+
 const PAGE_SIZE = 20;
 
 const formatDate = (date: string | number | undefined) => {
@@ -45,11 +50,13 @@ const formatDate = (date: string | number | undefined) => {
 
 const Users = ({ token }: UsersProps) => {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<Tab>('customers');
+  const [tab, setTab] = useTabParam('tab', TAB_KEYS, 'customers');
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [adminStatusFilter, setAdminStatusFilter] = useState('');
   const [roles, setRoles] = useState<string[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const customersFetcher = useCallback(
     async (page: number, limit: number) => {
@@ -105,6 +112,21 @@ const Users = ({ token }: UsersProps) => {
     const n = Number(value || 0);
     if (isNaN(n)) return '0';
     return n.toLocaleString('en-IN');
+  };
+
+  const deleteCustomer = async (customer: Customer) => {
+    setDeleting(true);
+    try {
+      const data = await apiDeleteUser(token, customer.id);
+      if (!data.success) throw new Error(data.message || 'Failed to delete customer');
+      toast.success('Customer deleted');
+      await customers.refresh();
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
   };
 
   const statCards = [
@@ -222,13 +244,12 @@ const Users = ({ token }: UsersProps) => {
                           {currency} {creditValue(customer.credit)}
                         </td>
                         <td className="p-3 text-right">
-                          <button
-                            onClick={() => navigate(`/users/${customer.id}`)}
-                            className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gold/25 bg-white/70 text-ink-soft hover:text-espresso hover:border-gold transition-colors cursor-pointer"
-                            title="View customer details"
-                          >
-                            <Eye size={18} />
-                          </button>
+                          <div className="flex justify-end">
+                            <RowActions
+                              onView={() => navigate(`/users/${customer.id}`)}
+                              onDelete={() => setDeleteTarget(customer)}
+                            />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -291,6 +312,21 @@ const Users = ({ token }: UsersProps) => {
           </>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete Customer"
+        message={
+          <>
+            Are you sure you want to delete <span className="font-medium text-ink">“{deleteTarget?.name}”</span>? This
+            permanently removes the customer account and cannot be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        busy={deleting}
+        onConfirm={() => { if (deleteTarget) void deleteCustomer(deleteTarget); }}
+        onClose={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };

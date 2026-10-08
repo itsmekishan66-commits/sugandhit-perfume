@@ -1,15 +1,23 @@
-﻿import { useState } from 'react';
-import PageHeader from '@/components/data-display/PageHeader';
+﻿import PageHeader from '@/components/data-display/PageHeader';
 import SectionCard from '@/components/data-display/SectionCard';
 import Tabs from '@/components/ui/Tabs';
+import { useTabParam } from '@/hooks/useTabParam';
 import InventoryPurchases from '@/features/inventory/components/Purchases';;
 import InventoryStock from '@/features/inventory/components/Stock';;
 import InventorySuppliers from '@/features/inventory/components/Suppliers';;
 import InventoryReturns from '@/features/inventory/components/Returns';;
 import InventoryMovements from '@/features/inventory/components/Movements';;
 
+const TABS = [
+  { key: 'stock', label: 'Products & Stock' },
+  { key: 'suppliers', label: 'Suppliers' },
+  { key: 'purchases', label: 'Purchases' },
+  { key: 'returns', label: 'Returns' },
+  { key: 'movements', label: 'Movements' },
+];
+
 const InventoryPage = ({ token }: { token: string }) => {
-  const [tab, setTab] = useState('stock');
+  const [tab, setTab] = useTabParam('tab', TABS.map((t) => t.key), 'stock');
 
   return (
     <div className="flex flex-col">
@@ -17,13 +25,7 @@ const InventoryPage = ({ token }: { token: string }) => {
 
       <SectionCard className="mt-6">
         <Tabs
-          tabs={[
-            { key: 'stock', label: 'Products & Stock' },
-            { key: 'suppliers', label: 'Suppliers' },
-            { key: 'purchases', label: 'Purchases' },
-            { key: 'returns', label: 'Returns' },
-            { key: 'movements', label: 'Movements' },
-          ]}
+          tabs={TABS}
           active={tab}
           onChange={setTab}
         />

@@ -23,6 +23,10 @@ const CustomPerfume = () => {
   // Sizes & settings come from the backend palette when available, else fall back to constants.
   const sizes = palette.sizes?.length ? palette.sizes : SIZE_CONFIG;
   const bottleTypes = palette.bottleTypes ?? [];
+  // Show the no-surcharge ("Included") bottle first, then the rest in their original order.
+  const orderedBottleTypes = [...bottleTypes].sort(
+    (a, b) => Number(Boolean(a.extraPrice && Number(a.extraPrice) > 0)) - Number(Boolean(b.extraPrice && Number(b.extraPrice) > 0))
+  );
   const maxNotes = palette.settings?.maxNotesPerLayer ?? MAX_NOTES_PER_LAYER;
   const deliveryFee = palette.settings?.deliveryFee ?? CUSTOM_BLEND_DELIVERY_FEE;
 
@@ -38,6 +42,10 @@ const CustomPerfume = () => {
   const defaultBottleType = bottleTypes.find(t => !Number(t.extraPrice)) ?? bottleTypes[0];
   const [bottleTypeCode, setBottleTypeCode] = useState<string>(() => defaultBottleType?.code ?? '');
   const bottleType = bottleTypes.find(t => t.code === bottleTypeCode) ?? defaultBottleType;
+  // Bottle-card expansion: hoveredCode is temporary, lockedCode persists from a click.
+  // A card is expanded when either matches it, so hover-overlays and click-locks compose.
+  const [hoveredBottleCode, setHoveredBottleCode] = useState<string | null>(null);
+  const [lockedBottleCode, setLockedBottleCode] = useState<string | null>(null);
   const [label, setLabel] = useState('');
 
   const base = baseOverride ?? (palette.bases?.find((b) => b.code === 'alcohol-EDT')
@@ -231,28 +239,48 @@ const CustomPerfume = () => {
               <h3 className="font-display text-2xl font-semibold mb-1">Bottle Type</h3>
               <p className="text-sm text-ink-soft italic mb-5">Pick the glass your blend is poured into.</p>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {bottleTypes.map((t) => {
+                {orderedBottleTypes.map((t) => {
                   const isOn = bottleType?.code === t.code;
+                  const expanded = t.code === lockedBottleCode || t.code === hoveredBottleCode;
                   return (
                     <button
                       key={t.code}
                       type="button"
-                      onClick={() => setBottleTypeCode(t.code)}
-                      className={`text-left rounded-xl border p-4 transition-all ${isOn ? 'border-ink bg-ink text-cream' : 'border-gold/25 bg-white hover:border-gold'}`}
+                      onClick={() => {
+                        setBottleTypeCode(t.code);
+                        // Clicking the locked card again collapses it; clicking another card moves the lock to it.
+                        setLockedBottleCode(prev => (prev === t.code ? null : t.code));
+                      }}
+                      onMouseEnter={() => setHoveredBottleCode(t.code)}
+                      onMouseLeave={() => setHoveredBottleCode(prev => (prev === t.code ? null : prev))}
+                      className={`relative text-left rounded-xl p-4 transition-all overflow-hidden cursor-pointer ${isOn ? 'border-[3px] border-gold bg-ink text-cream' : 'border border-gold/25 bg-white hover:border-gold'}`}
                     >
+                      {/* Normal content — fades out while the card is expanded so the layout never jumps. */}
+                      <div className={`transition-opacity duration-300 ease-out ${expanded ? 'opacity-0' : 'opacity-100'}`}>
+                        {t.image && (
+                          <img
+                            src={t.image}
+                            alt={`${t.name} bottle`}
+                            loading="lazy"
+                            className="w-full h-32 object-cover rounded-lg mb-3 bg-sand/60"
+                          />
+                        )}
+                        <p className="font-medium">{t.name}</p>
+                        <p className={`text-xs mt-1 ${isOn ? 'text-cream/70' : 'text-ink-soft'}`}>{t.description}</p>
+                        <p className={`text-sm font-semibold mt-2 ${isOn ? 'text-gold-soft' : 'gold-text'}`}>
+                          {Number(t.extraPrice) > 0 ? `+ Rs. ${t.extraPrice}` : 'Included'}
+                        </p>
+                      </div>
+                      {/* Expanded overlay — the bottle fills the card (object-contain keeps it fully visible). */}
                       {t.image && (
                         <img
                           src={t.image}
-                          alt={`${t.name} bottle`}
+                          alt=""
+                          aria-hidden="true"
                           loading="lazy"
-                          className="w-full h-32 object-cover rounded-lg mb-3 bg-sand/60"
+                          className={`pointer-events-none absolute inset-0 w-full h-full object-cover rounded-xl transition-all duration-300 ease-out ${expanded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
                         />
                       )}
-                      <p className="font-medium">{t.name}</p>
-                      <p className={`text-xs mt-1 ${isOn ? 'text-cream/70' : 'text-ink-soft'}`}>{t.description}</p>
-                      <p className={`text-sm font-semibold mt-2 ${isOn ? 'text-gold-soft' : 'gold-text'}`}>
-                        {Number(t.extraPrice) > 0 ? `+ Rs. ${t.extraPrice}` : 'Included'}
-                      </p>
                     </button>
                   );
                 })}
@@ -295,7 +323,7 @@ const CustomPerfume = () => {
               <hr className="border-cream/10" />
               <div className="flex justify-between"><span className="text-cream/60">Base</span><span>{base ? base.name : '\u2014'}</span></div>
               <div className="flex justify-between"><span className="text-cream/60">Size</span><span>{size.label}</span></div>
-              <div className="flex justify-between"><span className="text-cream/60">Bottle</span><span>{bottleType ? bottleType.name : '\u2014'}</span></div>
+              <div className="flex justify-between"><span className="text-cream/60">Bottle</span><span>{bottleType ? `${bottleType.name}${Number(bottleType.extraPrice) > 0 ? ` (${bottleType.extraPrice})` : ''}` : '\u2014'}</span></div>
               {label && <div className="flex justify-between"><span className="text-cream/60">Label</span><span className="italic gold-text">&quot;{label}&quot;</span></div>}
               <hr className="border-cream/10" />
               <div className="flex justify-between items-baseline">

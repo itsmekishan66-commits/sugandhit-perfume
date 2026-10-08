@@ -9,6 +9,7 @@ import {
   listAdminRoles as listAdminRolesRepo,
   findWithHistory,
   addCredit,
+  removeById,
   type UserListFilters,
   type AdminListFilters,
 } from './users.repository.js';
@@ -59,3 +60,5 @@ export const getUserWithHistory = async (userId: number) => findWithHistory(user
 export const listAdminRoles = () => listAdminRolesRepo();
 
 export const addUserCredit = async (userId: number, amount: number) => addCredit(userId, amount);
+
+export const deleteUserById = async (userId: number) => removeById(userId);

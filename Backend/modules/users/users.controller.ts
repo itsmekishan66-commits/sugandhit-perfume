@@ -6,6 +6,7 @@ import {
   listAllAdmins,
   getUserWithHistory,
   addUserCredit,
+  deleteUserById,
   listAdminRoles,
 } from './users.service.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
@@ -133,6 +134,27 @@ export const userCredit = async (req: Request, res: Response) => {
       ip: a.ip,
     });
     ok(res, { user }, 'Credit balance updated.');
+  } catch (error) {
+    console.log(error);
+    fail(res, (error as Error).message);
+  }
+};
+
+export const userDelete = async (req: Request, res: Response) => {
+  try {
+    const a = { actorId: req.admin?.id, ip: req.ip };
+    const { userId } = req.body;
+    const user = await deleteUserById(Number(userId));
+    if (!user) return fail(res, 'User not found.');
+    await createAuditLog({
+      ...a,
+      action: 'user.delete',
+      entityType: 'users',
+      entityId: String(userId),
+      newValue: { deleted: user.email, name: user.name },
+      ip: a.ip,
+    });
+    ok(res, {}, 'Customer deleted.');
   } catch (error) {
     console.log(error);
     fail(res, (error as Error).message);

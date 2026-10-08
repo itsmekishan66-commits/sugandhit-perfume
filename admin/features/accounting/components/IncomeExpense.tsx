@@ -19,6 +19,7 @@ import Pagination from '@/components/ui/Pagination';
 import { api } from '@/services/api';
 import { money, formatDate } from '@/utils/format';
 import Loading from '@/components/feedback/Loading';
+import { useTabParam } from '@/hooks/useTabParam';
 
 interface ChartAcc { id: number; code: string; name: string; accountType: string; active: boolean }
 interface PaymentAcc { id: number; name: string; active: boolean }
@@ -33,7 +34,7 @@ interface ExpenseRow {
 const PAGE_SIZE = 20;
 
 const AccountingIncomeExpense = ({ token }: { token: string }) => {
-  const [tab, setTab] = useState('income');
+  const [tab, setTab] = useTabParam('subtab', ['income', 'expenses'], 'income');
   const [income, setIncome] = useState<IncomeRow[]>([]);
   const [incomeTotal, setIncomeTotal] = useState(0);
   const [incomeCount, setIncomeCount] = useState(0);

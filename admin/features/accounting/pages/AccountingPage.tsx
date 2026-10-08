@@ -1,7 +1,7 @@
-﻿import { useState } from 'react';
-import PageHeader from '@/components/data-display/PageHeader';
+﻿import PageHeader from '@/components/data-display/PageHeader';
 import SectionCard from '@/components/data-display/SectionCard';
 import Tabs from '@/components/ui/Tabs';
+import { useTabParam } from '@/hooks/useTabParam';
 import Accounts from '@/features/accounting/components/Accounts';;
 import AccountingChart from '@/features/accounting/components/Chart';;
 import AccountingJournals from '@/features/accounting/components/Journals';;
@@ -15,8 +15,23 @@ import AccountingPeriods from '@/features/accounting/components/Periods';;
 import AccountingSettings from '@/features/accounting/components/AccountingSettings';;
 import AccountingAuditLogs from '@/features/accounting/components/AuditLogs';;
 
+const TABS = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'chart', label: 'Chart of Accounts' },
+  { key: 'journals', label: 'Journal Entries' },
+  { key: 'ledger', label: 'General Ledger' },
+  { key: 'trial-balance', label: 'Trial Balance' },
+  { key: 'profit-loss', label: 'Profit & Loss' },
+  { key: 'balance-sheet', label: 'Balance Sheet' },
+  { key: 'cash-flow', label: 'Cash Flow' },
+  { key: 'income-expense', label: 'Income & Expenses' },
+  { key: 'periods', label: 'Periods' },
+  { key: 'audit-logs', label: 'Audit Logs' },
+  { key: 'settings', label: 'Settings' },
+];
+
 const AccountsPage = ({ token }: { token: string }) => {
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useTabParam('tab', TABS.map((t) => t.key), 'overview');
 
   return (
     <div className="flex flex-col">
@@ -24,20 +39,7 @@ const AccountsPage = ({ token }: { token: string }) => {
 
       <SectionCard className="mt-6">
         <Tabs
-          tabs={[
-            { key: 'overview', label: 'Overview' },
-            { key: 'chart', label: 'Chart of Accounts' },
-            { key: 'journals', label: 'Journal Entries' },
-            { key: 'ledger', label: 'General Ledger' },
-            { key: 'trial-balance', label: 'Trial Balance' },
-            { key: 'profit-loss', label: 'Profit & Loss' },
-            { key: 'balance-sheet', label: 'Balance Sheet' },
-            { key: 'cash-flow', label: 'Cash Flow' },
-            { key: 'income-expense', label: 'Income & Expenses' },
-            { key: 'periods', label: 'Periods' },
-            { key: 'audit-logs', label: 'Audit Logs' },
-            { key: 'settings', label: 'Settings' },
-          ]}
+          tabs={TABS}
           active={tab}
           onChange={setTab}
         />

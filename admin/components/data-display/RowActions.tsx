@@ -21,7 +21,7 @@ const RowActions = ({
 }: RowActionsProps) => {
   if (!onView && !onEdit && !onDelete) return null;
 
-  const iconCls = `inline-flex h-8 w-8 items-center justify-center rounded-xl cursor-pointer transition-colors`;
+  const iconCls = `inline-flex h-8 w-8 items-center justify-center rounded-xl cursor-pointer transition-colors border`;
 
   return (
     <div className="inline-flex gap-1.5">

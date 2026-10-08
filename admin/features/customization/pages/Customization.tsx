@@ -5,9 +5,11 @@ import ConfirmDialog from '@/components/feedback/ConfirmDialog';
 import Loading from '@/components/feedback/Loading';
 import { api } from '@/services/api';
 import RowActions from '@/components/data-display/RowActions';
+import ImagePreview from '@/components/data-display/ImagePreview';
 import SearchInput from '@/components/ui/SearchInput';
 import Pagination from '@/components/ui/Pagination';
 import { matches } from '@/utils';
+import { useTabParam } from '@/hooks/useTabParam';
 
 interface Note {
   id: string;
@@ -57,6 +59,8 @@ interface CustomizationData {
 type LayerKey = 'topNotes' | 'heartNotes' | 'baseNotes';
 type TabKey = 'notes' | 'bases' | 'sizes' | 'bottletypes' | 'settings';
 type SectionKey = LayerKey | 'bases' | 'sizes' | 'bottleTypes' | 'settings';
+
+const TAB_KEYS: TabKey[] = ['notes', 'bases', 'sizes', 'bottletypes', 'settings'];
 
 interface Message {
   kind: 'error' | 'info' | 'success';
@@ -156,7 +160,7 @@ const bottleTypeToServer = (b: BottleTypeOption) => ({ name: b.name, code: b.cod
 
 const Customization = ({ token }: { token: string }) => {
   const [data, setData] = useState<CustomizationData>(clone(EMPTY_DATA));
-  const [activeTab, setActiveTab] = useState<TabKey>('notes');
+  const [activeTab, setActiveTab] = useTabParam('tab', TAB_KEYS, 'notes');
   const [message, setMessage] = useState<{ section: SectionKey } & Message | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -188,6 +192,14 @@ const Customization = ({ token }: { token: string }) => {
 
   /** Current page per block for its saved-items list (bounds are clamped on render). */
   const [savedPages, setSavedPages] = useState<Record<string, number>>({});
+
+  /**
+   * Bottle-type image source lock per row id: choosing a file disables the URL field,
+   * typing a URL disables the upload button (mutually exclusive inputs).
+   */
+  const [bottleImgMode, setBottleImgMode] = useState<Record<string, 'upload' | 'url'>>({});
+  /** Row id currently uploading, so the button shows "Uploading…" and can't double-fire. */
+  const [uploadingBottleId, setUploadingBottleId] = useState<string | null>(null);
 
   /* Load the live palette (notes + bases + sizes + settings) from the backend on mount. */
   useEffect(() => {
@@ -353,6 +365,7 @@ const Customization = ({ token }: { token: string }) => {
   const cancelDrafts = <K extends keyof Drafts>(key: K) => {
     setDrafts(prev => ({ ...prev, [key]: [] }));
     setEditing(prev => ({ ...prev, [key]: null }));
+    if (key === 'bottleTypes') setBottleImgMode({});
     setMessage(null);
   };
 
@@ -587,6 +600,8 @@ const Customization = ({ token }: { token: string }) => {
     setData(next);
     setDrafts(prev => ({ ...prev, bottleTypes: [] }));
     setEditing(prev => ({ ...prev, bottleTypes: null }));
+    setBottleImgMode({});
+    setUploadingBottleId(null);
     notify('bottleTypes', 'success', 'Bottle types saved.');
     void syncBottleTypes(nextBottleTypes);
   };
@@ -596,6 +611,7 @@ const Customization = ({ token }: { token: string }) => {
     if (!item) return;
     setEditing(prev => ({ ...prev, bottleTypes: id }));
     setDrafts(prev => ({ ...prev, bottleTypes: [clone(item)] }));
+    setBottleImgMode({});
     setMessage(null);
   };
 
@@ -604,6 +620,7 @@ const Customization = ({ token }: { token: string }) => {
     setData(next);
     setEditing(prev => (prev.bottleTypes === id ? { ...prev, bottleTypes: null } : prev));
     if (editing.bottleTypes === id) setDrafts(prev => ({ ...prev, bottleTypes: [] }));
+    setBottleImgMode({});
     notify('bottleTypes', 'success', 'Bottle type deleted.');
     void syncBottleTypes(next.bottleTypes);
   };
@@ -612,6 +629,47 @@ const Customization = ({ token }: { token: string }) => {
     if (!deleteTarget || !('section' in deleteTarget) || deleteTarget.section !== 'bottleTypes') return;
     deleteBottleType(deleteTarget.id);
     setDeleteTarget(null);
+  };
+
+  /** Uploads a picked file for one bottle-type row and stores the returned URL in the row. */
+  const handleBottleImageUpload = async (index: number, file: File | undefined, input: HTMLInputElement) => {
+    input.value = ''; // allow re-selecting the same file
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      notify('bottleTypes', 'error', 'Please choose an image file.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      notify('bottleTypes', 'error', 'Image must be 5 MB or smaller.');
+      return;
+    }
+    const row = drafts.bottleTypes[index];
+    if (!row) return;
+    setUploadingBottleId(row.id);
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const res = await api<{ url: string }>('/api/customization/bottletypes/image', token, { method: 'POST', body: formData });
+      setBottleImgMode(prev => ({ ...prev, [row.id]: 'upload' }));
+      updateDraftRow('bottleTypes', index, 'image', res.url);
+      notify('bottleTypes', 'success', 'Image uploaded.');
+    } catch (error) {
+      notify('bottleTypes', 'error', 'Could not upload image.', (error as Error).message);
+    } finally {
+      setUploadingBottleId(null);
+    }
+  };
+
+  /** Clears the row image and unlocks both inputs (upload + URL are usable again). */
+  const clearBottleImage = (index: number) => {
+    const row = drafts.bottleTypes[index];
+    if (!row) return;
+    setBottleImgMode(prev => {
+      const next = { ...prev };
+      delete next[row.id];
+      return next;
+    });
+    updateDraftRow('bottleTypes', index, 'image', '');
   };
 
   /* ---------- Settings ---------- */
@@ -662,6 +720,7 @@ const Customization = ({ token }: { token: string }) => {
     `px-4 py-2 rounded-lg text-sm transition-colors ${active ? 'bg-gold text-cream' : 'bg-gold/10 text-ink hover:bg-gold/20'}`;
   const addBtnCls = 'px-4 py-2 bg-gold text-cream rounded-lg text-sm font-medium hover:bg-gold/90 transition-colors';
   const smallOutlineBtn = 'px-3 py-1.5 text-sm border border-gold/30 rounded-lg hover:bg-sand transition-colors';
+  const uploadBtnCls = 'inline-flex items-center gap-1.5 shrink-0 px-3 py-2.5 text-sm border border-gold/30 rounded-xl bg-sand/60 hover:bg-sand/80 transition-colors cursor-pointer';
 
   const renderSavedList = (children: React.ReactNode) => (
     <div className="mt-5">
@@ -1049,17 +1108,20 @@ const Customization = ({ token }: { token: string }) => {
         {rows.length > 0 && (
           <>
             <div className="space-y-3 mb-4">
-              {rows.map((type, i) => (
+              {rows.map((type, i) => {
+                const imgMode = bottleImgMode[type.id];
+                return (
                 <div key={type.id} className="flex gap-3 items-end justify-between p-4 border border-gold/30 rounded-xl bg-sand/40">
                   <div className="flex gap-3 flex-1 flex-wrap items-end">
                     <div className="w-24 shrink-0">
                       <label className={labelCls}>Image</label>
                       {type.image ? (
-                        <img
+                        <ImagePreview
                           src={type.image}
                           alt={type.name || 'Bottle type'}
                           className="w-24 h-24 object-cover rounded-xl border border-gold/20 bg-cream/50"
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '0.2'; }}
+                          errorClassName="w-24 h-24 rounded-xl border border-dashed border-red-300 bg-red-50/60 text-red-500 flex flex-col items-center justify-center gap-1 text-center px-1 text-[10px] leading-tight"
+                          errorLabel="Invalid image link"
                         />
                       ) : (
                         <div className="w-24 h-24 rounded-xl border border-dashed border-gold/30 bg-cream/40" />
@@ -1082,15 +1144,58 @@ const Customization = ({ token }: { token: string }) => {
                       <input className={fieldCls} value={type.description} onChange={(e) => updateDraftRow('bottleTypes', i, 'description', e.target.value)} placeholder="Timeless clear glass" />
                     </div>
                     <div className="flex-2 min-w-60">
-                      <label className={labelCls}>Image URL</label>
-                      <input className={fieldCls} value={type.image} onChange={(e) => updateDraftRow('bottleTypes', i, 'image', e.target.value)} placeholder="https://…" />
+                      <label className={labelCls}>Image — upload or URL</label>
+                      <div className="flex gap-2 items-stretch">
+                        <label
+                          className={imgMode === 'url' ? `${uploadBtnCls} opacity-40 cursor-not-allowed` : uploadBtnCls}
+                          title={imgMode === 'url' ? 'Clear the URL below to enable upload' : 'Upload an image file'}
+                        >
+                          {uploadingBottleId === type.id ? 'Uploading…' : 'Upload image'}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={imgMode === 'url' || uploadingBottleId === type.id}
+                            onChange={(e) => { handleBottleImageUpload(i, e.target.files?.[0] ?? undefined, e.currentTarget); }}
+                          />
+                        </label>
+                        <div className="flex-1 min-w-40 relative">
+                          <input
+                            className={`${fieldCls} ${imgMode === 'upload' ? 'opacity-50 cursor-not-allowed pr-9' : ''}`}
+                            value={type.image}
+                            disabled={imgMode === 'upload'}
+                            placeholder={imgMode === 'upload' ? 'Uploaded image — click ✕ to use a URL' : 'https://… or upload'}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              updateDraftRow('bottleTypes', i, 'image', value);
+                              setBottleImgMode(prev => {
+                                const next = { ...prev };
+                                if (value.trim()) next[type.id] = 'url';
+                                else delete next[type.id];
+                                return next;
+                              });
+                            }}
+                          />
+                          {imgMode === 'upload' && (
+                            <button
+                              type="button"
+                              onClick={() => clearBottleImage(i)}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-red-600 hover:bg-red-50 rounded-md px-1.5 py-0.5 text-sm"
+                              title="Clear image and re-enable both options"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <button type="button" onClick={() => removeDraftRow('bottleTypes', i)} className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm transition-colors" title="Remove row">
                     ✕
                   </button>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex flex-col items-end gap-2">
@@ -1126,7 +1231,7 @@ const Customization = ({ token }: { token: string }) => {
                   <div key={type.id} className="flex items-center justify-between gap-3 border border-gold/15 rounded-xl px-4 py-2.5 bg-cream/40">
                     <div className="flex items-center gap-3 flex-wrap">
                       {type.image
-                        ? <img src={type.image} alt={type.name} className="w-10 h-10 rounded-lg object-cover border border-gold/20 shrink-0" />
+                        ? <ImagePreview src={type.image} alt={type.name} className="w-10 h-10 rounded-lg object-cover border border-gold/20 shrink-0" errorClassName="w-10 h-10 rounded-lg border border-dashed border-red-300 bg-red-50/60 text-red-500 flex items-center justify-center shrink-0 text-sm" />
                         : <span className="w-10 h-10 rounded-lg border border-dashed border-gold/30 shrink-0" />}
                       <span className="font-medium">{type.name}</span>
                       <span className="text-xs bg-gold/15 text-ink-soft px-2 py-0.5 rounded">{type.code}</span>

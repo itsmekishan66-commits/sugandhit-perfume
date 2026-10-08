@@ -122,6 +122,11 @@ export const findWithHistory = async (userId: number) => {
   };
 };
 
+export const removeById = async (userId: number) => {
+  const deleted = await db.delete(users).where(eq(users.id, userId)).returning();
+  return deleted[0] ? serializeUser(deleted[0]) : null;
+};
+
 export const addCredit = async (userId: number, amount: number) => {
   const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
   if (!user) throw new Error('User not found.');

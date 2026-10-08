@@ -146,6 +146,7 @@ export const PERMISSIONS = {
   inventory_view: 'inventory.view',
   inventory_manage: 'inventory.manage',
   inventory_adjust: 'inventory.adjust',
+  users_manage: 'users.manage',
 } as const;
 
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -171,6 +172,7 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.inventory_view,
     PERMISSIONS.inventory_manage,
     PERMISSIONS.inventory_adjust,
+    PERMISSIONS.users_manage,
   ],
   editor: [PERMISSIONS.payments_view, PERMISSIONS.accounts_view, PERMISSIONS.accounts_view_reports, PERMISSIONS.receivables_view, PERMISSIONS.payables_view, PERMISSIONS.inventory_view],
 };

@@ -63,6 +63,7 @@ interface CartState {
   updateCustomBlendQty: (key: string, qty: number) => void;
   removeCustomBlend: (key: string) => void;
   updateQuantity: (itemId: string, colors: string, quantity: number) => Promise<void>;
+  moveToWishlist: (itemId: string) => Promise<void>;
   toggleWishlist: (itemId: string) => Promise<void>;
   removeFromWishlist: (itemId: string) => Promise<void>;
   hydrateFromServer: (token: string) => Promise<void>;
@@ -182,6 +183,39 @@ export const useCart = create<CartState>()(
             const ok = await apiCartUpdate(token, itemId, colors, quantity);
             if (!ok) {
               showToast('Failed to update cart', 'error');
+            }
+          } catch (error) {
+            console.log(error);
+            showToast((error as Error).message, 'error');
+          }
+        }
+      },
+
+      // Moves a cart product to the wishlist: the product leaves every cart
+      // line and is saved as a wishlist entry (product-level, not size-level).
+      moveToWishlist: async (itemId) => {
+        const cartData = structuredClone(get().cartItems);
+        const sizes = Object.keys(cartData[itemId] || {});
+        const alreadyWishlisted = get().wishlist.includes(itemId);
+        delete cartData[itemId];
+        set((state) => ({
+          cartItems: cartData,
+          wishlist: alreadyWishlisted ? state.wishlist : [...state.wishlist, itemId],
+        }));
+        showToast('Moved to wishlist', 'success');
+        const token = getToken();
+        if (token) {
+          try {
+            for (const size of sizes) {
+              const ok = await apiCartUpdate(token, itemId, size, 0);
+              if (!ok) {
+                showToast('Failed to update cart', 'error');
+                break;
+              }
+            }
+            if (!alreadyWishlisted) {
+              const ok = await apiWishlistAdd(token, itemId);
+              if (!ok) showToast('Failed to update wishlist', 'error');
             }
           } catch (error) {
             console.log(error);

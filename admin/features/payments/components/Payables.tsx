@@ -20,6 +20,7 @@ import { api } from '@/services/api';
 import { money, num, formatDate } from '@/utils/format';
 import { DEBT_STATUS_LABELS } from '@/utils/labels';
 import Loading from '@/components/feedback/Loading';
+import { useTabParam } from '@/hooks/useTabParam';
 
 interface Vendor {
   _id: string;
@@ -56,7 +57,7 @@ interface Payable {
 const PAGE_SIZE = 20;
 
 const PaymentPayables = ({ token }: { token: string }) => {
-  const [tab, setTab] = useState('bills');
+  const [tab, setTab] = useTabParam('subtab', ['bills', 'vendors'], 'bills');
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [vendorTotal, setVendorTotal] = useState(0);
   const [aging, setAging] = useState<{ current: number; d30: number; d60: number; d90: number; d90plus: number } | null>(null);

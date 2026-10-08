@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Trash } from "lucide-react"
+import { Heart, Trash } from "lucide-react"
 import Title from '@/components/ui/Title';
 import CartTotal from '@/components/cart/CartTotal';
 import Reveal from '@/components/ui/Reveal';
@@ -89,6 +89,8 @@ const Cart = () => {
   const cartItems = useCart((s) => s.cartItems);
   const customBlends = useCart((s) => s.customBlends);
   const updateQuantity = useCart((s) => s.updateQuantity);
+  const moveToWishlist = useCart((s) => s.moveToWishlist);
+  const wishlist = useCart((s) => s.wishlist);
   const updateCustomBlendQty = useCart((s) => s.updateCustomBlendQty);
   const removeCustomBlend = useCart((s) => s.removeCustomBlend);
   const [tab, setTab] = useState<CartTab>('all');
@@ -179,6 +181,15 @@ const Cart = () => {
                           <span className="px-2 min-w-6 text-center">{quantity}</span>
                           <button onClick={() => updateQuantity(itemId, size, quantity + 1)} className="px-2.5 text-xl text-ink-soft">+</button>
                         </div>
+                        <button
+                          type="button"
+                          aria-label="Move to wishlist"
+                          title="Move to wishlist"
+                          onClick={() => moveToWishlist(itemId)}
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white border border-gold/20 shadow-sm transition-transform hover:scale-110"
+                        >
+                          <Heart className={`w-4 h-4 transition-colors ${wishlist.includes(itemId) ? 'fill-espresso text-espresso' : 'text-ink-soft'}`} />
+                        </button>
                         <Trash
                           onClick={() => updateQuantity(itemId, size, 0)}
                           className="w-4 cursor-pointer opacity-50 hover:opacity-100 transition-opacity"
