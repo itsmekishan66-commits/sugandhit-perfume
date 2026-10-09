@@ -143,7 +143,7 @@ const CustomizeCTA = () => {
                 <span className="w-6 h-px bg-gold/50" />
                 The Signature Studio
               </p>
-              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl leading-[1.1]">
+              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-[1.1]">
                 Design a scent that
                 <br />
                 <span className="italic gold-text">has never existed.</span>
@@ -156,7 +156,7 @@ const CustomizeCTA = () => {
                 <button
                   key={tier}
                   onClick={() => setActiveTier(tier)}
-                  className={`flex-1 py-2.5 px-3 rounded-xl text-xs tracking-wide uppercase transition-all duration-300 ${
+                  className={`flex-1 py-2.5 px-1.5 sm:px-3 rounded-xl text-[9px] sm:text-xs whitespace-nowrap tracking-wide uppercase transition-all duration-300 ${
                     activeTier === tier
                       ? 'bg-gold/15 text-gold border border-gold/30 shadow-lg shadow-gold/5'
                       : 'text-cream/40 hover:text-cream/70 border border-transparent'

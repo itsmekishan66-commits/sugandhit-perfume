@@ -1,7 +1,7 @@
-import { useState } from "react";
+  import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Search, User, ShoppingCart, Home, LayoutGrid, Sparkles, Heart, type LucideIcon } from "lucide-react";
+import { Search, User, ShoppingCart, Home, LayoutGrid, Sparkles, Heart, Info, Phone, type LucideIcon } from "lucide-react";
 import { LogOut, LayoutDashboardIcon } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
@@ -44,6 +44,16 @@ const Navbar = () => {
       to: token ? "/dashboard" : "/login",
       icon: User,
     },
+    {
+      label: "About",
+      to: "/about",
+      icon: Info,
+    },
+    {
+      label: "Contact",
+      to: "/contact",
+      icon: Phone,
+    },
   ];
 
   const getActiveIndex = () => {
@@ -63,6 +73,14 @@ const Navbar = () => {
 
     if (path.startsWith("/dashboard") || path.startsWith("/login")) {
       return 3;
+    }
+
+    if (path.startsWith("/about")) {
+      return 4;
+    }
+
+    if (path.startsWith("/contact")) {
+      return 5;
     }
 
     return -1;
@@ -231,7 +249,7 @@ const Navbar = () => {
               <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-linear-to-r from-transparent via-gold/50 to-transparent" />
 
               {activeIndex >= 0 && (
-                <div className=" pointer-events-none absolute left-0 top-0 z-0 h-full w-1/4 transition-transform duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform transform-[translate3d(0,0,0)] backface-hidden"
+                <div className=" pointer-events-none absolute left-0 top-0 z-0 h-full w-1/6 transition-transform duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform transform-[translate3d(0,0,0)] backface-hidden"
                   style={{
                     transform: `translate3d(${activeIndex * 100}%, 0, 0)`,
                   }}
@@ -248,7 +266,7 @@ const Navbar = () => {
                 </div>
               )}
 
-              <div className="relative z-10 grid h-full w-full grid-cols-4">
+              <div className="relative z-10 grid h-full w-full grid-cols-6">
 
                 {mobileLinks.map((item, index) => {
                   const Icon = item.icon;
@@ -270,7 +288,7 @@ const Navbar = () => {
                           strokeWidth={isActive ? 2.4 : 2} />
                       </span>
 
-                      <span className={`text-[10px] leading-none transition-colors duration-300
+                      <span className={`text-[9px] sm:text-[10px] whitespace-nowrap leading-none transition-colors duration-300
                            ${isActive
                             ? "font-semibold text-espresso"
                             : "font-medium text-ink-soft"

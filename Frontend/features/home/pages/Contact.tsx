@@ -34,7 +34,7 @@ const Contact = () => {
     });
   };
 
-  const inputClass = "w-full px-5 py-4 rounded-2xl bg-white/80 border border-gold/25 focus:border-gold transition-colors text-sm";
+  const inputClass = "w-full px-2 md:px-5 py-2 md:py-4 rounded-2xl bg-white/80 border border-gold/25 focus:border-gold transition-colors text-sm";
   const labelClass = "text-sm font-medium mb-2 inline-block";
 
   return (
@@ -92,7 +92,7 @@ const Contact = () => {
             <p className="text-sm text-ink-soft mt-1">{b}</p>
           </div>
         ))}
-      </Reveal>
+      </Reveal>   
     </div>
   );
 };

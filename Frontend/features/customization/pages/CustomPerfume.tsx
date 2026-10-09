@@ -181,7 +181,9 @@ const CustomPerfume = () => {
 
   return (
     <div className="pt-2 pb-16">
-      <Title text1={'Signature'} text2={'Perfume Studio'} />
+      <div className="[&_h2]:text-[clamp(1.35rem,6.5vw,3rem)] [&_h2]:whitespace-nowrap">
+        <Title text1={'Signature'} text2={'Perfume Studio'} />
+      </div>
       <p className="text-center text-ink-soft max-w-xl mx-auto -mt-6 mb-10">
         Compose your scent in three layers, choose your base, and we&apos;ll hand-blend it
         fresh — just for you.
@@ -189,7 +191,7 @@ const CustomPerfume = () => {
 
       {!token && (
         <Reveal className="max-w-lg mx-auto mb-10 rounded-2xl bg-linear-to-r from-espresso to-ink text-cream p-6 text-center">
-          <p className="font-display text-2xl">Sign in to save your blend & order.</p>
+          <p className="font-display text-[clamp(0.85rem,4.5vw,1.5rem)] whitespace-nowrap">Sign in to save your blend & order.</p>
           <button onClick={() => navigate('/login')} className="btn-gold mt-4">Sign in / Register</button>
         </Reveal>
       )}
