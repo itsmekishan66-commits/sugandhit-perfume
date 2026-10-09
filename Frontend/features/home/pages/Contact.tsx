@@ -44,7 +44,7 @@ const Contact = () => {
         <form onSubmit={onSubmitHandler} onChangeCapture={clearErrors} noValidate className="grid sm:grid-cols-2 gap-6">
           <div>
             <label className={labelClass}>Your name<RequiredMark /></label>
-            <input name="name" className={inputClass} type="text" required placeholder="e.g. Aarav Shakya" />
+            <input name="name" className={inputClass} type="text" required placeholder="e.g. Gopal Basnet" />
           </div>
           <div>
             <label className={labelClass}>Email<RequiredMark /></label>
