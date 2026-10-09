@@ -82,8 +82,8 @@ const Contact = () => {
 
       <Reveal className="mt-14 grid md:grid-cols-3 gap-6 text-center">
         {[
-          ['☎️', '+977 9804068834', 'Mon–Sat, 9am–7pm'],
-          ['✉️', 'hello@sugandhit.com', 'We reply within a day'],
+          ['☎️', '+977 9805994999', 'Mon–Sat, 9am–7pm'],
+          ['✉️', 'support@sugandhit.com', 'We reply within a day'],
           ['📍', 'Kathmandu, Nepal', 'Studio visits by appointment'],
         ].map(([icon, a, b]) => (
           <div key={a} className="card-lux rounded-2xl p-6">

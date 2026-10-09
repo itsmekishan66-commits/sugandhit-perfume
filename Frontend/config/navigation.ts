@@ -26,8 +26,8 @@ export const FOOTER_COMPANY_LINKS: NavLinkDef[] = [
 ];
 
 export const CONTACT_DETAILS = {
-  phone: '+977 9804068834',
-  email: 'hello@sugandhit.com',
+  phone: '+977 980599499',
+  email: 'support@sugandhit.com',
 };
 
 export interface SocialLink {
