@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Title from "@/components/ui/Title";
+import RequiredMark from "@/components/ui/RequiredMark";
+import FormErrors from "@/components/feedback/FormErrors";
 import { showToast } from "@/components/feedback/toast";
 import CartTotal from "@/components/cart/CartTotal";
 import { assets } from "@/assets/assets";
@@ -9,6 +11,7 @@ import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useCart, getCartAmount } from "@/context/CartContext";
 import { orderAddressSchema } from "@/validate/schemas";
+import { useFormErrors } from "@/hooks/useFormErrors";
 import { DELIVERY_FEE } from "@/config/constants";
 import { placeCustomOrder } from "@/features/customization/customization.service";
 import { buildOrderItems, placeOrder } from "../checkout.service";
@@ -35,6 +38,7 @@ const PlaceOrder = () => {
     district: '',
     phone: ''
   });
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const onChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     const name = event.target.name
@@ -63,13 +67,13 @@ const PlaceOrder = () => {
 
   const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (subtotal === 0) {
-      showToast('Your cart is empty', 'error');
-      return;
-    }
     const parsed = orderAddressSchema.safeParse(formData);
-    if (!parsed.success) {
-      showToast(parsed.error.issues[0].message, 'error');
+    if (
+      !validate([
+        subtotal === 0 && 'Your cart is empty',
+        ...(parsed.success ? [] : parsed.error.issues.map((issue) => issue.message)),
+      ])
+    ) {
       return;
     }
     try {
@@ -125,26 +129,47 @@ const PlaceOrder = () => {
     }
   }
 
-  const inputClass = "border border-gold/20 bg-white/70 rounded-xl py-3 px-4 w-full text-sm focus:border-gold transition-colors outline-none";
+  const inputClass = "border border-gold/20 bg-white/70 rounded-xl py-3 px-4 pr-9 w-full text-sm focus:border-gold transition-colors outline-none";
 
   return (
-    <form onSubmit={onSubmitHandler} className="flex flex-col lg:flex-row lg:items-start justify-between gap-10 pt-5 sm:pt-14 pb-10">
+    <form onSubmit={onSubmitHandler} onChangeCapture={clearErrors} noValidate className="flex flex-col lg:flex-row lg:items-start justify-between gap-10 pt-5 sm:pt-14 pb-10">
       {/* LEFT SIDE */}
       <div className="flex flex-col gap-4 w-full max-w-130">
         <div className="text-left lg:text-3xl my-3">
           <Title text1={'Delivery'} text2={'Information'} />
         </div>
         <div className="flex gap-3">
-          <input required onChange={onChangeHandler} name="firstName" value={formData.firstName} className={inputClass} type="text" placeholder="First name" />
-          <input required onChange={onChangeHandler} name="lastName" value={formData.lastName} className={inputClass} type="text" placeholder="Last name" />
+          <div className="relative w-full">
+            <input required onChange={onChangeHandler} name="firstName" value={formData.firstName} className={inputClass} type="text" placeholder="First name" />
+            <RequiredMark className="absolute right-3 top-1/2 -translate-y-1/2" />
+          </div>
+          <div className="relative w-full">
+            <input required onChange={onChangeHandler} name="lastName" value={formData.lastName} className={inputClass} type="text" placeholder="Last name" />
+            <RequiredMark className="absolute right-3 top-1/2 -translate-y-1/2" />
+          </div>
         </div>
-        <input required onChange={onChangeHandler} name="email" value={formData.email} className={inputClass} type="email" placeholder="Email address" />
-        <input required onChange={onChangeHandler} name="location" value={formData.location} className={inputClass} type="text" placeholder="Street / Location / Tole" />
+        <div className="relative">
+          <input required onChange={onChangeHandler} name="email" value={formData.email} className={inputClass} type="email" placeholder="Email address" />
+          <RequiredMark className="absolute right-3 top-1/2 -translate-y-1/2" />
+        </div>
+        <div className="relative">
+          <input required onChange={onChangeHandler} name="location" value={formData.location} className={inputClass} type="text" placeholder="Street / Location / Tole" />
+          <RequiredMark className="absolute right-3 top-1/2 -translate-y-1/2" />
+        </div>
         <div className="flex gap-3">
-          <input required onChange={onChangeHandler} name="district" value={formData.district} className={inputClass} type="text" placeholder="District" />
-          <input required onChange={onChangeHandler} name="city" value={formData.city} className={inputClass} type="text" placeholder="City" />
+          <div className="relative w-full">
+            <input required onChange={onChangeHandler} name="district" value={formData.district} className={inputClass} type="text" placeholder="District" />
+            <RequiredMark className="absolute right-3 top-1/2 -translate-y-1/2" />
+          </div>
+          <div className="relative w-full">
+            <input required onChange={onChangeHandler} name="city" value={formData.city} className={inputClass} type="text" placeholder="City" />
+            <RequiredMark className="absolute right-3 top-1/2 -translate-y-1/2" />
+          </div>
         </div>
-        <input required onChange={onChangeHandler} name="phone" value={formData.phone} className={inputClass} type="number" placeholder="Phone" />
+        <div className="relative">
+          <input required onChange={onChangeHandler} name="phone" value={formData.phone} className={inputClass} type="number" placeholder="Phone" />
+          <RequiredMark className="absolute right-3 top-1/2 -translate-y-1/2" />
+        </div>
       </div>
 
       {/* RIGHT SIDE */}
@@ -173,8 +198,11 @@ const PlaceOrder = () => {
               <p className="text-sm font-medium tracking-wide">CASH ON DELIVERY</p>
             </div>
           </div>
-          <div className="w-full text-center mt-8">
-            <button type="submit" className="btn-primary w-full">Place Order — {new Intl.NumberFormat().format(subtotal + DELIVERY_FEE)}</button>
+          <div className="mt-8 flex flex-col items-start gap-3">
+            <FormErrors errors={errors} />
+            <div className="w-full text-center">
+              <button type="submit" className="btn-primary w-full">Place Order — {new Intl.NumberFormat().format(subtotal + DELIVERY_FEE)}</button>
+            </div>
           </div>
         </div>
       </div>

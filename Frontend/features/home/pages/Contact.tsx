@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
+import RequiredMark from '@/components/ui/RequiredMark'
+import FormErrors from '@/components/feedback/FormErrors'
 import { contactSchema } from '@/validate/schemas'
-import { showToast } from '@/components/feedback/toast'
+import { useFormErrors } from '@/hooks/useFormErrors'
 
 interface ContactResult {
   success: boolean;
@@ -11,6 +13,7 @@ interface ContactResult {
 
 const Contact = () => {
   const [result, setResult] = useState<ContactResult | null>(null);
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -23,8 +26,7 @@ const Contact = () => {
       message: formData.get('message'),
     });
     if (!parsed.success) {
-      showToast(parsed.error.issues[0].message, 'error');
-      return;
+      return validate(parsed.error.issues.map((issue) => issue.message));
     }
     setResult({
       success: true,
@@ -39,21 +41,21 @@ const Contact = () => {
     <div className="pt-2">
       <Title text1={'Get in'} text2={'touch'} />
       <Reveal className="max-w-4xl mx-auto card-lux rounded-4xl p-8 md:p-12">
-        <form onSubmit={onSubmitHandler} className="grid sm:grid-cols-2 gap-6">
+        <form onSubmit={onSubmitHandler} onChangeCapture={clearErrors} noValidate className="grid sm:grid-cols-2 gap-6">
           <div>
-            <label className={labelClass}>Your name</label>
+            <label className={labelClass}>Your name<RequiredMark /></label>
             <input name="name" className={inputClass} type="text" required placeholder="e.g. Aarav Shakya" />
           </div>
           <div>
-            <label className={labelClass}>Email</label>
+            <label className={labelClass}>Email<RequiredMark /></label>
             <input name="email" className={inputClass} type="email" required placeholder="you@example.com" />
           </div>
           <div>
-            <label className={labelClass}>Subject</label>
+            <label className={labelClass}>Subject<RequiredMark /></label>
             <input name="subject" className={inputClass} type="text" required placeholder="Custom blend query…" />
           </div>
           <div>
-            <label className={labelClass}>Concern</label>
+            <label className={labelClass}>Concern<RequiredMark /></label>
             <select name="concern" className={inputClass + ' select-soft'} required defaultValue="">
               <option value="" disabled>Select a reason</option>
               <option>Order enquiry</option>
@@ -63,14 +65,17 @@ const Contact = () => {
             </select>
           </div>
           <div className="sm:col-span-2">
-            <label className={labelClass}>Message</label>
+            <label className={labelClass}>Message<RequiredMark /></label>
             <textarea name="message" className={inputClass} rows={5} required placeholder="Tell us about the scent you’re after…"></textarea>
           </div>
-          <div className="sm:col-span-2 flex sm:flex-row flex-col items-center gap-4">
-            <button className="btn-primary w-full sm:w-auto">Send Message</button>
-            {result && (
-              <p className={`text-sm text-center sm:text-left ${result.success ? 'text-green-700' : 'text-red-600'}`}>{result.message}</p>
-            )}
+          <div className="sm:col-span-2 flex flex-col gap-4">
+            <FormErrors errors={errors} />
+            <div className="flex sm:flex-row flex-col items-center gap-4">
+              <button className="btn-primary w-full sm:w-auto">Send Message</button>
+              {result && (
+                <p className={`text-sm text-center sm:text-left ${result.success ? 'text-green-700' : 'text-red-600'}`}>{result.message}</p>
+              )}
+            </div>
           </div>
         </form>
       </Reveal>

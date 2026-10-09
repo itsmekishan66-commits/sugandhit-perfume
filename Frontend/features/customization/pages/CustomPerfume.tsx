@@ -5,6 +5,8 @@ import { showToast } from '@/components/feedback/toast'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
 import Loading from '@/components/ui/Loading'
+import FormErrors from '@/components/feedback/FormErrors'
+import { useFormErrors } from '@/hooks/useFormErrors'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
@@ -47,11 +49,13 @@ const CustomPerfume = () => {
   const [hoveredBottleCode, setHoveredBottleCode] = useState<string | null>(null);
   const [lockedBottleCode, setLockedBottleCode] = useState<string | null>(null);
   const [label, setLabel] = useState('');
+  const { errors, validate, clearErrors } = useFormErrors();
 
   const base = baseOverride ?? (palette.bases?.find((b) => b.code === 'alcohol-EDT')
     ?? (palette.bases && palette.bases.length ? palette.bases[0] : null));
 
   const toggleNote = (layer: LayerKey, note: Note) => {
+    clearErrors(); // the selection changed, so stale blocking reasons are dropped
     setSelected(prev => {
       const list = prev[layer];
       if (list.some(n => n.id === note.id)) {
@@ -92,8 +96,16 @@ const CustomPerfume = () => {
   // "Add to Cart" — stage the blend locally, stay on the studio.
   const addBlendToCart = () => {
     if (!token) { showToast('Please sign in first', 'error'); navigate('/login'); return; }
+    if (
+      !validate([
+        selected.top.length === 0 && 'Pick at least one top note.',
+        selected.heart.length === 0 && 'Pick at least one heart note.',
+        selected.base.length === 0 && 'Pick at least one base note.',
+        !base && 'Pick a perfume base.',
+      ])
+    ) return;
     const blend = buildBlend();
-    if (!blend) { showToast('Pick at least one note from each layer and a base.', 'error'); return; }
+    if (!blend) return; // unreachable — validate() above covers buildBlend()'s guard
     addCustomBlend(blend);
   };
 
@@ -101,8 +113,16 @@ const CustomPerfume = () => {
   const orderBlend = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!token) { showToast('Please sign in first', 'error'); navigate('/login'); return; }
+    if (
+      !validate([
+        selected.top.length === 0 && 'Pick at least one top note.',
+        selected.heart.length === 0 && 'Pick at least one heart note.',
+        selected.base.length === 0 && 'Pick at least one base note.',
+        !base && 'Pick a perfume base.',
+      ])
+    ) return;
     const blend = buildBlend();
-    if (!blend) { showToast('Pick at least one note from each layer and a base.', 'error'); return; }
+    if (!blend) return; // unreachable — validate() above covers buildBlend()'s guard
     addCustomBlend(blend);
     navigate('/Place-Order');
   };
@@ -192,7 +212,7 @@ const CustomPerfume = () => {
                   <button
                     key={b.id}
                     type="button"
-                    onClick={() => setBaseOverride(b)}
+                    onClick={() => { setBaseOverride(b); clearErrors(); }}
                     className={`text-left rounded-xl border p-4 transition-all ${base?.id === b.id ? 'border-ink bg-ink text-cream' : 'border-gold/25 bg-white hover:border-gold'}`}
                   >
                     <p className="font-medium">{b.name}</p>
@@ -334,22 +354,23 @@ const CustomPerfume = () => {
                 <span>Delivery</span><span>Rs. {deliveryFee} at checkout</span>
               </div>
             </div>
-            <button
-              type="submit"
-              disabled={!canPlace}
-              className="btn-gold w-full mt-6 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {`Order My Blend \u2014 Rs. ${totalPrice}`}
-            </button>
-            <button
-              type="button"
-              onClick={addBlendToCart}
-              disabled={!canPlace}
-              className="w-full mt-3 rounded-full border border-gold/50 bg-transparent text-gold-soft font-medium text-sm tracking-wide py-4 px-8 transition-all hover:border-gold hover:text-cream disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Add to Cart
-            </button>
-            <p className="text-[11px] text-cream/40 text-center mt-3">Blended fresh on order Delivery charged at checkout</p>
+            <div className="mt-6 flex flex-col gap-3">
+              <FormErrors errors={errors} />
+              <button
+                type="submit"
+                className="btn-gold w-full"
+              >
+                {`Order My Blend \u2014 Rs. ${totalPrice}`}
+              </button>
+              <button
+                type="button"
+                onClick={addBlendToCart}
+                className="w-full rounded-full border border-gold/50 bg-transparent text-gold-soft font-medium text-sm tracking-wide py-4 px-8 transition-all hover:border-gold hover:text-cream disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Add to Cart
+              </button>
+              <p className="text-[11px] text-cream/40 text-center">Blended fresh on order Delivery charged at checkout</p>
+            </div>
           </Reveal>
         </div>
       </form>

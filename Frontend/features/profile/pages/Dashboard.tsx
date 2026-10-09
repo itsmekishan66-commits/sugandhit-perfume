@@ -4,7 +4,10 @@ import { showToast } from '@/components/feedback/toast'
 import Title from '@/components/ui/Title'
 import Reveal from '@/components/ui/Reveal'
 import Loading from '@/components/ui/Loading'
+import RequiredMark from '@/components/ui/RequiredMark'
+import FormErrors from '@/components/feedback/FormErrors'
 import { profileSchema } from '@/validate/schemas'
+import { useFormErrors } from '@/hooks/useFormErrors'
 import { Bell, BellRing, Camera, Copy, Gift, Heart, Pencil, Star, Tag } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
@@ -37,6 +40,7 @@ const Dashboard = () => {
   const [edit, setEdit] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const { errors, validate, clearErrors } = useFormErrors();
 
   useEffect(() => {
     if (!token) return;
@@ -72,8 +76,7 @@ const Dashboard = () => {
     e.preventDefault();
     const parsed = profileSchema.safeParse(form);
     if (!parsed.success) {
-      showToast(parsed.error.issues[0].message, 'error');
-      return;
+      return validate(parsed.error.issues.map((issue) => issue.message));
     }
     setSaving(true);
     const ok = await updateUserProfile({
@@ -86,6 +89,7 @@ const Dashboard = () => {
   };
 
   const startEdit = () => {
+    clearErrors(); // fresh edit session must not show reasons from a previous one
     setForm({
       name: userProfile?.name || '',
       phone: userProfile?.phone || '',
@@ -174,11 +178,21 @@ const Dashboard = () => {
                 </button>
               </>
             ) : (
-              <form onSubmit={onSave} className="mt-5 space-y-3 border-t border-cream/15 pt-5">
-                <input name="name" value={form.name} onChange={onChange} className="bg-ink/20 border border-cream/20 rounded-xl px-3 py-2.5 w-full text-sm text-cream placeholder:text-cream/40 focus:border-gold outline-none transition-colors" placeholder="Full name" required />
-                <input name="phone" value={form.phone} onChange={onChange} className="bg-ink/20 border border-cream/20 rounded-xl px-3 py-2.5 w-full text-sm text-cream placeholder:text-cream/40 focus:border-gold outline-none transition-colors" type="tel" placeholder="Phone" required />
-                <input name="address" value={form.address} onChange={onChange} className="bg-ink/20 border border-cream/20 rounded-xl px-3 py-2.5 w-full text-sm text-cream placeholder:text-cream/40 focus:border-gold outline-none transition-colors" placeholder="Delivery address" required />
+              <form onSubmit={onSave} onChangeCapture={clearErrors} noValidate className="mt-5 space-y-3 border-t border-cream/15 pt-5">
+                <div className="relative">
+                  <input name="name" value={form.name} onChange={onChange} className="bg-ink/20 border border-cream/20 rounded-xl px-3 py-2.5 pr-9 w-full text-sm text-cream placeholder:text-cream/40 focus:border-gold outline-none transition-colors" placeholder="Full name" required />
+                  <RequiredMark className="absolute right-3 top-1/2 -translate-y-1/2" />
+                </div>
+                <div className="relative">
+                  <input name="phone" value={form.phone} onChange={onChange} className="bg-ink/20 border border-cream/20 rounded-xl px-3 py-2.5 pr-9 w-full text-sm text-cream placeholder:text-cream/40 focus:border-gold outline-none transition-colors" type="tel" placeholder="Phone" required />
+                  <RequiredMark className="absolute right-3 top-1/2 -translate-y-1/2" />
+                </div>
+                <div className="relative">
+                  <input name="address" value={form.address} onChange={onChange} className="bg-ink/20 border border-cream/20 rounded-xl px-3 py-2.5 pr-9 w-full text-sm text-cream placeholder:text-cream/40 focus:border-gold outline-none transition-colors" placeholder="Delivery address" required />
+                  <RequiredMark className="absolute right-3 top-1/2 -translate-y-1/2" />
+                </div>
                 <input name="city" value={form.city} onChange={onChange} className="bg-ink/20 border border-cream/20 rounded-xl px-3 py-2.5 w-full text-sm text-cream placeholder:text-cream/40 focus:border-gold outline-none transition-colors" placeholder="City" />
+                <FormErrors errors={errors} />
                 <div className="flex gap-2 pt-1">
                   <button disabled={saving} className="flex-1 py-2.5 rounded-full bg-gold text-ink text-sm font-medium disabled:opacity-50">{saving ? 'Saving…' : 'Save Profile'}</button>
                   <button type="button" onClick={() => setEdit(false)} className="px-5 rounded-full border border-cream/25 text-sm">Cancel</button>
